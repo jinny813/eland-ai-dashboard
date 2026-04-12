@@ -1,0 +1,8 @@
+pandas
+gspread
+gspread-formatting
+oauth2client
+streamlit
+openpyxl
+xlrd
+lxml
