@@ -9,3 +9,4 @@ lxml
 fastapi
 python-multipart
 uvicorn
+requests
