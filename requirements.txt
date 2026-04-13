@@ -6,4 +6,6 @@ streamlit
 openpyxl
 xlrd
 lxml
-uvicorn
+fastapi
+python-multipart
+unicorn
