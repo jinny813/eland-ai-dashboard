@@ -8,4 +8,4 @@ xlrd
 lxml
 fastapi
 python-multipart
-unicorn
+uvicorn
