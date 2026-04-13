@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E·LAND AI Assortment Agent</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+    :root {
+      --bg-main: #F4F4F4;
+      --bg-card: #FFFFFF;
+      --bg-sidebar: #1D1E1E;
+      --bg-hover: #F9FAFB;
+      --border-main: #D4D5D5;
+      --border-light: #E5E7EB;
+      --red: #E30019;
+      --red-bg: #FEF2F2;
+      --blue: #1D4ED8;
+      --blue-bg: #EBF5FF;
+      --green: #15803D;
+      --amber: #F59E0B;
+      --text-main: #111827;
+      --text-dim: #6B7280;
+      --text-white: #FFFFFF;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --transition: all 0.2s ease-in-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* ──────────────────────────────────────────────
+   SIDEBAR
+   ────────────────────────────────────────────── */
+    .sidebar {
+      width: 245px;
+      background: var(--bg-sidebar);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      z-index: 100;
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .logo-area {
+      padding: 32px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--red);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .logo-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-white);
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .nav {
+      padding: 24px 0;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: var(--transition);
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-item.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+      font-weight: 700;
+      border-left-color: var(--red);
+    }
+
+    /* ──────────────────────────────────────────────
+   MAIN STRUCTURE
+   ────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 50px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      gap: 10px;
+    }
+
+    .top-sep {
+      color: #D1D5DB;
+      font-weight: 400;
+    }
+
+    .top-active {
+      color: #111;
+    }
+
+    .content {
+      padding: 24px 32px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* ──────────────────────────────────────────────
+   P1: 지점별 요약 테이블
+   ────────────────────────────────────────────── */
+    .section-head {
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .section-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-main);
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-wrap {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table-wrap th {
+      background: #1D1E1E;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .table-wrap td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-light);
+      text-align: center;
+    }
+
+    .table-wrap td:first-child {
+      text-align: left;
+      padding-left: 24px;
+      font-weight: 700;
+    }
+
+    .badge-score {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 50px;
+      border-radius: 10px;
+      color: #fff;
+      background: linear-gradient(135deg, #F97316, #EA580C);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .badge-score .grade {
+      font-size: 9px;
+      opacity: 0.8;
+      margin-bottom: 1px;
+    }
+
+    .badge-score .num {
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* ──────────────────────────────────────────────
+   P2: 브랜드 상세 현황 (IMAGE 4 MATCH)
+   ────────────────────────────────────────────── */
+    .alert-box {
+      background: var(--red-bg);
+      border: 1px solid #FECACA;
+      border-radius: 10px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .alert-icon {
+      width: 22px;
+      height: 22px;
+      background: var(--red);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .alert-text {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--red);
+    }
+
+    .brand-hero {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 36px 40px;
+      border: 1px solid var(--border-main);
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .h-title-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 8px;
+    }
+
+    #h-brand {
+      font-size: 32px;
+      font-weight: 950;
+      color: #111;
+      letter-spacing: -0.8px;
+    }
+
+    #h-store {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-dim);
+      margin-left: 2px;
+    }
+
+    #h-type {
+      font-size: 11px;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+
+    /* [v13.0] 브랜드명 옆 점수 박스 스타일 */
+    .score-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #1D1E1E;
+      color: #fff;
+      padding: 8px 24px;
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      margin-left: 12px;
+      position: relative;
+      min-height: 80px;
+    }
+
+    .score-box-label {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+      line-height: 1;
+    }
+
+    #h-score {
+      font-size: 52px;
+      font-weight: 950;
+      color: #fff;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .score-unit {
+      font-size: 16px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.6);
+      margin-left: 4px;
+      align-self: flex-end;
+      margin-bottom: 8px;
+    }
+
+    .p2-header {
+      margin-bottom: 28px;
+    }
+
+    /* [v26.0] 지점명과 카드 사이 여백 확보 */
+
+    /* [v26.0] 점수 설명 아이콘 스타일 */
+    .info-btn {
+      width: 18px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-left: 8px;
+      vertical-align: middle;
+      transition: background 0.2s;
+    }
+
+    .info-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    /* [v28.0] 점수 설명 말풍선(Info Bubble) 스타일 */
+    .info-bubble {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 100%;
+      width: 320px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 18px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+      z-index: 1000;
+      color: #1e293b;
+      text-align: left;
+      margin-left: 20px;
+      animation: fadeInRight 0.2s ease-out;
+    }
+
+    .info-bubble::after {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: -8px;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-right: 8px solid #fff;
+    }
+
+    @keyframes fadeInRight {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .info-bubble h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 900;
+      color: #111;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+
+    .info-bubble p {
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    .info-bubble .weight-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-weight: 800;
+      color: #475569;
+    }
+
+    .info-bubble .footer {
+      font-size: 11px;
+      color: #94A3B8;
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px dashed #eee;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .score-hero {
+      display: none;
+    }
+
+    /* 기존 하단 점수 영역 숨김 */
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .kpi-item {
+      background: #F3F4F6;
+      padding: 18px 24px;
+      border-radius: 14px;
+    }
+
+    .kpi-h {
+      font-size: 10px;
+      color: #9CA3AF;
+      font-weight: 800;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .kpi-v {
+      font-size: 24px;
+      font-weight: 900;
+      color: #111;
+      line-height: 1;
+    }
+
+    .kpi-status {
+      font-size: 11px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .metrics-4-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .m-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-main);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      transition: transform 0.2s;
+      position: relative;
+    }
+
+    .m-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .m-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 32px;
+      border-bottom: 2px solid #F8FAFC;
+      padding-bottom: 16px;
+    }
+
+    .m-title {
+      font-size: 20px;
+      font-weight: 950;
+      color: #111;
+      letter-spacing: -0.5px;
+    }
+
+    .m-score {
+      font-size: 42px;
+      font-weight: 950;
+      line-height: 1;
+      color: var(--red);
+      letter-spacing: -1.5px;
+    }
+
+    .m-score-unit {
+      font-size: 14px;
+      font-weight: 800;
+      color: #64748b;
+      margin-left: 2px;
+    }
+
+    /* [v29.0] 듀얼 바 및 달성률 스타일 정밀 고도화 */
+    .seg-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .seg-label-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .seg-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .seg-name {
+      font-size: 15px;
+      font-weight: 950;
+      color: #1e293b;
+      letter-spacing: -0.3px;
+    }
+
+    .attainment-val {
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -0.5px;
+      transition: color 0.3s;
+    }
+
+    .dual-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 12px;
+    }
+
+    .bar-label {
+      font-size: 10px;
+      font-weight: 900;
+      color: #94A3B8;
+      width: 40px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+
+    .bar-track-wrap {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 14px;
+      background: #F1F5F9;
+      border-radius: 7px;
+      position: relative;
+      overflow: visible;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 7px;
+      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 목표 바 전용 가이드 스타일 */
+    .target-bar-fill {
+      background: #CBD5E1;
+    }
+
+    .val-text-sm {
+      font-size: 10px;
+      font-weight: 800;
+      color: #64748B;
+      margin-top: 6px;
+      display: block;
+    }
+
+    .vvid-red {
+      color: #DC2626;
+    }
+
+    /* Danger / 부족 */
+    .vvid-amber {
+      color: #D97706;
+    }
+
+    /* Warning / 주의 */
+    .vvid-green {
+      color: #16A34A;
+    }
+
+    /* Success / 적정 */
+    .vvid-blue {
+      color: #2563EB;
+    }
+
+    /* Overflow / 과다 */
+
+    /* [v8.0] 지표별 고정 색상 제거 (서버 동적 색상 사용) */
+    .seg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      opacity: 0.9;
+    }
+
+    .bar-line {
+      height: 100%;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease;
+      border-radius: 4px;
+    }
+
+    /* ──────────────────────────────────────────────
+   MODAL & OTHERS
+   ────────────────────────────────────────────── */
+    /* ── 모달 ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+      animation: fadeOverlay 0.2s ease;
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    @keyframes fadeOverlay {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .modal {
+      width: 80vw;
+      max-width: 1400px;
+      min-height: 60vh;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.25s ease;
+      transform-origin: top;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(-20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .modal-hdr {
+      background: #1D1E1E;
+      padding: 20px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .modal-sub {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 4px;
+    }
+
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .modal-body {
+      padding: 24px 28px;
+      overflow-x: auto;
+    }
+
+    .modal-tbl {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #F3F4F6;
+    }
+
+    .modal-tbl th {
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      white-space: nowrap;
+      background: #1D1E1E;
+      border: none;
+    }
+
+    .modal-tbl td {
+      padding: 14px 14px;
+      border-bottom: 1px solid #F3F4F6;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .modal-tbl td:first-child {
+      text-align: left;
+    }
+
+    .modal-tbl tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .modal-tbl tr:hover td {
+      background: #F9FAFB;
+    }
+
+    .brand-row-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .type-badge {
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    /* [v20.0] P1 모달용 수직 스택형 그래프 복원 */
+    .stack-graph {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stack-percent {
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .stack-bar {
+      width: 80px;
+      height: 6px;
+      background: #E5E7EB;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .stack-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .stack-status {
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: -0.2px;
+    }
+
+    .score-cell {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    /* [v22.0] 비중 연동형 상대 너비 및 오버플로우 바 스타일 */
+    .dual-bar-container {
+      margin-top: 8px;
+      position: relative;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .bar-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #64748B;
+      width: 62px;
+      flex-shrink: 0;
+    }
+
+    .bar-track {
+      height: 14px;
+      background: transparent;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 트랙 배경 제거 (가이드 바 자체가 트랙임) */
+    .bar-guide {
+      height: 100%;
+      background: #E2E8F0;
+      border-radius: 7px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 1;
+    }
+
+    .bar-fill-actual {
+      height: 100%;
+      border-radius: 7px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 2;
+      transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .bar-values {
+      font-size: 11px;
+      font-weight: 950;
+      font-family: 'Pretendard', sans-serif;
+      min-width: 60px;
+      text-align: right;
+    }
+
+    .val-target {
+      color: #94A3B8;
+    }
+
+    .val-actual {
+      color: #111;
+    }
+
+    .seg-item {
+      margin-bottom: 22px;
+      position: relative;
+      overflow: visible;
+    }
+
+    /* 오버플로우 허용 */
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #D1D5DB;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo-area">
+        <div class="logo-row">
+          <!-- E-LAND 회사 로고 SVG -->
+          <div class="logo-icon"
+            style="background:#E30019; border-radius:8px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="46" stroke="white" stroke-width="8" fill="none" />
+              <path d="M32 34 L32 66 L68 66 L68 58 L42 58 L42 54 L62 54 L62 46 L42 46 L42 42 L68 42 L68 34 Z"
+                fill="white" />
+            </svg>
+          </div>
+          <div>
+            <div class="logo-title">상품구색 시스템</div>
+            <div class="logo-sub">E-LAND RETAIL</div>
+          </div>
+        </div>
+      </div>
+      <nav class="nav">
+        <div class="nav-item active" onclick="showPage('p1',this)" data-page="p1">
+          <span style="font-size:16px; flex-shrink:0;">☰</span> 지점별 구색 점수
+        </div>
+        <div class="nav-item" onclick="showPage('p2',this)" data-page="p2">
+          <span style="font-size:16px; flex-shrink:0;">▶</span> 브랜드별 상품 구색 현황
+        </div>
+        <div class="nav-item" onclick="showPage('p3',this)" data-page="p3">
+          <span style="font-size:16px; flex-shrink:0;">⇧</span> 데이터 업로드
+        </div>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <div class="topbar"><span>상품구색 시스템</span><span class="top-sep">></span><span class="top-active" id="top-title">지점별
+          구색 점수</span></div>
+      <div class="content">
+
+        <!-- P1: MAIN TABLE -->
+        <div class="page active" id="p1">
+          <div class="section-head">
+            <div class="section-title">지점별 상품 구색 점수</div>
+            <div class="section-sub">점수 클릭 → 지점 분석 | 브랜드 행 클릭 → 브랜드 상세</div>
+          </div>
+          <div class="card">
+            <table class="table-wrap">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding-left:24px">지점</th>
+                  <th>전체</th>
+                  <th>여성</th>
+                  <th>스포츠</th>
+                  <th>캐주얼</th>
+                  <th>잡화</th>
+                  <th>아동</th>
+                  <th>신사</th>
+                  <th>골프웨어</th>
+                </tr>
+              </thead>
+              <tbody id="mainTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- P2: BRAND DETAIL -->
+        <div class="page" id="p2">
+          <div id="alertArea"></div>
+          <div class="brand-hero">
+            <div class="p2-header">
+              <div class="h-title-row">
+                <h1 id="h-brand">로딩 중...</h1>
+                <span id="h-type">정상</span>
+                <div class="score-box">
+                  <div style="display:flex; align-items:center;">
+                    <span class="score-box-label">Score</span>
+                    <div class="info-btn" onclick="toggleScoreBubble(event)">i</div>
+                    <!-- [v28.0] 정보 말풍선 HTML 추가 -->
+                    <div id="scoreBubble" class="info-bubble">
+                      <h4>여성 카테고리 정밀 채점 로직</h4>
+                      <p><b>■ 매장 유형별 최종 점수 반영 가중치</b></p>
+                      <div class="weight-row" style="color:#EF4444"><span>1. 상설 매장</span> <span>45 / 25 / 15 / 15</span>
+                      </div>
+                      <div class="weight-row" style="color:#3B82F6"><span>2. 정상 매장</span> <span>30 / 30 / 20 / 20</span>
+                      </div>
+                      <p style="font-size:10px; color:#94A3B8; margin-top:4px;">(할인율 / BEST / 시즌 / 신선도 순)</p>
+
+                      <p style="margin-top:12px;"><b>■ 지표별 산출 방식</b></p>
+                      <p style="margin-bottom:4px;">- 항목별 달성률: (실제/목표) * 100</p>
+                      <p>- 지표 점수: 세부 항목 달성률들의 평균</p>
+
+                      <div class="footer">※ 목표 매출의 200%를 적정 재고 기준으로 삼습니다.</div>
+                    </div>
+                  </div>
+                  <span id="h-score">0</span>
+                  <span class="score-unit">점</span>
+                </div>
+              </div>
+              <div id="h-store">지점명</div>
+            </div>
+            <div class="kpi-grid" id="kpiGrid"></div>
+          </div>
+          <div class="metrics-4-grid" id="detailGrid"></div>
+
+          <!-- BEST 10 품번 기반 판매 순위 -->
+          <div style="margin-top:24px;">
+            <div class="card" style="padding:24px;">
+              <div
+                style="font-size:16px; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                🏆 최근 판매 BEST 10 — 품번 기준
+              </div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr style="border-bottom:2px solid #F3F4F6; color:#6B7280; font-size:11px; font-weight:800;">
+                      <th style="text-align:center; padding:10px; width:40px;">순위</th>
+                      <th style="text-align:left; padding:10px; width:100px;">아이템명</th>
+                      <th style="text-align:left; padding:10px; width:120px;">품번</th>
+                      <th style="text-align:left; padding:10px;">스타일명</th>
+                      <th style="text-align:right; padding:10px; width:90px;">판매가</th>
+                      <th style="text-align:center; padding:10px; width:80px;">판매량</th>
+                      <th style="text-align:right; padding:10px; width:120px;">재고액</th>
+                      <th style="text-align:right; padding:10px; width:80px;">재고량</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bestItems"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- P3: UPLOAD (사진 100% 매칭) -->
+        <div class="page" id="p3">
+          <div style="max-width:680px; margin:0 auto; padding:32px 0;">
+            <div
+              style="background:#fff; border-radius:20px; border:1px solid #E5E7EB; box-shadow:0 4px 20px rgba(0,0,0,0.06); padding:40px 48px;">
+              <div
+                style="font-size:22px; font-weight:900; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+                🚢 RAW 데이터 입력</div>
+              <div
+                style="background:#EBF5FF; border:1px solid #BFDBFE; border-radius:10px; padding:14px 18px; margin-bottom:28px;">
+                <div style="font-size:13px; color:#1D4ED8; font-weight:700; line-height:1.6;">안내에 따라 순서대로 [지점 → 카테고리 →
+                  브랜드 → 월]을 선택하고 파이프라인을 활성화해주세요.</div>
+              </div>
+              <div
+                style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px; padding-bottom:28px; border-bottom:1px dashed #E5E7EB;">
+                <div>
+                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">🏬 1. 지점명</div>
+                  <select id="ux_store" onchange="onUxStep(1)"
+                    style="width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:14px; background:#fff; cursor:pointer;">
+                    <option value="" disabled selected>선택...</option>
+                    <option>NC신구로점</option>
+                    <option>NC강서점</option>
+                    <option>동아쇼핑점</option>
+                  </select>
+                </div>
+                <div>
+                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">👚 2. 카테고리</div>
+                  <select id="ux_cat" onchange="onUxStep(2)" disabled
+                    style="width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:14px; background:#F9FAFB;">
+                    <option value="" disabled selected>선택...</option>
+                    <option>여성</option>
+                    <option>잡화</option>
+                    <option>스포츠</option>
+                    <option>캐주얼</option>
+                    <option>아동</option>
+                    <option>신사</option>
+                    <option>골프웨어</option>
+                  </select>
+                </div>
+                <div>
+                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">🏷️ 3. 대상 브랜드(매장유형)
+                  </div>
+                  <select id="ux_brand" onchange="onUxStep(3)" disabled
+                    style="width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:14px; background:#F9FAFB;">
+                    <option value="" disabled selected>선택...</option>
+                    <option value="로엠|정상">로엠 (정상)</option>
+                    <option value="미쏘|정상">미쏘 (정상)</option>
+                    <option value="리스트|상설">리스트 (상설)</option>
+                    <option value="쉬즈미스|상설">쉬즈미스 (상설)</option>
+                    <option value="JJ지고트|상설">JJ지고트 (상설)</option>
+                    <option value="바바팩토리|상설">바바팩토리 (상설)</option>
+                    <option value="나이스클랍|상설">나이스클랍 (상설)</option>
+                  </select>
+                </div>
+                <div>
+                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📅 4. 대상 월(Month)
+                  </div>
+                  <select id="ux_month" onchange="onUxStep(4)" disabled
+                    style="width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:14px; background:#F9FAFB;">
+                    <option value="" disabled selected>선택...</option>
+                    <option>1월</option>
+                    <option>2월</option>
+                    <option>3월</option>
+                    <option>4월</option>
+                    <option>5월</option>
+                    <option>6월</option>
+                    <option>7월</option>
+                    <option>8월</option>
+                    <option>9월</option>
+                    <option>10월</option>
+                    <option>11월</option>
+                    <option>12월</option>
+                  </select>
+                </div>
+              </div>
+              <div id="fileSection" style="display:none;">
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 재고조회 엑셀</div>
+                  <label for="ux_inv"
+                    style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
+                    <span
+                      style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
+                      선택</span>
+                    <span id="invFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
+                      선택하세요 (.xls, .xlsx)</span>
+                  </label>
+                  <input type="file" id="ux_inv" accept=".xls,.xlsx"
+                    onchange="document.getElementById('invFileName').textContent=this.files[0]?.name||'파일을 선택하세요'"
+                    style="display:none;">
+                </div>
+                <div style="margin-bottom:28px;">
+                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 판매조회 엑셀</div>
+                  <label for="ux_sales"
+                    style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
+                    <span
+                      style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
+                      선택</span>
+                    <span id="salesFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
+                      선택하세요 (.xls, .xlsx) — 선택사항</span>
+                  </label>
+                  <input type="file" id="ux_sales" accept=".xls,.xlsx"
+                    onchange="document.getElementById('salesFileName').textContent=this.files[0]?.name||'파일을 선택하세요'"
+                    style="display:none;">
+                </div>
+                <button id="uploadBtn" onclick="handleUpload()"
+                  style="width:100%; padding:18px; border:none; border-radius:14px; background:var(--red); color:#fff; font-size:16px; font-weight:900; cursor:pointer; box-shadow:0 6px 20px rgba(227,0,25,0.25); transition:all 0.2s; font-family:inherit;">업로드
+                  및 병합 실행</button>
+              </div>
+              <div id="uploadStatus"
+                style="display:none; margin-top:16px; align-items:center; gap:10px; padding:14px 18px; border-radius:12px; font-size:13px; font-weight:800; background:#FEF2F2; border:1px solid #FECACA; color:#E30019;">
+                <span>❌</span><span id="statusTxt">오류</span>
+              </div>
+              <div id="uploadSuccess"
+                style="display:none; margin-top:16px; align-items:center; gap:10px; padding:14px 18px; border-radius:12px; font-size:13px; font-weight:800; background:#F0FDF4; border:1px solid #BBF7D0; color:#15803D;">
+                <span>✅</span><span id="successTxt">업로드 성공</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 지점 분석 모달 -->
+  <div class="overlay" id="storeModal" onclick="if(event.target===this)closeStoreModal()">
+    <div class="modal">
+      <div class="modal-hdr">
+        <div>
+          <div class="modal-title" id="mTitle">NC신구로점 · 여성 카테고리 분석</div>
+        </div>
+        <button class="modal-close" onclick="closeStoreModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <table class="modal-tbl">
+          <thead>
+            <tr>
+              <th style="background:#1D1E1E; text-align:left;">브랜드명</th>
+              <th style="background:#1D1E1E;">총 점수</th>
+              <th style="background:#1D1E1E;">목표대비 재고</th>
+              <th style="background:#DC2626;">할인율</th>
+              <th style="background:#2563EB;">신선도</th>
+              <th style="background:#16A34A;">BEST</th>
+              <th style="background:#D97706;">시즌</th>
+            </tr>
+          </thead>
+          <tbody id="modalTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #fileSection {
+      animation: fadeInUp 0.3s ease;
+    }
+  </style>
+  <script>window.__INITIAL_DATA__ = {"CATS": ["전체", "여성", "스포츠", "캐주얼", "잡화", "아동", "신사", "골프웨어"], "STORES": ["NC신구로점"], "scoreData": {"NC신구로점": [61, 12, 0, 0, 0, 0, 0, 0]}, "BRANDS": [{"name": "인동팩토리(리스트,쉬즈미스)", "store": "NC신구로점", "category": "여성", "type": "outlet", "type_label": "상설", "total": 0, "dis": 0, "fresh": 0, "best": 0, "season": 0, "tM": 47.1, "sM": 0.0, "month": "4월", "data_month": ""}, {"name": "나이스클랍", "store": "NC신구로점", "category": "여성", "type": "outlet", "type_label": "상설", "total": 0, "dis": 0, "fresh": 0, "best": 0, "season": 0, "tM": 24.6, "sM": 0.0, "month": "4월", "data_month": ""}, {"name": "로엠", "store": "NC신구로점", "category": "여성", "type": "normal", "type_label": "정상", "total": 61, "dis": 55, "fresh": 99, "best": 36, "season": 70, "tM": 26.6, "sM": 55.3, "month": "4월", "data_month": "3월"}, {"name": "바바팩토리", "store": "NC신구로점", "category": "여성", "type": "outlet", "type_label": "상설", "total": 0, "dis": 0, "fresh": 0, "best": 0, "season": 0, "tM": 59.0, "sM": 0.0, "month": "4월", "data_month": ""}, {"name": "JJ지고트", "store": "NC신구로점", "category": "여성", "type": "outlet", "type_label": "상설", "total": 0, "dis": 0, "fresh": 0, "best": 0, "season": 0, "tM": 57.4, "sM": 0.0, "month": "4월", "data_month": ""}], "DETAIL": {"NC신구로점": {"로엠": {"정상": {"item": {"segs": [{"key": "일반쟈켓류", "l": "일반쟈켓류", "valM": 29.46, "qty": 232, "c": "#7C3AED"}, {"key": "모직/기지", "l": "모직/기지", "valM": 10.57, "qty": 177, "c": "#A78BFA"}, {"key": "청바지", "l": "청바지", "valM": 9.22, "qty": 150, "c": "#C4B5FD"}, {"key": "블라우스(..", "l": "블라우스(..", "valM": 7.85, "qty": 132, "c": "#DDD6FE"}, {"key": "가디건", "l": "가디건", "valM": 7.68, "qty": 136, "c": "#EDE9FE"}, {"key": "원피스(우..", "l": "원피스(우..", "valM": 7.24, "qty": 53, "c": "#6D28D9"}, {"key": "무지 셔츠", "l": "무지 셔츠", "valM": 4.13, "qty": 73, "c": "#8B5CF6"}, {"key": "풀오버스웨..", "l": "풀오버스웨..", "valM": 3.79, "qty": 74, "c": "#9F7AEA"}, {"key": "무지긴팔티", "l": "무지긴팔티", "valM": 2.43, "qty": 69, "c": "#B794F4"}, {"key": "블라우스나..", "l": "블라우스나..", "valM": 2.29, "qty": 67, "c": "#D6BCFA"}], "warnFn_key": "item_warn"}, "dis": {"segs": [{"key": "age_1", "l": "할인율 1~30%미만", "valM": 17.8, "qty": 259, "c": "#FF2D55", "weight": 15, "pct": 224.0, "targetM": 8.0, "mix_pct": 32.2, "opt_pct": 15.0}, {"key": "age_2", "l": "할인율 30% 이상", "valM": 0.8, "qty": 14, "c": "#FF2D55", "weight": 10, "pct": 15.2, "targetM": 5.3, "mix_pct": 1.5, "opt_pct": 10.0}, {"key": "age_3", "l": "할인율 50% 이상", "valM": 0.0, "qty": 0, "c": "#FF2D55", "weight": 5, "pct": 0.0, "targetM": 2.7, "mix_pct": 0.0, "opt_pct": 5.0}, {"key": "age_4", "l": "할인율 70% 이상", "valM": 0.0, "qty": 0, "c": "#CBD5E1", "weight": 0, "pct": 100.0, "targetM": 0.0, "mix_pct": 0.0, "opt_pct": 0.0}], "warnFn_key": "dis_warn", "insight": "현재 할인율 1~30%미만 비중이 최적 지침(15.0%) 대비 17.2%p 많습니다."}, "fresh": {"segs": [{"key": "new", "l": "신상 (New)", "valM": 36.7, "qty": 519, "c": "#FDE68A", "weight": 0.7, "mix_pct": 66.3, "opt_pct": 70, "targetM": 37.2, "pct": 98.7}, {"key": "off", "l": "시즌 OFF", "valM": 18.7, "qty": 273, "c": "#FDE68A", "weight": 0.3, "mix_pct": 33.7, "opt_pct": 30, "targetM": 15.9, "pct": 117.1}], "warnFn_key": "fresh_warn", "insight": "현재 신상 (New) 비중이 최적 지침(70%) 대비 3.7%p 적습니다."}, "best": {"segs": [{"key": "best", "l": "매장 판매 BEST 10", "valM": 4.8, "qty": 62, "c": "#8B5CF6", "weight": 2.5, "opt_weight": 25, "pct": 36.0, "targetM": 13.3, "mix_pct": 5.2, "opt_pct": 25}], "warnFn_key": "best_warn", "insight": "현재 매장 판매 BEST 10 비중이 최적 지침(25%) 대비 19.8%p 적습니다."}, "season": {"segs": [{"key": "ss_s", "l": "봄 (SS)", "valM": 10.0, "qty": 122, "c": "#FCD34D", "weight": 35, "pct": 54.0, "targetM": 18.6, "mix_pct": 10.8, "opt_pct": 35, "is_score_target": true}, {"key": "ss_m", "l": "여름 (SS)", "valM": 27.9, "qty": 419, "c": "#F59E0B", "weight": 35, "pct": 150.2, "targetM": 18.6, "mix_pct": 30.1, "opt_pct": 35, "is_score_target": true}, {"key": "fw_f", "l": "가을 (FW)", "valM": 7.7, "qty": 114, "c": "#94A3B8", "weight": 15, "pct": 96.5, "targetM": 8.0, "mix_pct": 8.3, "opt_pct": 15, "is_score_target": false}, {"key": "fw_w", "l": "겨울 (FW)", "valM": 9.7, "qty": 137, "c": "#94A3B8", "weight": 15, "pct": 121.7, "targetM": 8.0, "mix_pct": 10.5, "opt_pct": 15, "is_score_target": false}], "warnFn_key": "season_warn", "insight": "현재 봄 (SS) 비중이 최적 지침(35%) 대비 24.2%p 적습니다."}}}}}, "BP_DETAIL": {"NC신구로점": {"로엠": {"정상": {"item": {"segs": []}, "dis": {"segs": [{"key": "s70", "l": "70% 이상", "valM": 0.05, "qty": 0, "c": "#E30019"}, {"key": "s50", "l": "50% 이상", "valM": 8.75, "qty": 0, "c": "#F97316"}, {"key": "s30", "l": "30% 이상", "valM": 46.3, "qty": 0, "c": "#FBBF24"}, {"key": "normal", "l": "정상가", "valM": 44.9, "qty": 0, "c": "#D4D5D5"}]}, "fresh": {"segs": [{"key": "new", "l": "신상(정상)", "valM": 70.0, "qty": 0, "c": "#1D4ED8"}, {"key": "plan", "l": "기획 상품", "valM": 18.0, "qty": 0, "c": "#93C5FD"}, {"key": "off", "l": "시즌 OFF", "valM": 12.0, "qty": 0, "c": "#DBEAFE"}]}, "best": {"segs": [{"key": "store10", "l": "매장 Top10", "valM": 27.2, "qty": 0, "c": "#15803D"}, {"key": "other", "l": "그 외", "valM": 72.8, "qty": 0, "c": "#86EFAC"}]}, "season": {"segs": [{"key": "s1", "l": "봄", "valM": 18.0, "qty": 0, "c": "#FCD34D"}, {"key": "s2", "l": "여름", "valM": 52.0, "qty": 0, "c": "#F59E0B"}, {"key": "s3", "l": "가을", "valM": 15.0, "qty": 0, "c": "#D97706"}, {"key": "s4", "l": "겨울", "valM": 10.0, "qty": 0, "c": "#92400E"}, {"key": "s9", "l": "사계절", "valM": 5.0, "qty": 0, "c": "#B45309"}]}}}}}, "BEST_ITEMS": {"NC신구로점": {"로엠": {"정상": {"store": [{"rank": 1, "item_name": "청바지", "style_code": "RMTJG24G11", "style_name": "스트레이트 데님", "price": 59900, "sales": 11, "valWon": 239600, "qty": 4}, {"rank": 2, "item_name": "블라우스나..", "style_code": "RMBNG24R02", "style_name": "베이직 2WAY 나시 블라우스", "price": 29900, "sales": 10, "valWon": 209300, "qty": 7}, {"rank": 2, "item_name": "무지 셔츠", "style_code": "RMYWG23R11", "style_name": "[올데이셔츠] 링클프리 셔츠", "price": 45409, "sales": 10, "valWon": 349300, "qty": 7}, {"rank": 3, "item_name": "무지폴로티", "style_code": "RMHWG24R02", "style_name": "[올데이티셔츠] 베이직 V넥 티셔츠", "price": 19900, "sales": 8, "valWon": 179100, "qty": 9}, {"rank": 3, "item_name": "청바지", "style_code": "RMTJG23G01", "style_name": "[Fit-me] 와이드 데님 (숏ver.)", "price": 59900, "sales": 8, "valWon": 59900, "qty": 1}, {"rank": 4, "item_name": "일반쟈켓류", "style_code": "RMJKG23R11", "style_name": "테일러드 자켓 (셋업)", "price": 123471, "sales": 7, "valWon": 1032000, "qty": 8}, {"rank": 5, "item_name": "일반쟈켓류", "style_code": "RMJKG23S11", "style_name": "라운드넥 트위드 수술자켓", "price": 120400, "sales": 6, "valWon": 1161000, "qty": 9}, {"rank": 5, "item_name": "일반쟈켓류", "style_code": "RMJKG24R11", "style_name": "린넨라이크 긴팔 자켓 (세트)", "price": 129000, "sales": 6, "valWon": 1290000, "qty": 10}, {"rank": 5, "item_name": "무지긴팔티", "style_code": "RMLWG23R01", "style_name": "[올데이티셔츠] 라운드 티셔츠", "price": 18905, "sales": 6, "valWon": 19900, "qty": 1}, {"rank": 5, "item_name": "무지긴팔티", "style_code": "RMLWG23R18", "style_name": "긴팔 크링클 티셔츠", "price": 39900, "sales": 6, "valWon": 239400, "qty": 6}], "nc": [{"rank": 1, "item_name": "청바지", "style_code": "RMTJG24G11", "style_name": "스트레이트 데님", "price": 59900, "sales": 11, "valWon": 239600, "qty": 4}, {"rank": 2, "item_name": "블라우스나..", "style_code": "RMBNG24R02", "style_name": "베이직 2WAY 나시 블라우스", "price": 29900, "sales": 10, "valWon": 209300, "qty": 7}, {"rank": 2, "item_name": "무지 셔츠", "style_code": "RMYWG23R11", "style_name": "[올데이셔츠] 링클프리 셔츠", "price": 45409, "sales": 10, "valWon": 349300, "qty": 7}, {"rank": 3, "item_name": "무지폴로티", "style_code": "RMHWG24R02", "style_name": "[올데이티셔츠] 베이직 V넥 티셔츠", "price": 19900, "sales": 8, "valWon": 179100, "qty": 9}, {"rank": 3, "item_name": "청바지", "style_code": "RMTJG23G01", "style_name": "[Fit-me] 와이드 데님 (숏ver.)", "price": 59900, "sales": 8, "valWon": 59900, "qty": 1}, {"rank": 4, "item_name": "일반쟈켓류", "style_code": "RMJKG23R11", "style_name": "테일러드 자켓 (셋업)", "price": 123471, "sales": 7, "valWon": 1032000, "qty": 8}, {"rank": 5, "item_name": "일반쟈켓류", "style_code": "RMJKG23S11", "style_name": "라운드넥 트위드 수술자켓", "price": 120400, "sales": 6, "valWon": 1161000, "qty": 9}, {"rank": 5, "item_name": "일반쟈켓류", "style_code": "RMJKG24R11", "style_name": "린넨라이크 긴팔 자켓 (세트)", "price": 129000, "sales": 6, "valWon": 1290000, "qty": 10}, {"rank": 5, "item_name": "무지긴팔티", "style_code": "RMLWG23R01", "style_name": "[올데이티셔츠] 라운드 티셔츠", "price": 18905, "sales": 6, "valWon": 19900, "qty": 1}, {"rank": 5, "item_name": "무지긴팔티", "style_code": "RMLWG23R18", "style_name": "긴팔 크링클 티셔츠", "price": 39900, "sales": 6, "valWon": 239400, "qty": 6}]}}}}};</script><script>
+    const API_URL = "http://localhost:8000";
+    let CATS = [], STORES = [], scoreData = {}, BRANDS = [], DETAIL = {}, BP_DETAIL = {}, BEST_ITEMS = {}, currentBrand = null;
+
+    // ─── P3 업로드 UX 핸들러 ───
+    function _setEnabled(id, enabled) {
+      const el = document.getElementById(id);
+      el.disabled = !enabled;
+      el.style.background = enabled ? '#fff' : '#F9FAFB';
+      el.style.cursor = enabled ? 'pointer' : 'not-allowed';
+    }
+    function onUxStep(step) {
+      const s = document.getElementById('ux_store').value;
+      const c = document.getElementById('ux_cat').value;
+      const b = document.getElementById('ux_brand').value;
+      const m = document.getElementById('ux_month').value;
+      if (step >= 1 && s) { _setEnabled('ux_cat', true); }
+      if (step >= 2 && c) { _setEnabled('ux_brand', true); }
+      if (step >= 3 && b) { _setEnabled('ux_month', true); }
+      if (step >= 4 && m) { document.getElementById('fileSection').style.display = 'block'; }
+      document.getElementById('uploadStatus').style.display = 'none';
+      document.getElementById('uploadSuccess').style.display = 'none';
+    }
+
+    async function handleUpload() {
+      const btn = document.getElementById('uploadBtn');
+      const statusEl = document.getElementById('uploadStatus');
+      const successEl = document.getElementById('uploadSuccess');
+      const statusTxt = document.getElementById('statusTxt');
+      statusEl.style.display = 'none'; successEl.style.display = 'none';
+
+      const store = document.getElementById('ux_store').value;
+      const cat = document.getElementById('ux_cat').value;
+      const brandRaw = document.getElementById('ux_brand').value;
+      const month = document.getElementById('ux_month').value;
+      const invFile = document.getElementById('ux_inv').files[0];
+
+      if (!store || !cat || !brandRaw || !month) {
+        statusTxt.textContent = '지점, 카테고리, 브랜드, 월을 모두 선택해주세요.'; statusEl.style.display = 'flex'; return;
+      }
+      if (!invFile) {
+        statusTxt.textContent = '재고조회 엑셀 파일을 선택해주세요.'; statusEl.style.display = 'flex'; return;
+      }
+
+      btn.disabled = true; btn.textContent = '처리 중...';
+      const fd = new FormData();
+      fd.append('store_name', store);
+      fd.append('category_group', cat);
+      fd.append('brand_name', brandRaw); // "로엠|정상"
+      fd.append('data_month', month);
+      fd.append('inv_file', invFile);
+      const salesFile = document.getElementById('ux_sales').files[0];
+      if (salesFile) fd.append('sales_file', salesFile);
+
+      try {
+        const r = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: fd, credentials: 'omit' });
+        const d = await r.json();
+        if (d.status === 'success') {
+          document.getElementById('successTxt').textContent = d.message || `업로드 완료! (${d.rows}개 레코드)`;
+          successEl.style.display = 'flex';
+        } else {
+          statusTxt.textContent = d.error || '처리 오류'; statusEl.style.display = 'flex';
+        }
+      } catch (e) {
+        statusTxt.textContent = `네트워크 오류: ${e.message} — Streamlit 상단 탭 "📤 데이터 통합 및 업로드"에서 파일을 업로드해 주세요.`;
+        statusEl.style.display = 'flex';
+      }
+      btn.disabled = false; btn.textContent = '업로드 및 병합 실행';
+    }
+
+    function showPage(id, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
+      document.getElementById('top-title').textContent = { 'p1': '지점별 구색 점수', 'p2': '브랜드별 상품 구색 현황', 'p3': '데이터 업로드' }[id] || '';
+    }
+
+    function buildMainTable() {
+      const tb = document.getElementById('mainTbody'); if (!tb) return;
+      tb.innerHTML = '';
+      STORES.forEach(st => {
+        // 지점명 셀: 클릭 시 모달 오픈
+        let r = `<td style="cursor:pointer;" onclick="openStoreModal('${st}','전체')">
+      <span style="font-weight:800; color:#111; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#D1D5DB;">${st}</span>
+    </td>`;
+        (scoreData[st] || []).forEach((v, ci) => {
+          r += `<td>${v > 0 ? `<div class="badge-score" onclick="openStoreModal('${st}','${CATS[ci]}')"><span class="grade">${v >= 80 ? 'A' : v < 60 ? 'C' : 'B'}</span><span class="num">${v}</span></div>` : '—'}</td>`;
+        });
+        const tr = document.createElement('tr'); tr.innerHTML = r; tb.appendChild(tr);
+      });
+    }
+
+    function openStoreModal(store, cat) {
+      // [v20.0] '전체' 클릭 시 화면 노출 중단
+      if (cat === '전체') {
+        closeStoreModal();
+        return;
+      }
+
+      const catLabel = `${cat} 카테고리`;
+      document.getElementById('mTitle').textContent = `${store} · ${catLabel} 분석`;
+
+      // [v20.0] 필터링 강화: 해당 지점 및 선택한 카테고리에 부합하는 브랜드만 추출
+      const storeBrands = BRANDS.filter(b => b.store === store && b.category === cat);
+
+      const tb = document.getElementById('modalTbody');
+      const thRow = document.querySelector('#storeModal thead tr');
+
+      // 헤더 개편 (브랜드명, 총 점수, 재고 비중 + 4대 지표 점수)
+      thRow.innerHTML = `
+    <th style="text-align:left;padding-left:24px;background:#1D1E1E;">브랜드명</th>
+    <th style="background:#1D1E1E;">총 점수</th>
+    <th style="background:#1D1E1E;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
+    <th style="background:#E30019; width:85px;">할인율</th>
+    <th style="background:#F59E0B; width:85px;">신선도</th>
+    <th style="background:#0055D4; width:85px;">시즌</th>
+    <th style="background:#8B5CF6; width:85px;">BEST</th>
+  `;
+
+      tb.innerHTML = '';
+
+      if (!storeBrands.length) {
+        tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
+      } else {
+        storeBrands.forEach(b => {
+          const tM2 = +(b.tM * 2).toFixed(1);
+          const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
+
+          const isShort = supply < 100;
+          const statusColor = isShort ? '#E30019' : '#008B3E'; // 부족(Red), 충족(Green) - P2 총 재고액 바와 동일한 초록색 적용
+          const statusText = isShort ? '부족' : '충족';
+
+          const typeBg = b.type === 'normal' ? '#FEF2F2' : '#F3F4F6';
+          const typeColor = b.type === 'normal' ? '#E30019' : '#6B7280';
+          const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
+
+          const tr = document.createElement('tr');
+          tr.onclick = () => { closeStoreModal(); selectBrand(store, b.name); };
+          tr.innerHTML = `
+        <td>
+          <div class="brand-row-name">
+            ${b.name}
+            <span class="type-badge" style="background:${typeBg}; color:${typeColor};">${typeLabel}</span>
+          </div>
+        </td>
+        <td><span class="score-cell" style="color:${b.total < 60 ? '#EF4444' : '#111827'}">${b.total}</span></td>
+        <td>
+          <div class="stack-graph">
+            <div class="stack-percent" style="color:${statusColor}; font-size:13px;">${supply}%</div>
+            <div class="stack-bar"><div class="stack-bar-fill" style="width:${Math.min(100, supply)}%; background:${statusColor}"></div></div>
+            <div class="stack-status" style="color:${statusColor}; font-size:10px; font-weight:800; margin-top:2px;">${statusText}</div>
+          </div>
+        </td>
+        <td><span class="score-cell" style="color:#E30019">${b.dis || 0}</span></td>
+        <td><span class="score-cell" style="color:#F59E0B">${b.fresh || 0}</span></td>
+        <td><span class="score-cell" style="color:#0055D4">${b.season || 0}</span></td>
+        <td><span class="score-cell" style="color:#8B5CF6">${b.best || 0}</span></td>
+      `;
+          tb.appendChild(tr);
+        });
+      }
+      document.getElementById('storeModal').classList.add('show');
+    }
+
+    function closeStoreModal() {
+      document.getElementById('storeModal').classList.remove('show');
+    }
+
+    // 구 openModal 호환
+    function openModal(store, cat) { openStoreModal(store, cat); }
+
+    function selectBrand(store, name) {
+      currentBrand = BRANDS.find(b => b.name === name && b.store === store) || BRANDS[0];
+      showPage('p2', document.querySelector('[data-page="p2"]'));
+      renderBrandDetail();
+    }
+
+    function renderBrandDetail() {
+      if (!currentBrand) return;
+      const b = currentBrand;
+      const st = b.store;
+
+      document.getElementById('h-brand').textContent = b.name;
+      document.getElementById('h-store').textContent = st;
+      document.getElementById('h-type').textContent = b.type === 'normal' ? '정상' : '상설';
+      document.getElementById('h-type').style.background = b.type === 'normal' ? '#FEF2F2' : '#F3F4F6';
+      document.getElementById('h-type').style.color = b.type === 'normal' ? '#E30019' : '#6B7280';
+
+      // 총점수 업데이트
+      document.getElementById('h-score').textContent = b.total || 0;
+
+      // 원 단위 포맷 함수 (M → 실제 원 단위)
+      function formatWon(million) {
+        const won = Math.round((million || 0) * 1_000_000);
+        if (won === 0) return '0원';
+        if (won >= 100_000_000) {
+          const eok = Math.floor(won / 100_000_000);
+          const man = Math.round((won % 100_000_000) / 10_000);
+          return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
+        }
+        return `${Math.round(won / 10_000).toLocaleString()}만원`;
+      }
+
+      const tM2 = +(b.tM * 2).toFixed(1);
+      const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
+      const gap = Math.max(0, 100 - supply);
+      const supplyColor = supply >= 100 ? '#008B3E' : supply >= 70 ? '#F58220' : '#E30019';
+      const monthLabel = b.month ? b.month + ' 기준' : '';
+
+      // 경고 배너
+      document.getElementById('alertArea').innerHTML = supply < 100 ? `
+    <div class="alert-box">
+      <div class="alert-icon">!</div>
+      <div class="alert-text">목표 재고 미달 — 필요 재고액(목표매출 × 2) 대비 ${supply}% 보유 (${gap}%p 부족)</div>
+    </div>` : '';
+
+      // KPI 4종 카드 (원 단위) — 유일한 dStore/d/typeLabel 선언 지점
+      const dStore = DETAIL[st] || {};
+      const dBrand = dStore[b.name] || {};
+      const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
+      const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
+      const allSegs = Object.values(d).flatMap(v => v.segs || []);
+      const totalQty = allSegs.reduce((a, c) => a + (c.qty || 0), 0);
+
+      document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-item">
+      <div class="kpi-h">목표 매출액${monthLabel ? ' · ' + monthLabel : ''}</div>
+      <div class="kpi-v" style="font-size:19px;">${formatM(b.tM)}<span style="font-size:11px; margin-left:2px;">백만원</span></div>
+      <div class="kpi-status" style="color:var(--text-dim);font-weight:600">작년 동월대비 30% 성장</div>
+    </div>
+    <div class="kpi-item" style="grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="kpi-h">재고 현황 (필요 목표 대비 실제 보유액)</div>
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;">
+        <span style="font-size: 22px; font-weight: 950; color: #111;">${formatM(b.sM)}<span style="font-size:13px; font-weight:800; margin-left:1px; color:#64748B;">백만원</span></span>
+        <span style="font-size: 14px; font-weight: 700; color: #6B7280;">/ 목표 ${formatM(tM2)}<span style="font-size:11px; margin-left:1px;">백만원</span></span>
+        <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: #9CA3AF;">(${totalQty.toLocaleString()} EA 보유)</span>
+      </div>
+      <div>
+        <div class="bar-line-wrap" style="height:10px; background:#E5E7EB; border-radius: 5px; overflow: hidden;">
+            <div class="bar-line" style="width:${Math.min(100, supply)}%; background:${supplyColor}; height:100%; border-radius: 5px; transition: width 0.8s ease;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; font-weight:900; color:${supplyColor};">
+          <span>목표 대비 재고 달성률</span>
+          <span>${supply}%</span>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-h">보유 상태</div>
+      <div class="kpi-v" style="color:${supplyColor}">${supply >= 100 ? '적정 재고' : supply >= 70 ? '재고 부족' : '심각 미달'}</div>
+      <div class="kpi-status" style="color:${supplyColor}; font-weight:800; margin-top:12px;">
+        ${supply >= 100 ? `▲ ${supply}% 보유` : `▼ ${supply}% 보유`}
+      </div>
+    </div>
+  `;
+
+      // 1. 4개 지표 카드 — 위에서 전역 선언된 dStore/dBrand/d/typeLabel 재사용
+      const mList = [
+        { id: 'dis', l: '할인율 점수', s: b.dis || 0, c: 'm-dis' },
+        { id: 'fresh', l: '신선도 점수', s: b.fresh || 0, c: 'm-fresh' },
+        { id: 'season', l: '시즌 점수', s: b.season || 0, c: 'm-season' },
+        { id: 'best', l: 'BEST 점수', s: b.best || 0, c: 'm-best' }
+      ];
+
+      function getRateColor(r) {
+        if (r >= 100) return '#059669'; // Emerald 600
+        if (r >= 75) return '#10B981'; // Emerald 500
+        if (r >= 50) return '#3B82F6'; // Blue 500
+        if (r >= 25) return '#F59E0B'; // Amber 500
+        return '#EF4444'; // Red 500
+      }
+
+      // 재고액 백만원 단위 포맷 함수 (v49.1 / v51.0 강제 소수점 1자리)
+      function formatM(val) {
+        if (val === undefined || val === null || val === "") return "0.0";
+        const n = parseFloat(val);
+        if (isNaN(n)) return "0.0";
+        // [v51.0] 정수라도 반드시 소수점 1자리를 노출 (#.#백만원 통일)
+        return n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      }
+
+      const grid = document.getElementById('detailGrid');
+      grid.innerHTML = mList.map(m => {
+        const groupData = d[m.id] || {};
+        let segs = groupData.segs || [];
+        if (m.id === 'best') segs = segs.filter(s => !s.key.includes('worst'));
+
+        // [v35.0] 그룹 내 최대 비중(maxOptPct) 추출 (상대적 바 길이 계산용)
+        // [v58.0] 필터링 완화: 할인율(dis) 및 시즌(season)의 경우 목표 비중이 0이더라도 모두 노출
+        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season');
+        const maxOptPct = Math.max(...validSegs.map(s => s.opt_pct || 0), 1);
+
+        const indicatorColors = { dis: '#E30019', fresh: '#F59E0B', season: '#0055D4', best: '#8B5CF6' };
+        const baseColor = indicatorColors[m.id] || '#111';
+
+        const segsHtml = validSegs.map(s => {
+          const rateVal = s.pct !== undefined ? Math.round(s.pct) : 0;
+          let rateStyle = 'color: #111827;';
+          // [v60.0] 점수에 반영되지 않는 항목(비시즌 등)은 수치를 회색으로 표기
+          if (s.is_score_target === false) {
+            rateStyle = 'color: #94A3B8;';
+          }
+
+          let rateDisplay = `${rateVal}%`;
+          let statusTag = '';
+
+          // [v59.0] 목표가 0인 항목은 달성률을 '-'로 표기하고 배지 제거
+          if ((s.opt_pct || 0) === 0) {
+            rateDisplay = '-';
+          } else {
+            if (rateVal >= 140) {
+              statusTag = `<span style="background:#2563EB; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">초과</span>`;
+            } else if (rateVal <= 60) {
+              statusTag = `<span style="background:#DC2626; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">부족</span>`;
+            }
+          }
+
+          // [v35.0] 상대적 가중치 기반 바 너비 계산
+          // 1. 목표 바 길이: (본인 비중 / 그룹 내 최대 비중) * 100%
+          const targetW = ((s.opt_pct || 0) / maxOptPct) * 100;
+          // 2. 보유 바 길이: 목표 바 길이 * (달성률 / 100). 카드 너비(100%) 초과 금지
+          // 2. 보유 바 길이: 목표 바 길이 * (달성률 / 100). 카드 너비(100%) 초과 금지
+          const actualW = Math.min(100, targetW * (rateVal / 100));
+
+          return `
+        <div class="seg-item" style="margin-bottom:32px; border-bottom:1px solid #F8FAFC; padding-bottom:16px;">
+          <!-- 첫 줄: 지표명과 달성률 -->
+          <div class="seg-label-row" style="margin-bottom:14px;">
+            <div class="seg-label-left">
+              <div class="seg-dot" style="background:${baseColor}; width:10px; height:10px;"></div>
+              <span class="seg-name" style="font-size:16px; font-weight:800; color:#1e293b;">${s.l}</span>
+            </div>
+            <div class="attainment-val" style="font-size:19px; font-weight:950; ${rateStyle}">${rateDisplay}${statusTag}</div>
+          </div>
+          
+          <!-- [v41.0] 굵은 듀얼 바 게이지 세트 (바 우측에 수치 배치 및 한글 단위) -->
+          <div class="dual-bar-container" style="display:flex; flex-direction:column; gap:12px; width:100%;">
+            <!-- 목표 행 -->
+            <div class="bar-row" style="display:flex; align-items:center; gap:10px; height:20px;">
+              <div class="bar-label" style="width:70px; font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">목표 재고액</div>
+              <div class="bar-track-wrap" style="flex:1;">
+                <div class="bar-track" style="background:#F1F5F9; height:14px; width:100%; border-radius:7px; overflow:hidden; position:relative;">
+                  <div class="bar-fill target-bar-fill" style="width:${targetW}%; height:100%; background:#CBD5E1; border-radius:7px;"></div>
+                </div>
+              </div>
+              <div class="bar-values" style="width:110px; text-align:right; font-size:14px; font-weight:800; color:#94A3B8;">
+                ${formatM(s.targetM)}<span style="font-size:11px; margin-left:1px;">백만원</span>
+              </div>
+            </div>
+
+            <!-- 보유 행 -->
+            <div class="bar-row" style="display:flex; align-items:center; gap:10px; height:38px;">
+              <div class="bar-label" style="width:70px; font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">보유 재고액</div>
+              <div class="bar-track-wrap" style="flex:1;">
+                <div class="bar-track" style="background:#F1F5F9; height:14px; width:100%; border-radius:7px; overflow:hidden; position:relative;">
+                  <div class="bar-fill" style="width:${actualW}%; height:100%; background:${baseColor}; border-radius:7px;"></div>
+                </div>
+              </div>
+              <div class="bar-values" style="width:110px; text-align:right; line-height:1.2;">
+                <div style="font-size:18px; font-weight:950; color:#0f172a;">${formatM(s.valM)}<span style="font-size:12px; font-weight:800; margin-left:1px; color:#64748B;">백만원</span></div>
+                <div style="font-size:13px; font-weight:850; color:#0f172a;">(${(s.qty || 0).toLocaleString()}EA)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+        }).join('') || '<div style="font-size:12px;color:#9CA3AF;padding:12px 0;text-align:center">데이터가 없습니다.</div>';
+
+        return `
+      <div class="m-card">
+        <div class="m-head">
+          <span class="m-title">${m.l}</span>
+          <div style="text-align:right;">
+            <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">점</span>
+          </div>
+        </div>
+        <div class="m-body">${segsHtml}</div>
+      </div>
+    `;
+      }).join('');
+
+      // 2. BEST 10 아이템 리스트 (품번 기준)
+      const bStore = BEST_ITEMS[st] || {};
+      const bBrand = bStore[b.name] || {};
+      const best = (bBrand[typeLabel] || Object.values(bBrand)[0] || {})?.store || [];
+      document.getElementById('bestItems').innerHTML = best.length ? best.map(it => `
+    <tr>
+      <td><div style="width:22px;height:22px;background:#111;color:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800">${it.rank}</div></td>
+      <td style="font-size:12px;font-weight:600;color:#1e293b;text-align:left;">${it.item_name || '—'}</td>
+      <td style="font-size:11px;font-weight:900;color:#6B7280;font-family:monospace;text-align:left;">${it.style_code || '—'}</td>
+      <td class="best-item-name" style="font-size:12px;font-weight:600;text-align:left;">${it.style_name || '—'}</td>
+      <td style="font-size:12px;font-weight:700;text-align:right;color:#1e293b;">${(it.price || 0).toLocaleString()}원</td>
+      <td style="font-size:12px;font-weight:700;text-align:center;color:#E30019">${it.sales.toLocaleString()} EA</td>
+      <td style="font-size:12px;font-weight:800;text-align:right;color:#111;">${(it.valWon || 0).toLocaleString()}원</td>
+      <td style="font-size:12px;font-weight:650;text-align:right;color:#64748B;">${(it.qty || 0).toLocaleString()} EA</td>
+    </tr>
+  `).join('') : `<tr><td colspan="8" style="text-align:center;padding:24px;color:#9CA3AF;font-size:12px">판매 데이터 없음</td></tr>`;
+    }
+
+    function toggleScoreBubble(e) {
+      e.stopPropagation();
+      const b = document.getElementById('scoreBubble');
+      b.style.display = (b.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // 말풍선 외부 클릭 시 닫기
+    document.addEventListener('click', function (e) {
+      const b = document.getElementById('scoreBubble');
+      if (b && b.style.display === 'block') {
+        if (!b.contains(e.target)) b.style.display = 'none';
+      }
+    });
+
+    function _loadData(d) {
+      CATS = d.CATS || CATS; STORES = d.STORES || []; scoreData = d.scoreData || {};
+      BRANDS = d.BRANDS || []; DETAIL = d.DETAIL || {};
+      BP_DETAIL = d.BP_DETAIL || {}; BEST_ITEMS = d.BEST_ITEMS || {};
+      if (BRANDS.length) currentBrand = BRANDS[0];
+    }
+
+    function _showError(msg) {
+      document.getElementById('mainTbody').innerHTML =
+        `<tr><td colspan="9" style="text-align:center;padding:40px;color:#9CA3AF;font-size:14px">${msg}</td></tr>`;
+      document.getElementById('alertArea').innerHTML =
+        `<div class="alert-box"><div class="alert-icon">!</div><div class="alert-text">${msg}</div></div>`;
+    }
+
+    async function init() {
+      if (window.__INITIAL_DATA__) {
+        const d = window.__INITIAL_DATA__;
+        if (d.error) { _showError(`데이터 로드 실패 — ${d.error}`); return; }
+        _loadData(d);
+        buildMainTable(); renderBrandDetail();
+        return;
+      }
+      try {
+        const r = await fetch(`${API_URL}/api/dashboard`);
+        if (r.ok) {
+          const d = await r.json();
+          if (d.error) { _showError(`API 오류 — ${d.error}`); return; }
+          _loadData(d);
+        } else { _showError('API 서버 응답 없음.'); return; }
+      } catch (e) { _showError('연결 실패.'); return; }
+      buildMainTable(); renderBrandDetail();
+    }
+    window.onload = init;
+  </script>
+</body>
+
+</html>

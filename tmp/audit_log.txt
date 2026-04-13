@@ -1,0 +1,16 @@
+--- BRAND AUDIT: 로엠 (정상) ---
+Total Records found: 551
+Target Total (2*tM): 53,118,650 Won
+Calculation Row Result: {'no': 1, 'year': 2024, 'season_code': 1, 'style_code': 'RMTWE11R15', 'style_name': '[RE]와이드 슬랙스(기모)(RMTWD4VR15)', 'item_code': '', 'item_name': '모직/기지', 'price_type': '정상', 'stock_qty': 2, 'stock_amt': 119800, 'sales_qty': 0, 'sales_amt': 0, 'normal_price': 59900, 'sales_date': '', 'brand_name': '로엠', 'store_name': 'NC신구로점', 'category_group': '여성', 'store_type': '정상', 'data_month': '3월', 'freshness_type': '', 'discount_rate': '', 'tM': 26559325.0, 'discount_score': 55.8, 'freshness_score': 100.0, 'season_score': 70.0, '_sale_dt': NaT, 'best_score': 100.0, 'total_score': 80.7}
+
+[BEST 10 DETAIL]
+  Rank 1 | RMTJG24G11 | Stock: 2,156,400 Won / 36 EA
+  Rank 2 | RMBNG24R02 | Stock: 1,674,400 Won / 56 EA
+  Rank 3 | RMYWG23R11 | Stock: 3,493,000 Won / 70 EA
+  Rank 4 | RMHWG24R02 | Stock: 358,200 Won / 18 EA
+  Rank 5 | RMTJG23G01 | Stock: 838,600 Won / 14 EA
+  Rank 6 | RMJKG23R11 | Stock: 8,256,000 Won / 64 EA
+  Rank 7 | RMJKG23S11 | Stock: 6,966,000 Won / 54 EA
+  Rank 8 | RMJKG24R11 | Stock: 6,450,000 Won / 50 EA
+  Rank 9 | RMLWG23R01 | Stock: 139,300 Won / 7 EA
+  Rank 10 | RMLWG23R18 | Stock: 1,197,000 Won / 30 EA

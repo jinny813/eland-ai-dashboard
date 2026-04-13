@@ -1,0 +1,12 @@
+pandas
+gspread
+gspread-formatting
+oauth2client
+streamlit
+openpyxl
+xlrd
+lxml
+fastapi
+python-multipart
+uvicorn
+requests

@@ -1,0 +1,8 @@
+[theme]
+# 화이트 배경, 깔끔한 라이트 모드 테마 강제 적용
+base="light"
+primaryColor="#4F8BF9"
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F8F9FA"
+textColor="#212529"
+font="sans serif"
