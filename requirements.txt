@@ -6,3 +6,4 @@ streamlit
 openpyxl
 xlrd
 lxml
+uvicorn
