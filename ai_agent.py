@@ -7,8 +7,23 @@ Claude API가 목표 달성 관점에서 리포트를 생성합니다.
 
 import os
 import json
-import urllib.request
-import urllib.error
+import sys
+import time
+import requests
+from dotenv import load_dotenv
+
+# [v100.1] Windows 콘솔 인코딩 대응: stdout/stderr를 UTF-8로 설정
+if sys.platform == "win32":
+    try:
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+        if hasattr(sys.stderr, 'reconfigure'):
+            sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
+# 환경변수 로드
+load_dotenv()
 
 # 1. 주신 데이터를 바탕으로 한 브랜드별 매출 목표 (단위: 원)
 TARGET_REVENUE = {
@@ -25,14 +40,13 @@ TARGET_REVENUE = {
 
 class AIAgent:
     """
-    Claude API를 호출해 상품구색 진단 리포트를 생성하는 에이전트.
+    Gemini API를 호출해 상품구색 진단 리포트를 생성하는 에이전트.
     """
 
-    MODEL = "claude-3-5-sonnet-20240620"
-    API_URL = "https://api.anthropic.com/v1/messages"
+    MODEL = "gemini-2.5-flash"
 
     def __init__(self, api_key: str = None):
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+        self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
 
     # ──────────────────────────────────────────
     # 메인: 진단 리포트 생성
@@ -42,6 +56,7 @@ class AIAgent:
         brand_name: str,
         scores: dict,
         data_summary: dict,
+        bp_summary: dict,
         indicator_id: str = None,
     ) -> dict:
         
@@ -57,13 +72,14 @@ class AIAgent:
             return self._fallback(brand_name, scores, indicator_id)
 
         # 프롬프트 생성 시 정확한 목표액 전달
-        prompt = self._build_prompt(brand_name, target_revenue, scores, data_summary, indicator_id)
+        prompt = self._build_prompt(brand_name, target_revenue, scores, data_summary, bp_summary, indicator_id)
 
         try:
-            result = self._call_claude(prompt)
+            result = self._call_gemini(prompt)
             return self._parse_response(result)
         except Exception as e:
-            print(f"[AIAgent] API 호출 실패 — fallback 사용: {e}")
+            # [v100.1] 인코딩 오류 방지를 위해 에러 메시지를 repr()로 안전하게 출력
+            print(f"[AIAgent] API 호출 실패 (fallback 사용): {repr(e)}")
             return self._fallback(brand_name, scores, indicator_id)
 
     # ──────────────────────────────────────────
@@ -75,6 +91,7 @@ class AIAgent:
         target_revenue: int,
         scores: dict,
         data_summary: dict,
+        bp_summary: dict,
         indicator_id: str,
     ) -> str:
         ind_filter = ""
@@ -107,40 +124,49 @@ class AIAgent:
 - 시즌 점수:   {scores.get('season', 0)}점
 - 최종 점수:   {scores.get('total', 0)}점
 
-## 세부 비중 데이터
+## 세부 비중 데이터 (해당 브랜드)
 {json.dumps(data_summary, ensure_ascii=False, indent=2)}
+
+## 벤치마크(BP) 매장 세부 비중 데이터 (평매출 1위 기준)
+{json.dumps(bp_summary, ensure_ascii=False, indent=2)}
+
+## 진단 작성 가이드
+1. 전반적 진단이 아닌, 요청받은 **해당 지표에 대한 분석**에만 엄격하게 집중하세요.
+2. BP 매장과의 수치를 비교하여, 구체적으로 **어떤 상품 비중이 부족하여 추가해야 하는지**, **어떤 상품이 과다하여 제거/할인 소진해야 하는지** 짚어주세요.
+3. 결과적으로 목표 매출을 올리기 위해 **무엇을 어떻게 팔아야 하는지(매출 증대 체감 액션)**에 대한 제안을 포함하세요.
+4. 구구절절한 설명은 빼고, 가독성을 극대화하기 위해 반드시 ⚠️ 이모지를 포함하여 1~2줄 이내의 아주 짧은 개조식 문장(결론/액션 위주)으로만 반환하세요.
 
 ## 출력 형식 (JSON만 출력)
 {{
-  "core_title": "핵심 문제 요약 (20자 이내)",
-  "core_body": "목표 매출 달성을 위한 현재 구색의 문제점과 해결 방향 진단",
   "actions": [
-    "즉시 실행 액션 1 (구체적)",
-    "즉시 실행 액션 2 (구체적)",
-    "즉시 실행 액션 3 (구체적)"
+    "⚠️ 70%+ 할인 비중이 BP 매장 대비 14%p 높습니다.",
+    "⚠️ 정상가 상품 비중이 BP 매장 대비 낮습니다. 신상 입고가 필요합니다."
   ]
 }}"""
 
-    def _call_claude(self, prompt: str) -> str:
-        payload = json.dumps({
-            "model": self.MODEL,
-            "max_tokens": 1024,
-            "messages": [{"role": "user", "content": prompt}],
-        }).encode("utf-8")
+    def _call_gemini(self, prompt: str) -> str:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.MODEL}:generateContent?key={self.api_key}"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}]
+        }
 
-        req = urllib.request.Request(
-            self.API_URL,
-            data=payload,
-            headers={
-                "Content-Type": "application/json",
-                "x-api-key": self.api_key,
-                "anthropic-version": "2023-06-01",
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        return data["content"][0]["text"]
+        max_retries = 3
+        timeout = 60  # [v100.2] 타임아웃 대폭 연장 (60초)
+
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+                response.raise_for_status()
+                data = response.json()
+                return data["candidates"][0]["content"]["parts"][0]["text"]
+            except Exception as e:
+                attempt_num = attempt + 1
+                if attempt_num < max_retries:
+                    print(f"[AIAgent] API 호출 시도 {attempt_num} 실패: {repr(e)}. 2초 후 재시도...")
+                    time.sleep(2)
+                else:
+                    raise e
 
     def _parse_response(self, text: str) -> dict:
         start = text.find("{")
@@ -159,9 +185,9 @@ class AIAgent:
             "actions": ["네트워크 상태 확인", "API 키 유효성 점검"]
         }
 
-    def generate_all(self, brand_name, scores, data_summary):
+    def generate_all(self, brand_name, scores, data_summary, bp_summary):
         results = {}
         for ind_id in ["item", "dis", "fresh", "best", "season"]:
-            results[ind_id] = self.generate_report(brand_name, scores, data_summary, ind_id)
+            results[ind_id] = self.generate_report(brand_name, scores, data_summary, bp_summary, ind_id)
         return results
         

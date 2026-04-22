@@ -533,8 +533,11 @@ def _build_best_items(df) -> dict:
 
             # [v75.2] 브랜드 프리픽스 규칙 적용
             brand_prefix = ""
+            # 0. style_master.json brand 오버라이드 우선 적용
+            if cached and cached.get("brand"):
+                brand_prefix = cached["brand"]
             # 1. 인동팩토리 (T: 리스트, S: 쉬즈미스)
-            if s_name == "인동팩토리(리스트,쉬즈미스)" or "인동팩토리" in s_name:
+            elif s_name == "인동팩토리(리스트,쉬즈미스)" or "인동팩토리" in s_name:
                 if s_code.startswith("T"): brand_prefix = "리스트"
                 elif s_code.startswith("S"): brand_prefix = "쉬즈미스"
             

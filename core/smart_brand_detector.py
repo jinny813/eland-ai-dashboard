@@ -70,6 +70,10 @@ BRAND_TO_COMPANY_MAP = {
     "BABAFACTORY": "BabaGroup",
     "나이스클랍": "LotteGFR",
     "NICECLAUP": "LotteGFR",
+    "베네통": "Generic",
+    "BENETTON": "Generic",
+    "시슬리": "Generic",
+    "SISLEY": "Generic",
 }
 
 

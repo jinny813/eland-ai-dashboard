@@ -26,19 +26,21 @@ _WOMEN_NORMAL_BASE = {
     "bp_best_target":    [25.0, 29.4],
     "year_base": 2026,
 
-    # ── 최종 재고 로직 (v5) 목표 비중
+    # ── 최종 재고 로직 (v8) 목표 비중
     "inv_weights": {
-        "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.05, "normal": 0.10}, # 5단계 할인율 (총 합 0.30 대비 비중)
-        "fresh":  {"new": 0.70, "off":  0.30, "plan": 0.00},
+        "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15}, 
+        "fresh":  {"new": 0.70},
         "best":   {"store10": 0.25},
-        "season": {"current": 0.70},
+        "season": {"current": 0.80, "sub": 0.50, "other": 0.30},
+        "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
 
-    # 지표별 최종 가중치 (총점 산출용 - 사용자 확정)
+    # 지표별 최종 가중치 (총점 산출용)
     "weight_discount":  0.30,
     "weight_freshness": 0.20,
-    "weight_season":    0.20,
-    "weight_best":      0.30,
+    "weight_season":    0.15,
+    "weight_best":      0.25,
+    "weight_item":      0.10,
 }
 
 # ──────────────────────────────────────────────────────
@@ -48,19 +50,21 @@ _WOMEN_OUTLET_BASE = {
     "bp_freshness_target": 10.0,
     "year_base": 2026,
 
-    # ── 최종 재고 로직 (v5) 목표 비중
+    # ── 최종 재고 로직 (v8) 목표 비중
     "inv_weights": {
         "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10}, 
-        "fresh":  {"new": 0.10, "off":  0.70, "plan": 0.20},
-        "best":   {"store10": 0.25, },
-        "season": {"current": 0.70},
+        "fresh":  {"new": 0.10, "plan": 0.20},
+        "best":   {"store10": 0.25},
+        "season": {"current": 0.80, "sub": 0.50, "other": 0.30},
+        "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
 
     # 지표별 최종 가중치 (총점 산출용)
-    "weight_discount":  0.45,
+    "weight_discount":  0.40,
     "weight_freshness": 0.15,
     "weight_season":    0.15,
-    "weight_best":      0.25,
+    "weight_best":      0.20,
+    "weight_item":      0.10,
 }
 
 # ══════════════════════════════════════════════════════
@@ -102,4 +106,21 @@ SCORING_CONFIG = {
 
     # ── 시슬리 — 상설 매장
     "여성_상설_시슬리": {**_WOMEN_OUTLET_BASE, "brand_name": "시슬리"},
+
+    # ── 신규 신구로점 브랜드
+    "여성_정상_클라비스": {**_WOMEN_NORMAL_BASE, "brand_name": "클라비스"},
+    "여성_상설_더아이잗": {**_WOMEN_OUTLET_BASE, "brand_name": "더아이잗"},
+    "여성_상설_비씨비지": {**_WOMEN_OUTLET_BASE, "brand_name": "비씨비지"},
+    "여성_상설_발렌시아": {**_WOMEN_OUTLET_BASE, "brand_name": "발렌시아"},
+    "여성_상설_베스띠벨리": {**_WOMEN_OUTLET_BASE, "brand_name": "베스띠벨리"},
+    "여성_상설_올리비아로렌": {**_WOMEN_OUTLET_BASE, "brand_name": "올리비아로렌"},
+    "여성_상설_제시뉴욕": {**_WOMEN_OUTLET_BASE, "brand_name": "제시뉴욕"},
+    "여성_상설_에잇컨셉": {**_WOMEN_OUTLET_BASE, "brand_name": "에잇컨셉"},
+    "여성_상설_샤틴": {**_WOMEN_OUTLET_BASE, "brand_name": "샤틴"},
+    "여성_상설_보니스팍스": {**_WOMEN_OUTLET_BASE, "brand_name": "보니스팍스"},
+    "여성_상설_안지크": {**_WOMEN_OUTLET_BASE, "brand_name": "안지크"},
+    "여성_상설_플라스틱아일랜드": {**_WOMEN_OUTLET_BASE, "brand_name": "플라스틱아일랜드"},
+    # ── 추가 지점 브랜드
+    "여성_상설_리스트": {**_WOMEN_OUTLET_BASE, "brand_name": "리스트"},
+    "여성_상설_쉬즈미스": {**_WOMEN_OUTLET_BASE, "brand_name": "쉬즈미스"},
 }

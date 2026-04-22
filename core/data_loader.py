@@ -14,8 +14,9 @@ from datetime import datetime
 from database.gsheet_manager import GSheetManager
 from core.scoring_logic import AssortmentScorer
 from config.scoring_config import SCORING_CONFIG, _WOMEN_NORMAL_BASE, _WOMEN_OUTLET_BASE
-from config.brand_targets import get_tm
+from config.brand_targets import get_tm, PREV_MONTH_SALES
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items
+from config.area_config import get_area
 import logging
 
 logger = logging.getLogger(__name__)
@@ -114,8 +115,18 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         # [v68.4] 마스터 브랜드 리스트 (데이터 유무와 상관없이 노출할 브랜드 명시)
         MASTER_CATEGORY_BRANDS = {
             "NC신구로점": {
-                "여성": ["로엠", "인동팩토리(리스트,쉬즈미스)", "JJ지고트", "나이스클랍", "바바팩토리"]
-            }
+                "여성": [
+                    "로엠", "미쏘", "리스트", "쉬즈미스", "JJ지고트", "나이스클랍", "바바팩토리", "베네통", "시슬리",
+                    "클라비스", "더아이잗", "비씨비지", "발렌시아", "베스띠벨리", "올리비아로렌",
+                    "제시뉴욕", "에잇컨셉", "샤틴", "보니스팍스", "안지크", "플라스틱아일랜드"
+                ]
+            },
+            "2001중계점": { "여성": ["리스트", "나이스클랍"] },
+            "NC송파점": { "여성": ["쉬즈미스"] },
+            "동아쇼핑점": { "여성": ["로엠"] },
+            "NC야탑점": { "여성": ["베네통", "시슬리"] },
+            "NC강서점": { "여성": ["JJ지고트"] },
+            "NC평촌점": { "여성": ["바바팩토리"] },
         }
 
         score_data  = {}
@@ -137,8 +148,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 target_df = st_df if cat == '전체' else st_df[st_df['category_group'] == cat]
                 
                 actual_brands = target_df['brand_name'].unique().tolist() if not target_df.empty else []
-                # 마스터 브랜드와 실제 데이터 브랜드 합집합
-                loop_brands = list(set(actual_brands + master_list))
+                loop_brands = actual_brands
 
                 if not loop_brands:
                     score_data[store].append(0)
@@ -148,7 +158,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 for brand in loop_brands:
                     b_df = target_df[target_df['brand_name'] == brand].copy()
                     if b_df.empty:
-                        cat_scores.append(0)
+                        # [v114.0] 데이터가 없는 브랜드는 P1 점수 합산에서 제외
                         continue
                     
                     b_type = str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설'
@@ -160,36 +170,23 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 score_data[store].append(avg)
 
             # 2. 브랜드별 상세 데이터 구축 (P2)
-            actual_brands = st_df['brand_name'].unique().tolist()
-            all_target_brands = set(actual_brands)
-            for m_list in MASTER_CATEGORY_BRANDS.get(store, {}).values():
-                all_target_brands.update(m_list)
+            # [v114.1] 데이터가 있는 브랜드만 노출 (Placeholder 생성 로직 제거)
+            all_target_brands = sorted(st_df['brand_name'].unique().tolist())
 
             for b_name in all_target_brands:
                 if not b_name: continue
                 b_df = st_df[st_df['brand_name'] == b_name].copy()
                 
-                # 데이터가 없는 브랜드 (마스터 리스트 기반) 처리
+                # 데이터가 없는 브랜드를 걸러내는 안전장치
                 if b_df.empty:
-                    b_cat = "여성"
-                    for mc, ml in MASTER_CATEGORY_BRANDS.get(store, {}).items():
-                        if b_name in ml: b_cat = mc; break
-                    
-                    b_type = "정상" if b_name in ["로엠"] else "상설"
-                    tM_won = get_tm(brand_name=b_name, store_name=store, month=diag_month)
-
-                    brands_list.append({
-                        "name": b_name, "store": store, "category": b_cat,
-                        "type": "outlet" if _is_outlet_type(b_type) else "normal", "type_label": b_type,
-                        "total": 0, "dis": 0, "fresh": 0, "best": 0, "season": 0,
-                        "tM": round(tM_won / 1_000_000, 1), "sM": 0.0, "sQ": 0,
-                        "month": diag_month, "data_month": ""
-                    })
                     continue
 
                 # 데이터가 있는 브랜드 처리
                 b_cat = str(b_df.iloc[0].get('category_group', '여성')).strip() or '여성'
-                b_type = str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설'
+                
+                # [v107.0] 특정 브랜드는 DB 설정과 무관하게 '정상/상설' 유형 고정 적용
+                normals = ["로엠", "미쏘", "더아이잗", "에잇컨셉"]
+                b_type = "정상" if b_name in normals else (str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설')
                 cfg = _get_config(b_cat, b_type, b_name)
                 
                 tM_won = get_tm(brand_name=b_name, store_name=store, month=diag_month)
@@ -214,10 +211,23 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 scored = scorer.score(b_df)
                 if scored is not None and not scored.empty:
                     row = scored.iloc[0]
+                    # [v104.5] 매출 데이터 소급 적용 로직 (벤치마크 실적 우선 적용)
+                    b_data_month = str(b_df.iloc[0].get('data_month', '')).strip()
+                    prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(b_name, 0.0)
+                    
+                    if prev_benchmark_sales > 0:
+                        # 사용자가 제공한 벤치마크(3월) 실적이 있다면 이를 우선 사용
+                        cur_sales_sum = prev_benchmark_sales
+                        b_data_month = "3월"
+                    else:
+                        # 벤치마크 데이터가 없을 때만 시트 데이터 활용
+                        cur_sales_sum = b_df['sales_amt'].sum() if 'sales_amt' in b_df.columns else 0.0
+
                     brands_list.append({
                         "name": b_name, "store": store, "category": b_cat,
                         "type": "outlet" if _is_outlet_type(b_type) else "normal", "type_label": b_type,
                         "total": int(round(float(row.get('total_score', 0)))),
+                        "item": int(round(float(row.get('item_score', 0)))),
                         "dis": int(round(float(row.get('discount_score', 0)))),
                         "fresh": int(round(float(row.get('freshness_score', 0)))),
                         "best": int(round(float(row.get('best_score', 0)))),
@@ -225,7 +235,9 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "tM": round(tM_won / 1_000_000, 1),
                         "sM": max(0.0, round(stock_amt / 1_000_000, 1)),
                         "sQ": int(stock_qty),
-                        "month": diag_month, "data_month": str(b_df.iloc[0].get('data_month', ''))
+                        "sales_amt": cur_sales_sum / 1_000_000,
+                        "area": get_area(store, b_name),
+                        "month": diag_month, "data_month": b_data_month
                     })
 
                 # 상세 섹션 조립

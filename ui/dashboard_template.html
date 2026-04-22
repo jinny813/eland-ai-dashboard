@@ -60,6 +60,64 @@
       flex-shrink: 0;
       z-index: 100;
       box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .sidebar.collapsed {
+      width: 70px;
+    }
+
+    .sidebar.collapsed .logo-title,
+    .sidebar.collapsed .logo-sub,
+    .sidebar.collapsed .nav-item span:last-child {
+      display: none;
+    }
+
+    .sidebar.collapsed .logo-area {
+      padding: 32px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .logo-row {
+      gap: 0;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding: 14px 0;
+      border-left-width: 4px;
+    }
+
+    .sidebar.collapsed .nav-item span:first-child {
+      margin: 0;
+      font-size: 20px !important;
+    }
+
+    /* 토글 버튼 스타일 */
+    .sidebar-toggle {
+      position: absolute;
+      right: -12px;
+      top: 40px;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border: 1px solid var(--border-main);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 110;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+      color: #111;
+      font-size: 10px;
+    }
+
+    .sidebar.collapsed .sidebar-toggle {
+      transform: rotate(180deg);
     }
 
     .logo-area {
@@ -204,27 +262,30 @@
     .table-wrap {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     .table-wrap th {
       background: #1D1E1E;
       color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 14px;
       text-align: center;
     }
 
     .table-wrap td {
-      padding: 12px;
+      padding: 14px;
       border-bottom: 1px solid var(--border-light);
       text-align: center;
+      vertical-align: middle;
     }
 
     .table-wrap td:first-child {
       text-align: left;
       padding-left: 24px;
-      font-weight: 700;
+      font-weight: 800;
+      font-size: 14px;
     }
 
     .badge-score {
@@ -232,24 +293,30 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      height: 50px;
-      border-radius: 10px;
+      width: 58px;
+      height: 60px;
+      border-radius: 12px;
       color: #fff;
-      background: linear-gradient(135deg, #F97316, #EA580C);
       text-decoration: none;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .badge-score:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
     }
 
     .badge-score .grade {
-      font-size: 9px;
-      opacity: 0.8;
-      margin-bottom: 1px;
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 2px;
     }
 
     .badge-score .num {
-      font-size: 19px;
-      font-weight: 900;
+      font-size: 22px;
+      font-weight: 950;
       line-height: 1;
     }
 
@@ -296,6 +363,37 @@
       position: relative;
     }
 
+    /* [v100.33] 매장 유형 배지 스타일 통합 및 색상 체계 변경 (Indigo / Slate) */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: -0.2px;
+      line-height: 1;
+    }
+    .type-badge.normal {
+      background: #EEF2FF; /* Indigo 50 */
+      color: #4338CA;      /* Indigo 700 */
+    }
+    .type-badge.outlet {
+      background: #F1F5F9; /* Slate 100 */
+      color: #475569;      /* Slate 700 */
+    }
+
+    /* P2 헤더용 확장 배지 스타일 */
+    #h-type {
+      font-size: 13px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: 8px;
+      margin-left: 4px;
+    }
+
     .h-title-row {
       display: flex;
       align-items: center;
@@ -318,13 +416,7 @@
     }
 
     #h-type {
-      font-size: 11px;
-      font-weight: 900;
-      padding: 4px 12px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      background: #F3F4F6;
-      color: #6B7280;
+      /* 클래스로 대체됨 */
     }
 
     /* [v13.0] 브랜드명 옆 점수 박스 스타일 */
@@ -368,7 +460,17 @@
     }
 
     .p2-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 24px;
       margin-bottom: 28px;
+    }
+
+    .h-left-wrap {
+      flex: 1;
+      min-width: 300px;
     }
 
     /* [v26.0] 지점명과 카드 사이 여백 확보 */
@@ -489,7 +591,7 @@
 
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
     }
 
@@ -500,12 +602,12 @@
     }
 
     .kpi-h {
-      font-size: 10px;
-      color: #9CA3AF;
+      font-size: 13px;
+      color: #4B5563;
       font-weight: 800;
       margin-bottom: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
 
     .kpi-v {
@@ -521,9 +623,18 @@
       margin-top: 8px;
     }
 
+    /* [v104.5] 과재고 안내 문구 (말풍선 제거 → 줄글로 변경) */
+    .overstock-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
     .metrics-4-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
       align-items: stretch;
     }
@@ -739,10 +850,12 @@
     .modal {
       width: 80vw;
       max-width: 1400px;
-      min-height: 60vh;
+      max-height: 85vh;
       background: #fff;
       border-radius: 20px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
       animation: slideUp 0.25s ease;
       transform-origin: top;
@@ -801,7 +914,9 @@
 
     .modal-body {
       padding: 24px 28px;
+      overflow-y: auto;
       overflow-x: auto;
+      flex: 1;
     }
 
     .modal-tbl {
@@ -980,12 +1095,126 @@
       background: #D1D5DB;
       border-radius: 10px;
     }
+
+    /* ── [v100.7] P2 Navigator Toolbar ── */
+    .p2-nav-toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #fff;
+      padding: 10px 18px;
+      border-radius: 16px;
+      border: 1px solid var(--border-main);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      z-index: 50;
+    }
+
+    .p2-sel-box {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .p2-sel-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .p2-selector {
+      padding: 8px 14px;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1E293B;
+      background-color: #F8FAFC;
+      cursor: pointer;
+      min-width: 140px;
+      transition: all 0.2s;
+    }
+
+    .p2-selector:hover {
+      border-color: #CBD5E1;
+      background-color: #fff;
+    }
+
+    .p2-selector:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(227, 0, 25, 0.1);
+    }
+
+    /* ─── Responsive Styles ─── */
+    @media (max-width: 1400px) {
+      .metrics-4-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .metrics-4-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .sidebar {
+        width: 70px;
+      }
+      .sidebar .logo-title, .sidebar .logo-sub, .sidebar .nav-item span:last-child {
+        display: none;
+      }
+      .sidebar .logo-area { padding: 32px 0; justify-content: center; }
+      .sidebar .nav-item { justify-content: center; padding: 14px 0; }
+      .sidebar .nav-item span:first-child { margin: 0; font-size: 20px !important; }
+      .sidebar-toggle { display: none; } /* 모바일에서는 자동 축소 */
+    }
+
+    @media (max-width: 768px) {
+      .metrics-4-grid {
+        grid-template-columns: 1fr;
+      }
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .content {
+        padding: 16px;
+      }
+      .brand-hero {
+        padding: 24px;
+      }
+      #h-brand {
+        font-size: 24px;
+      }
+      .p2-nav-toolbar {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px;
+      }
+      .p2-sel-box {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        border-left: none !important;
+      }
+      .p2-selector {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 
 <body>
   <div class="app">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-toggle" onclick="toggleSidebar()">❯</div>
       <div class="logo-area">
         <div class="logo-row">
           <!-- E-LAND 회사 로고 SVG -->
@@ -1005,13 +1234,13 @@
       </div>
       <nav class="nav">
         <div class="nav-item active" onclick="showPage('p1',this)" data-page="p1">
-          <span style="font-size:16px; flex-shrink:0;">☰</span> 상품 구색 점수판
+          <span style="font-size:16px; flex-shrink:0;">☰</span> <span>상품 구색 점수판</span>
         </div>
         <div class="nav-item" onclick="showPage('p2',this)" data-page="p2">
-          <span style="font-size:16px; flex-shrink:0;">▶</span> 브랜드별 상품 현황판
+          <span style="font-size:16px; flex-shrink:0;">▶</span> <span>브랜드별 상품 현황판</span>
         </div>
         <div class="nav-item" onclick="showPage('p3',this)" data-page="p3">
-          <span style="font-size:16px; flex-shrink:0;">⇧</span> 상품 정보 입력
+          <span style="font-size:16px; flex-shrink:0;">⇧</span> <span>상품 정보 입력</span>
         </div>
       </nav>
     </aside>
@@ -1052,35 +1281,49 @@
           <div id="alertArea"></div>
           <div class="brand-hero">
             <div class="p2-header">
-              <div class="h-title-row">
-                <h1 id="h-brand">로딩 중...</h1>
-                <span id="h-type">정상</span>
-                <div class="score-box">
-                  <div style="display:flex; align-items:center;">
-                    <span class="score-box-label">Score</span>
-                    <div class="info-btn" onclick="toggleScoreBubble(event)">i</div>
-                    <!-- [v28.0] 정보 말풍선 HTML 추가 -->
-                    <div id="scoreBubble" class="info-bubble">
-                      <h4>여성 카테고리 정밀 채점 로직</h4>
-                      <p><b>■ 매장 유형별 최종 점수 반영 가중치</b></p>
-                      <div class="weight-row" style="color:#EF4444"><span>1. 상설 매장</span> <span>45 / 25 / 15 / 15</span>
-                      </div>
-                      <div class="weight-row" style="color:#3B82F6"><span>2. 정상 매장</span> <span>30 / 30 / 20 / 20</span>
-                      </div>
-                      <p style="font-size:10px; color:#94A3B8; margin-top:4px;">(할인율 / BEST / 시즌 / 신선도 순)</p>
+              <div class="h-left-wrap">
+                <div class="h-title-row">
+                  <h1 id="h-brand">로딩 중...</h1>
+                  <span id="h-type">정상</span>
+                  <div class="score-box">
+                    <div style="display:flex; align-items:center;">
+                      <span class="score-box-label">Score</span>
+                      <div class="info-btn" onclick="toggleScoreBubble(event)">i</div>
+                      <!-- [v28.0] 정보 말풍선 HTML 추가 -->
+                      <div id="scoreBubble" class="info-bubble">
+                        <h4>여성 카테고리 정밀 채점 로직</h4>
+                        <p><b>■ 매장 유형별 최종 점수 반영 가중치</b></p>
+                        <div class="weight-row" style="color:#EF4444"><span>1. 상설 매장</span> <span>45 / 25 / 15 / 15</span>
+                        </div>
+                        <div class="weight-row" style="color:#3B82F6"><span>2. 정상 매장</span> <span>30 / 30 / 20 / 20</span>
+                        </div>
+                        <p style="font-size:10px; color:#94A3B8; margin-top:4px;">(할인율 / BEST / 시즌 / 신선도 순)</p>
 
-                      <p style="margin-top:12px;"><b>■ 지표별 산출 방식</b></p>
-                      <p style="margin-bottom:4px;">- 항목별 달성률: (실제/목표) * 100</p>
-                      <p>- 지표 점수: 세부 항목 달성률들의 평균</p>
+                        <p style="margin-top:12px;"><b>■ 지표별 산출 방식</b></p>
+                        <p style="margin-bottom:4px;">- 항목별 달성률: (실제/목표) * 100</p>
+                        <p>- 지표 점수: 세부 항목 달성률들의 평균</p>
 
-                      <div class="footer">※ 목표 매출의 200%를 적정 재고 기준으로 삼습니다.</div>
+                        <div class="footer">※ 목표 매출의 200%를 적정 재고 기준으로 삼습니다.</div>
+                      </div>
                     </div>
+                    <span id="h-score">0</span>
+                    <span class="score-unit">점</span>
                   </div>
-                  <span id="h-score">0</span>
-                  <span class="score-unit">점</span>
+                </div>
+                <div id="h-store">지점명</div>
+              </div>
+
+              <!-- [v100.7] 브랜드 상세 전용 네비게이터 -->
+              <div class="p2-nav-toolbar">
+                <div class="p2-sel-box">
+                  <div class="p2-sel-label">🏬 지점</div>
+                  <select id="p2_store_sel" class="p2-selector" onchange="onNavStoreChange(this.value)"></select>
+                </div>
+                <div class="p2-sel-box" style="margin-left:8px; padding-left:12px; border-left:1px solid #E2E8F0;">
+                  <div class="p2-sel-label">🏷️ 브랜드</div>
+                  <select id="p2_brand_sel" class="p2-selector" onchange="onNavBrandChange(this.value)"></select>
                 </div>
               </div>
-              <div id="h-store">지점명</div>
             </div>
             <div class="kpi-grid" id="kpiGrid"></div>
           </div>
@@ -1091,7 +1334,7 @@
             <div class="card" style="padding:24px;">
               <div
                 style="font-size:16px; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
-                🏆 최근 판매 BEST 10 — 품번 기준
+                🏆 최근 2주 내 판매 BEST - 품번 기준
               </div>
               <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse;">
@@ -1136,7 +1379,20 @@
                     <option value="" disabled selected>선택...</option>
                     <option>NC신구로점</option>
                     <option>NC강서점</option>
+                    <option>NC송파점</option>
+                    <option>NC불광점</option>
+                    <option>NC고잔점</option>
+                    <option>NC평촌점</option>
+                    <option>NC야탑점</option>
+                    <option>NC청주점</option>
+                    <option>뉴코아강남점</option>
+                    <option>뉴코아부천점</option>
+                    <option>뉴코아인천점</option>
+                    <option>2001중계점</option>
+                    <option>2001분당점</option>
                     <option>동아쇼핑점</option>
+                    <option>동아수성점</option>
+                    <option>NC대전유성점</option>
                   </select>
                 </div>
                 <div>
@@ -1190,37 +1446,83 @@
                 </div>
               </div>
               <div id="fileSection" style="display:none;">
-                <div style="margin-bottom:16px;">
-                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 재고조회 엑셀</div>
-                  <label for="ux_inv"
-                    style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
-                    <span
-                      style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
-                      선택</span>
-                    <span id="invFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
-                      선택하세요 (.xls, .xlsx)</span>
-                  </label>
-                  <input type="file" id="ux_inv" accept=".xls,.xlsx"
-                    onchange="document.getElementById('invFileName').textContent=this.files[0]?.name||'파일을 선택하세요'"
-                    style="display:none;">
+                <!-- [v10.0] 업로드 방식 선택 탭 -->
+                <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">
+                  <button id="btn_mode_text" onclick="setUploadMode('text')"
+                    style="flex:1; padding:10px; border:none; border-radius:10px; background:#1D1E1E; color:#fff; font-size:12px; font-weight:800; cursor:pointer; transition:all 0.2s;">📋 텍스트 붙여넣기</button>
+                  <button id="btn_mode_file" onclick="setUploadMode('file')" 
+                    style="flex:1; padding:10px; border:none; border-radius:10px; background:#F3F4F6; color:#6B7280; font-size:12px; font-weight:800; cursor:pointer; transition:all 0.2s;">📂 엑셀 파일 업로드</button>
                 </div>
-                <div style="margin-bottom:28px;">
-                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 판매조회 엑셀</div>
-                  <label for="ux_sales"
-                    style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
-                    <span
-                      style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
-                      선택</span>
-                    <span id="salesFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
-                      선택하세요 (.xls, .xlsx) — 선택사항</span>
-                  </label>
-                  <input type="file" id="ux_sales" accept=".xls,.xlsx"
-                    onchange="document.getElementById('salesFileName').textContent=this.files[0]?.name||'파일을 선택하세요'"
-                    style="display:none;">
+
+                <!-- 1. 텍스트 붙여넣기 모드 (Default) -->
+                <div id="area_text">
+                  <!-- [v100.30] 데이터 누락 방지 검증 필드 추가 -->
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; padding:16px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px;">
+                    <div>
+                      <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:6px;">🔢 검증용 총 재고량 (EA)</div>
+                      <input type="text" id="ux_check_qty" oninput="formatNumberWithCommas(this)" placeholder="예: 1,250" style="width:100%; padding:10px; border:1px solid #CBD5E1; border-radius:8px; font-size:13px; font-weight:700;">
+                    </div>
+                    <div>
+                      <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:6px;">💰 검증용 총 재고액 (원)</div>
+                      <input type="text" id="ux_check_amt" oninput="formatNumberWithCommas(this)" placeholder="예: 45,000,000" style="width:100%; padding:10px; border:1px solid #CBD5E1; border-radius:8px; font-size:13px; font-weight:700;">
+                    </div>
+                    <div style="grid-column: span 2; font-size:11px; color:#94A3B8; font-weight:600;">※ 입력하신 총계와 붙여넣은 데이터의 합계가 다를 경우 업로드가 차단됩니다.</div>
+                  </div>
+
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:6px;">📋 재고 데이터 붙여넣기</div>
+                    <!-- [v100.30] 사용자 가이드 문구 추가 -->
+                    <div style="font-size:11px; background:#FFFBEB; color:#B45309; padding:8px 12px; border-radius:6px; margin-bottom:8px; font-weight:700; border:1px solid #FDE68A;">
+                      💡 방법: 표 상단 헤더 값을 선택 -> Ctrl+A(전체선택) -> Ctrl+C(복사) -> Ctrl+V(붙여넣기)
+                    </div>
+                    <textarea id="ux_inv_text" oninput="validateUploadForm()" placeholder="엑셀에서 헤더를 포함하여 범위를 복사해서 붙여넣으세요..."
+                      style="width:100%; height:120px; padding:12px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:12px; background:#FAFBFC; resize:vertical;"></textarea>
+                  </div>
+                  <div style="margin-bottom:28px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📋 판매 데이터 붙여넣기</div>
+                    <!-- [v100.31] 판매 데이터 영역에도 안내 문구 추가 -->
+                    <div style="font-size:11px; background:#FFFBEB; color:#B45309; padding:8px 12px; border-radius:6px; margin-bottom:8px; font-weight:700; border:1px solid #FDE68A;">
+                      💡 방법: 표 상단 헤더 값을 선택 -> Ctrl+A(전체선택) -> Ctrl+C(복사) -> Ctrl+V(붙여넣기)
+                    </div>
+                    <textarea id="ux_sales_text" oninput="validateUploadForm()" placeholder="판매 데이터가 있다면 복사해서 붙여넣으세요..."
+                      style="width:100%; height:120px; padding:12px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:12px; background:#FAFBFC; resize:vertical;"></textarea>
+                  </div>
                 </div>
-                <button id="uploadBtn" onclick="handleUpload()"
-                  style="width:100%; padding:18px; border:none; border-radius:14px; background:var(--red); color:#fff; font-size:16px; font-weight:900; cursor:pointer; box-shadow:0 6px 20px rgba(227,0,25,0.25); transition:all 0.2s; font-family:inherit;">업로드
-                  및 병합 실행</button>
+
+                <!-- 2. 파일 업로드 모드 -->
+                <div id="area_file" style="display:none;">
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 재고조회 엑셀</div>
+                    <label for="ux_inv"
+                      style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
+                      <span
+                        style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
+                        선택</span>
+                      <span id="invFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
+                        선택하세요 (.xls, .xlsx)</span>
+                    </label>
+                    <input type="file" id="ux_inv" accept=".xls,.xlsx"
+                      onchange="document.getElementById('invFileName').textContent=this.files[0]?.name||'파일을 선택하세요'; validateUploadForm();"
+                      style="display:none;">
+                  </div>
+                  <div style="margin-bottom:28px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 판매조회 엑셀</div>
+                    <label for="ux_sales"
+                      style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
+                      <span
+                        style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
+                        선택</span>
+                      <span id="salesFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
+                        선택하세요 (.xls, .xlsx)</span>
+                    </label>
+                    <input type="file" id="ux_sales" accept=".xls,.xlsx"
+                      onchange="document.getElementById('salesFileName').textContent=this.files[0]?.name||'파일을 선택하세요'; validateUploadForm();"
+                      style="display:none;">
+                  </div>
+                </div>
+
+                <button id="uploadBtn" onclick="handleUpload()" disabled
+                  style="width:100%; padding:18px; border:none; border-radius:14px; background:#D1D5DB; color:#fff; font-size:16px; font-weight:900; cursor:not-allowed; transition:all 0.2s; font-family:inherit;">데이터를 모두 입력해주세요</button>
               </div>
               <div id="uploadStatus"
                 style="display:none; margin-top:16px; align-items:center; gap:10px; padding:14px 18px; border-radius:12px; font-size:13px; font-weight:800; background:#FEF2F2; border:1px solid #FECACA; color:#E30019;">
@@ -1285,9 +1587,52 @@
   </style>
   <script>
     const API_URL = "http://localhost:8000";
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+      
+      // 상태 저장 (선택 사항)
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      localStorage.setItem('sidebarCollapsed', isCollapsed);
+    }
+
+    // 페이지 로드 시 이전 상태 복원
+    document.addEventListener('DOMContentLoaded', () => {
+      const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (isCollapsed) {
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+    });
     let CATS = [], STORES = [], scoreData = {}, BRANDS = [], DETAIL = {}, BP_DETAIL = {}, BEST_ITEMS = {}, currentBrand = null;
 
+    // [v100.32] 숫자 천단위 콤마 포맷팅 함수
+    function formatNumberWithCommas(el) {
+      let val = el.value.replace(/[^0-9]/g, '');
+      if (val === '') { el.value = ''; return; }
+      el.value = Number(val).toLocaleString('ko-KR');
+    }
+
     // ─── P3 업로드 UX 핸들러 ───
+    let currentUploadMode = 'text';
+    function setUploadMode(mode) {
+      currentUploadMode = mode;
+      document.getElementById('area_file').style.display = (mode === 'file' ? 'block' : 'none');
+      document.getElementById('area_text').style.display = (mode === 'text' ? 'block' : 'none');
+      
+      const btnFile = document.getElementById('btn_mode_file');
+      const btnText = document.getElementById('btn_mode_text');
+      
+      if (mode === 'file') {
+        btnFile.style.background = '#1D1E1E'; btnFile.style.color = '#fff';
+        btnText.style.background = '#F3F4F6'; btnText.style.color = '#6B7280';
+      } else {
+        btnText.style.background = '#1D1E1E'; btnText.style.color = '#fff';
+        btnFile.style.background = '#F3F4F6'; btnFile.style.color = '#6B7280';
+      }
+      validateUploadForm(); // 모드 변경 시 버튼 상태 갱신
+    }
+
     function _setEnabled(id, enabled) {
       const el = document.getElementById(id);
       el.disabled = !enabled;
@@ -1305,6 +1650,37 @@
       if (step >= 4 && m) { document.getElementById('fileSection').style.display = 'block'; }
       document.getElementById('uploadStatus').style.display = 'none';
       document.getElementById('uploadSuccess').style.display = 'none';
+      validateUploadForm();
+    }
+
+    // [v100.31] 데이터 입력 여부에 따른 업로드 버튼 활성화 제어
+    function validateUploadForm() {
+      const btn = document.getElementById('uploadBtn');
+      let isValid = false;
+
+      if (currentUploadMode === 'text') {
+        const invTxt = document.getElementById('ux_inv_text').value.trim();
+        const salesTxt = document.getElementById('ux_sales_text').value.trim();
+        isValid = (invTxt !== '' && salesTxt !== '');
+      } else {
+        const invFile = document.getElementById('ux_inv').files.length > 0;
+        const salesFile = document.getElementById('ux_sales').files.length > 0;
+        isValid = (invFile && salesFile);
+      }
+
+      if (isValid) {
+        btn.disabled = false;
+        btn.style.background = 'var(--red)';
+        btn.style.cursor = 'pointer';
+        btn.style.boxShadow = '0 6px 20px rgba(227,0,25,0.25)';
+        btn.textContent = '업로드 및 병합 실행';
+      } else {
+        btn.disabled = true;
+        btn.style.background = '#D1D5DB';
+        btn.style.cursor = 'not-allowed';
+        btn.style.boxShadow = 'none';
+        btn.textContent = '재고 및 판매 데이터를 모두 입력해주세요';
+      }
     }
 
     async function handleUpload() {
@@ -1318,36 +1694,91 @@
       const cat = document.getElementById('ux_cat').value;
       const brandRaw = document.getElementById('ux_brand').value;
       const month = document.getElementById('ux_month').value;
-      const invFile = document.getElementById('ux_inv').files[0];
 
       if (!store || !cat || !brandRaw || !month) {
         statusTxt.textContent = '지점, 카테고리, 브랜드, 월을 모두 선택해주세요.'; statusEl.style.display = 'flex'; return;
       }
-      if (!invFile) {
-        statusTxt.textContent = '재고조회 엑셀 파일을 선택해주세요.'; statusEl.style.display = 'flex'; return;
-      }
 
-      btn.disabled = true; btn.textContent = '처리 중...';
       const fd = new FormData();
       fd.append('store_name', store);
       fd.append('category_group', cat);
-      fd.append('brand_name', brandRaw); // "로엠|정상"
+      fd.append('brand_name', brandRaw);
       fd.append('data_month', month);
-      fd.append('inv_file', invFile);
-      const salesFile = document.getElementById('ux_sales').files[0];
-      if (salesFile) fd.append('sales_file', salesFile);
 
+      if (currentUploadMode === 'file') {
+        const invFile = document.getElementById('ux_inv').files[0];
+        if (!invFile) {
+          statusTxt.textContent = '재고조회 엑셀 파일을 선택해주세요.'; statusEl.style.display = 'flex'; return;
+        }
+        fd.append('inv_file', invFile);
+        const salesFile = document.getElementById('ux_sales').files[0];
+        if (salesFile) fd.append('sales_file', salesFile);
+      } else {
+        const invText = document.getElementById('ux_inv_text').value;
+        if (!invText || !invText.trim()) {
+          statusTxt.textContent = '재고 데이터를 붙여넣어 주세요.'; statusEl.style.display = 'flex'; return;
+        }
+
+        // [v100.30] 데이터 누락 방지 검증 로직 추가
+        const checkQty = document.getElementById('ux_check_qty').value.replace(/,/g, '').trim();
+        const checkAmt = document.getElementById('ux_check_amt').value.replace(/,/g, '').trim();
+
+        if (checkQty || checkAmt) {
+          const lines = invText.trim().split('\n');
+          if (lines.length > 1) {
+            const headers = lines[0].split('\t').map(h => h.trim());
+            const rows = lines.slice(1);
+
+            const qtySynonyms = ['재고수량', '재고', '수량', '가용재고수량', '판매가능재고', '총재고_수량', '가용수량', '판매가능재고수량'];
+            const amtSynonyms = ['재고금액', '최초판매금액', '총재고_최초판매금액', '총재고_TAG금액', '가용재고금액', '판매가능재고금액', '재고금액(정상)', '가용재고합계', '최초판매가합계'];
+
+            let qtyIdx = -1, amtIdx = -1;
+            headers.forEach((h, idx) => {
+              if (qtySynonyms.some(s => h.includes(s))) qtyIdx = idx;
+              if (amtSynonyms.some(s => h.includes(s))) amtIdx = idx;
+            });
+
+            const parseNum = (v) => parseFloat(String(v).replace(/[^0-9.-]/g, '')) || 0;
+
+            if (checkQty && qtyIdx !== -1) {
+              const sumQty = rows.reduce((acc, row) => acc + parseNum(row.split('\t')[qtyIdx]), 0);
+              if (Math.abs(sumQty - parseFloat(checkQty)) > 0.1) {
+                statusTxt.textContent = '오류! 입력하신 데이터와 총 재고액에 차이가 있습니다. 누락된 데이터를 확인해주세요.';
+                statusEl.style.display = 'flex'; return;
+              }
+            }
+            if (checkAmt && amtIdx !== -1) {
+              const sumAmt = rows.reduce((acc, row) => acc + parseNum(row.split('\t')[amtIdx]), 0);
+              if (Math.abs(sumAmt - parseFloat(checkAmt)) > 1) {
+                statusTxt.textContent = '오류! 입력하신 데이터와 총 재고액에 차이가 있습니다. 누락된 데이터를 확인해주세요.';
+                statusEl.style.display = 'flex'; return;
+              }
+            }
+          }
+        }
+
+        fd.append('inv_text', invText);
+        const salesText = document.getElementById('ux_sales_text').value;
+        if (salesText) fd.append('sales_text', salesText);
+      }
+
+      btn.disabled = true; btn.textContent = '처리 중...';
       try {
         const r = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: fd, credentials: 'omit' });
         const d = await r.json();
         if (d.status === 'success') {
           document.getElementById('successTxt').textContent = d.message || `업로드 완료! (${d.rows}개 레코드)`;
           successEl.style.display = 'flex';
+          // 입력값 초기화
+          if (currentUploadMode === 'text') {
+            document.getElementById('ux_inv_text').value = '';
+            document.getElementById('ux_sales_text').value = '';
+          }
         } else {
           statusTxt.textContent = d.error || '처리 오류'; statusEl.style.display = 'flex';
         }
       } catch (e) {
-        statusTxt.textContent = `네트워크 오류: ${e.message} — Streamlit 상단 탭 "📤 데이터 통합 및 업로드"에서 파일을 업로드해 주세요.`;
+        statusTxt.textContent = `네트워크 오류: ${e.message}`;
         statusEl.style.display = 'flex';
       }
       btn.disabled = false; btn.textContent = '업로드 및 병합 실행';
@@ -1358,6 +1789,51 @@
       document.getElementById(id).classList.add('active');
       if (el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
       document.getElementById('top-title').textContent = { 'p1': '상품 구색 점수판', 'p2': '브랜드별 상품 현황판', 'p3': '상품 정보 입력' }[id] || '';
+      
+      // P2 진입 시 네비게이터 초기화
+      if (id === 'p2') initP2Selectors();
+    }
+
+    // ─── [v100.7] P2 전용 네비게이터 로직 ───
+    function initP2Selectors() {
+      const sSel = document.getElementById('p2_store_sel');
+      if (!sSel) return;
+      
+      // 지점 목록 채우기 (데이터 로드 후에만 유효)
+      if (STORES.length > 0 && sSel.options.length <= 1) {
+        sSel.innerHTML = STORES.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
+      
+      if (currentBrand) {
+        sSel.value = currentBrand.store;
+        updateP2BrandOptions(currentBrand.store, currentBrand.name);
+      }
+    }
+
+    function updateP2BrandOptions(store, selectedName, showPlaceholder = false) {
+      const bSel = document.getElementById('p2_brand_sel');
+      const filtered = BRANDS.filter(b => b.store === store);
+      
+      let html = '';
+      if (showPlaceholder) {
+        html = '<option value="" selected disabled>브랜드를 선택하세요</option>';
+      }
+      
+      html += filtered.map(b => `<option value="${b.name}">${b.name} (${b.type_label || (b.type === 'normal' ? '정상' : '상설')})</option>`).join('');
+      bSel.innerHTML = html;
+      
+      if (selectedName) bSel.value = selectedName;
+    }
+
+    function onNavStoreChange(st) {
+      // 지점 변경 시 즉시 이동하지 않고 브랜드 목록만 "선택하세요" 상태로 갱신
+      updateP2BrandOptions(st, null, true);
+    }
+
+    function onNavBrandChange(bName) {
+      if (!bName) return; // 선택하세요 인 경우 무시
+      const st = document.getElementById('p2_store_sel').value;
+      selectBrand(st, bName);
     }
 
     function buildMainTable() {
@@ -1369,7 +1845,20 @@
       <span style="font-weight:800; color:#111; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#D1D5DB;">${st}</span>
     </td>`;
         (scoreData[st] || []).forEach((v, ci) => {
-          r += `<td>${v > 0 ? `<div class="badge-score" onclick="openStoreModal('${st}','${CATS[ci]}')"><span class="grade">${v >= 80 ? 'A' : v < 60 ? 'C' : 'B'}</span><span class="num">${v}</span></div>` : '—'}</td>`;
+          if (v > 0) {
+            let grade = 'B';
+            let badgeBg = 'linear-gradient(135deg, #F59E0B, #D97706)'; // B (Yellow - Image Match)
+            if (v >= 80) {
+              grade = 'A';
+              badgeBg = 'linear-gradient(135deg, #3B82F6, #2563EB)'; // A (Blue)
+            } else if (v < 60) {
+              grade = 'C';
+              badgeBg = 'linear-gradient(135deg, #EF4444, #DC2626)'; // C (Red)
+            }
+            r += `<td><div class="badge-score" style="background:${badgeBg};" onclick="openStoreModal('${st}','${CATS[ci]}')"><span class="grade">${grade}</span><span class="num">${v}</span></div></td>`;
+          } else {
+            r += `<td>—</td>`;
+          }
         });
         const tr = document.createElement('tr'); tr.innerHTML = r; tb.appendChild(tr);
       });
@@ -1385,38 +1874,41 @@
       const catLabel = `${cat} 카테고리`;
       document.getElementById('mTitle').textContent = `${store} · ${catLabel} 분석`;
 
-      // [v20.0] 필터링 강화: 해당 지점 및 선택한 카테고리에 부합하는 브랜드만 추출
-      const storeBrands = BRANDS.filter(b => b.store === store && b.category === cat);
+      // [v20.0] 필터링 강화: 해당 지점 및 선택한 카테고리에 부합하는 브랜드만 추출 후 총점 기준 내림차순 정렬
+      const storeBrands = BRANDS.filter(b => b.store === store && b.category === cat)
+                                .sort((a, b) => (b.total || 0) - (a.total || 0));
 
       const tb = document.getElementById('modalTbody');
       const thRow = document.querySelector('#storeModal thead tr');
 
-      // 헤더 개편 (브랜드명, 총 점수, 재고 비중 + 4대 지표 점수)
+      // 헤더 개편 (브랜드명, 총 점수, 재고 비중 + 5대 지표 점수)
       thRow.innerHTML = `
     <th style="text-align:left;padding-left:24px;background:#1D1E1E;">브랜드명</th>
     <th style="background:#1D1E1E;">총 점수</th>
     <th style="background:#1D1E1E;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
-    <th style="background:#E30019; width:140px;">할인율</th>
-    <th style="background:#F59E0B; width:140px;">신선도</th>
-    <th style="background:#0055D4; width:140px;">시즌</th>
-    <th style="background:#8B5CF6; width:140px;">BEST</th>
+    <th style="background:#E30019; width:110px;">할인율</th>
+    <th style="background:#2563EB; width:110px;">신선도</th>
+    <th style="background:#F59E0B; width:110px;">시즌</th>
+    <th style="background:#16A34A; width:110px;">BEST</th>
+    <th style="background:#8B5CF6; width:110px;">아이템</th>
   `;
 
       tb.innerHTML = '';
 
       if (!storeBrands.length) {
-        tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
       } else {
         storeBrands.forEach(b => {
           const tM2 = +(b.tM * 2).toFixed(1);
           const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
 
+          // [v104.8] 과재고 컬러 최종 보정: 눈이 더욱 편안한 허니 골드(#E9C040) 반영
+          const isOver = supply >= 200;
           const isShort = supply < 100;
-          const statusColor = isShort ? '#E30019' : '#008B3E'; // 부족(Red), 충족(Green) - P2 총 재고액 바와 동일한 초록색 적용
-          const statusText = isShort ? '부족' : '충족';
+          const statusColor = isOver ? '#E9C040' : (isShort ? '#B91C1C' : '#065F46'); 
+          const statusText = isOver ? '과재고' : (isShort ? '부족' : '충족');
 
-          const typeBg = b.type === 'normal' ? '#FEF2F2' : '#F3F4F6';
-          const typeColor = b.type === 'normal' ? '#E30019' : '#6B7280';
+          const typeClass = b.type === 'normal' ? 'normal' : 'outlet';
           const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
 
           const tr = document.createElement('tr');
@@ -1425,7 +1917,7 @@
         <td>
           <div class="brand-row-name">
             ${b.name}
-            <span class="type-badge" style="background:${typeBg}; color:${typeColor};">${typeLabel}</span>
+            <span class="type-badge ${typeClass}">${typeLabel}</span>
           </div>
         </td>
         <td><span class="score-cell" style="color:${b.total < 60 ? '#EF4444' : '#111827'}">${b.total}</span></td>
@@ -1437,9 +1929,10 @@
           </div>
         </td>
         <td><span class="score-cell" style="color:#E30019">${b.dis || 0}</span></td>
-        <td><span class="score-cell" style="color:#F59E0B">${b.fresh || 0}</span></td>
-        <td><span class="score-cell" style="color:#0055D4">${b.season || 0}</span></td>
-        <td><span class="score-cell" style="color:#8B5CF6">${b.best || 0}</span></td>
+        <td><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
+        <td><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
+        <td><span class="score-cell" style="color:#16A34A">${b.best || 0}</span></td>
+        <td><span class="score-cell" style="color:#8B5CF6">${b.item || 0}</span></td>
       `;
           tb.appendChild(tr);
         });
@@ -1468,11 +1961,21 @@
       document.getElementById('h-brand').textContent = b.name;
       document.getElementById('h-store').textContent = st;
       document.getElementById('h-type').textContent = b.type === 'normal' ? '정상' : '상설';
-      document.getElementById('h-type').style.background = b.type === 'normal' ? '#FEF2F2' : '#F3F4F6';
-      document.getElementById('h-type').style.color = b.type === 'normal' ? '#E30019' : '#6B7280';
+      document.getElementById('h-type').className = 'type-badge ' + (b.type === 'normal' ? 'normal' : 'outlet');
+      // 인라인 스타일 제거 (클래스 우선)
+      document.getElementById('h-type').style.background = '';
+      document.getElementById('h-type').style.color = '';
 
       // 총점수 업데이트
       document.getElementById('h-score').textContent = b.total || 0;
+
+      // [v100.7] 네비게이터 드롭다운 동기화
+      const sSel = document.getElementById('p2_store_sel');
+      const bSel = document.getElementById('p2_brand_sel');
+      if (sSel && bSel) {
+        sSel.value = st;
+        updateP2BrandOptions(st, b.name);
+      }
 
       // 원 단위 포맷 함수 (M → 실제 원 단위)
       function formatWon(million) {
@@ -1489,7 +1992,9 @@
       const tM2 = +(b.tM * 2).toFixed(1);
       const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
       const gap = Math.max(0, 100 - supply);
-      const supplyColor = supply >= 100 ? '#008B3E' : supply >= 70 ? '#F58220' : '#E30019';
+      // [v104.8] 과재고(200%↑) 컬러 최종 보정: 눈이 더욱 편안한 허니 골드(#E9C040) 반영
+      const supplyColor = supply >= 200 ? '#E9C040' : supply >= 100 ? '#065F46' : supply >= 70 ? '#D97706' : '#B91C1C';
+      const statusText = supply >= 200 ? '과재고' : supply >= 100 ? '적정 재고' : supply >= 70 ? '재고 부족' : '심각 미달';
       const monthLabel = b.month ? b.month + ' 기준' : '';
 
       // 경고 배너
@@ -1504,17 +2009,59 @@
       const dBrand = dStore[b.name] || {};
       const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
       const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
+      
+      // [v104.0] 매장 평수 및 효율 지표 추가
+      const area = b.area || 20.0;
+      const salesAmt = b.sales_amt || 0.0;
+      const dataMonthStr = b.data_month || "3월"; // 데이터가 입력된 월
+      const days = dataMonthStr.includes('3월') ? 31 : (dataMonthStr.includes('2월') ? 28 : (dataMonthStr.includes('4월') || dataMonthStr.includes('6월') || dataMonthStr.includes('9월') || dataMonthStr.includes('11월') ? 30 : 31));
+      const val = area > 0 ? (salesAmt * 1000000 / days / area) : 0;
+      
+      // [v104.2] 다음 달 목표 매출 라벨 계산
+      function getNextMonthLabel(mStr) {
+        const m = mStr.match(/(\d+)월/);
+        if (m) {
+          let next = parseInt(m[1]) + 1;
+          if (next > 12) next = 1;
+          return next + "월";
+        }
+        return "4월"; //Fallback
+      }
+      const targetMonthLabel = getNextMonthLabel(dataMonthStr);
+
+      // [v104.8] 일평매출 색상 및 배지 로직 (재고 현황 색상과 동기화)
+      const EFF_RED = '#B91C1C';
+      const EFF_GREEN = '#065F46';
+      const EFF_BLACK = '#111827';
+      
+      const efficiencyColor = val < 40000 ? EFF_RED : (val >= 100000 ? EFF_GREEN : EFF_BLACK);
+      const efficiencyBadge = val < 40000 ? '저조' : (val >= 100000 ? '양호' : '평균수준');
 
       // [v74.3] 세그먼트 합산이 아닌 서버에서 제공하는 중복 제거된 유일 수량 사용
       const totalQty = d.total_qty_unique || b.sQ || 0;
 
       document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-item">
-      <div class="kpi-h">목표 매출액${monthLabel ? ' · ' + monthLabel : ''}</div>
-      <div class="kpi-v" style="font-size:19px;">${formatM(b.tM)}<span style="font-size:11px; margin-left:2px;">백만원</span></div>
-      <div class="kpi-status" style="color:var(--text-dim);font-weight:600">작년 동월대비 30% 성장</div>
+    <!-- [v104.8] 통합 효율 카드 (문구 및 배지 업데이트) -->
+    <div class="kpi-item" style="grid-column: span 1; background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 1.5px solid #C4B5FD; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);">
+      <div class="kpi-h" style="color: #6D28D9;">📊 ${dataMonthStr} 일평매출</div>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 6px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 23px; font-weight: 950; color: ${efficiencyColor}; letter-spacing: -1px;">${Math.round(val).toLocaleString()}</span>
+          <span style="font-size: 13px; font-weight: 800; color: ${efficiencyColor};">원</span>
+          <span style="background: ${efficiencyColor}; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 900; margin-left: 2px; height: 18px; display: flex; align-items: center;">${efficiencyBadge}</span>
+        </div>
+        <span style="font-size: 14px; font-weight: 700; color: #8B5CF6;">(${area.toFixed(1)}평)</span>
+      </div>
     </div>
-    <div class="kpi-item" style="grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between;">
+
+    <!-- [v104.3] 다음 달 목표 매출액 (문구 변경) -->
+    <div class="kpi-item" style="background: #FFF; border: 1px solid #E5E7EB;">
+      <div class="kpi-h">${targetMonthLabel} 목표 매출액</div>
+      <div class="kpi-v" style="font-size: 19px; color: #111;">${formatM(b.tM)}<span style="font-size: 11px; margin-left: 2px; font-weight: 700;">백만원</span></div>
+      <div class="kpi-status" style="color: #6B7280; font-weight: 600;">전년 동월 매출 대비 30% 성장</div>
+    </div>
+
+    <div class="kpi-item" style="grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between; background: #FFF; border: 1px solid #E5E7EB;">
       <div class="kpi-h">재고 현황 (필요 목표 대비 실제 보유액)</div>
       <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;">
         <span style="font-size: 22px; font-weight: 950; color: #111;">${formatM(b.sM)}<span style="font-size:13px; font-weight:800; margin-left:1px; color:#64748B;">백만원</span></span>
@@ -1522,7 +2069,7 @@
         <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: #9CA3AF;">(${totalQty.toLocaleString()} EA 보유)</span>
       </div>
       <div>
-        <div class="bar-line-wrap" style="height:10px; background:#E5E7EB; border-radius: 5px; overflow: hidden;">
+        <div class="bar-line-wrap" style="height:10px; background:#F3F4F6; border-radius: 5px; overflow: hidden;">
             <div class="bar-line" style="width:${Math.min(100, supply)}%; background:${supplyColor}; height:100%; border-radius: 5px; transition: width 0.8s ease;"></div>
         </div>
         <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; font-weight:900; color:${supplyColor};">
@@ -1531,21 +2078,26 @@
         </div>
       </div>
     </div>
-    <div class="kpi-item">
+
+    <div class="kpi-item" style="position:relative; overflow:visible; background: #FFF; border: 1px solid #E5E7EB;">
       <div class="kpi-h">보유 상태</div>
-      <div class="kpi-v" style="color:${supplyColor}">${supply >= 100 ? '적정 재고' : supply >= 70 ? '재고 부족' : '심각 미달'}</div>
-      <div class="kpi-status" style="color:${supplyColor}; font-weight:800; margin-top:12px;">
-        ${supply >= 100 ? `▲ ${supply}% 보유` : `▼ ${supply}% 보유`}
+      <div class="kpi-v" style="color:${supplyColor}">${statusText}</div>
+      <div class="kpi-status" style="color:${supplyColor}; font-weight:800; margin-top:12px; line-height:1.6; display:flex; flex-direction:column; align-items:flex-start;">
+        ${supply >= 200 ? `
+          <span style="font-size:15px; font-weight:900;">▲ 과다 보유 상태</span>
+          <div class="overstock-text">"BEST상품 선별 및 진열에 주의하세요."</div>` : 
+          (supply >= 100 ? `<span style="font-size:13px;">▲ ${supply}% 보유 (적정)</span>` : `<span style="font-size:13px;">▼ ${supply}% 보유 (부족)</span>`)}
       </div>
     </div>
   `;
 
-      // 1. 4개 지표 카드 — 위에서 전역 선언된 dStore/dBrand/d/typeLabel 재사용
+      // 1. 5개 지표 카드 — 위에서 전역 선언된 dStore/dBrand/d/typeLabel 재사용
       const mList = [
         { id: 'dis', l: '할인율 점수', s: b.dis || 0, c: 'm-dis' },
         { id: 'fresh', l: '신선도 점수', s: b.fresh || 0, c: 'm-fresh' },
         { id: 'season', l: '시즌 점수', s: b.season || 0, c: 'm-season' },
-        { id: 'best', l: 'BEST 점수', s: b.best || 0, c: 'm-best' }
+        { id: 'best', l: 'BEST 점수', s: b.best || 0, c: 'm-best' },
+        { id: 'item', l: '아이템 점수', s: b.item || 0, c: 'm-item' }
       ];
 
       function getRateColor(r) {
@@ -1576,7 +2128,42 @@
         const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season');
         const maxOptPct = Math.max(...validSegs.map(s => s.opt_pct || 0), 1);
 
-        const indicatorColors = { dis: '#E30019', fresh: '#F59E0B', season: '#0055D4', best: '#8B5CF6' };
+        let shortageHtml = '';
+        let missingItems = [];
+        validSegs.forEach(s => {
+          const mVal = s.valM || 0;
+          const tVal = s.targetM || 0;
+          if (mVal < tVal) {
+             const diff = tVal - mVal;
+             missingItems.push(`
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; margin-bottom:12px; border-bottom:1px dashed rgba(254, 202, 202, 0.8);">
+                  <span style="color:#B91C1C; font-weight:800; font-size:14px; letter-spacing:-0.5px; display:flex; align-items:center; gap:6px;">
+                    <span style="width:4px; height:4px; border-radius:50%; background:#DC2626;"></span>${s.l}
+                  </span>
+                  <span style="color:#DC2626; font-weight:900; font-size:17px;">
+                    ${diff.toLocaleString(undefined, {minimumFractionDigits:1, maximumFractionDigits:1})}
+                    <span style="font-size:12px; margin-left:3px; color:#EF4444;">백만원</span>
+                  </span>
+                </div>
+             `);
+          }
+        });
+        if (missingItems.length > 0) {
+           shortageHtml = `
+           <div style="background:linear-gradient(135deg, #FFF1F2 0%, #FEF2F2 100%); border:1px solid #FECACA; border-radius:14px; padding:20px 24px; margin:-12px 0 32px 0; box-shadow:0 6px 16px rgba(220, 38, 38, 0.08);">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                 <div style="background:#FFF9C1; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid #FDE68A; font-size:24px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.15);">
+                   📢
+                 </div>
+                <div style="font-weight:900; color:#991B1B; font-size:16px; letter-spacing:-0.5px;">목표대비 추가 확보 필요</div>
+              </div>
+              <div style="display:flex; flex-direction:column; padding:0 4px;">
+                ${missingItems.join('')}
+              </div>
+           </div>`;
+        }
+
+        const indicatorColors = { item: '#8B5CF6', dis: '#E30019', fresh: '#2563EB', season: '#F59E0B', best: '#16A34A' };
         const baseColor = indicatorColors[m.id] || '#111';
 
         const segsHtml = validSegs.map(s => {
@@ -1653,14 +2240,19 @@
         }).join('') || '<div style="font-size:12px;color:#9CA3AF;padding:12px 0;text-align:center">데이터가 없습니다.</div>';
 
         return `
-      <div class="m-card">
+      <div class="m-card" style="display:flex; flex-direction:column;">
         <div class="m-head">
           <span class="m-title">${m.l}</span>
           <div style="text-align:right;">
             <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">점</span>
           </div>
         </div>
+        ${shortageHtml}
         <div class="m-body">${segsHtml}</div>
+        <div style="margin-top:auto; padding-top:20px; border-top:1px dashed #E2E8F0;">
+          <button onclick="runDiagnosis('${m.id}', this)" class="btn-diagnosis" style="width:100%; padding:14px; background:#1D1E1E; color:#fff; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; border:none; transition:all 0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.1); letter-spacing:-0.5px; font-family:inherit;">AI 상세 진단</button>
+          <div class="diagnosis-result" style="display:none; margin-top:14px; padding:16px; background:#F8FAFC; border-radius:10px; border:1px solid #E2E8F0; font-size:13px; line-height:1.6;"></div>
+        </div>
       </div>
     `;
       }).join('');
@@ -1696,6 +2288,150 @@
         if (!b.contains(e.target)) b.style.display = 'none';
       }
     });
+
+    async function runDiagnosis(indicatorId, btnElem) {
+      if (!currentBrand) return;
+      const resultDiv = btnElem.nextElementSibling;
+      
+      btnElem.disabled = true;
+      btnElem.textContent = '진단 리포트 생성 중... ⏳';
+      btnElem.style.opacity = '0.7';
+      resultDiv.style.display = 'none';
+
+      try {
+        const scores = {
+          total: currentBrand.total || 0,
+          dis: currentBrand.dis || 0,
+          fresh: currentBrand.fresh || 0,
+          best: currentBrand.best || 0,
+          season: currentBrand.season || 0
+        };
+
+        const typeLabel = currentBrand.type_label || (currentBrand.type === 'normal' ? '정상' : '상설');
+        const st = currentBrand.store;
+        const dStore = DETAIL[st] || {};
+        const dBrand = dStore[currentBrand.name] || {};
+        const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
+        const dataSummary = d[indicatorId] || {};
+
+        const bpStoreData = BP_DETAIL[st] || {};
+        const bpBrand = bpStoreData[currentBrand.name] || {};
+        const bpDataForType = bpBrand[typeLabel] || Object.values(bpBrand)[0] || {};
+        const bpSummary = bpDataForType[indicatorId] || {};
+
+        const reqBody = {
+          brand_name: currentBrand.name,
+          indicator_id: indicatorId,
+          scores: scores,
+          data_summary: dataSummary,
+          bp_summary: bpSummary
+        };
+
+        const response = await fetch(`${API_URL}/api/diagnose`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody)
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.result) {
+          const res = data.result;
+
+          // 1. BP 매장 비교 분석 시각화
+          let bpChartHtml = '';
+          if (dataSummary && bpSummary && dataSummary.segs && bpSummary.segs) {
+            const currentSegs = dataSummary.segs;
+            const bpSegs = bpSummary.segs;
+            
+            let rowsHtml = '';
+            currentSegs.forEach(curr => {
+               // Matching segment
+               const bpMatch = bpSegs.find(b => b.key === curr.key || b.l === curr.l);
+               if (!bpMatch) return;
+               
+               const curPct = Math.round(curr.mix_pct || curr.pct || 0);
+               const bpPct = Math.round(bpMatch.mix_pct || bpMatch.valM || bpMatch.pct || 0);
+               const diff = curPct - bpPct;
+               const diffColor = diff > 0 ? '#DC2626' : (diff < 0 ? '#16A34A' : '#64748B');
+               const diffSign = diff > 0 ? '+' : '';
+               const curName = st.replace('NC','').replace('점','').substring(0,4); // '신구로'
+               
+               rowsHtml += `
+                 <div style="margin-bottom:18px;">
+                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                     <span style="font-size:12px; font-weight:800; color:#111;">${curr.l}</span>
+                     <span style="font-size:12px; font-weight:900; color:${diffColor}">${diffSign}${diff}%p</span>
+                   </div>
+                   
+                   <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                     <span style="width:46px; font-size:11px; font-weight:800; color:#DC2626;">${curName}</span>
+                     <div style="flex:1; background:#F1F5F9; height:8px; border-radius:4px;">
+                       <div style="width:${curPct}%; background:#DC2626; height:100%; border-radius:4px;"></div>
+                     </div>
+                     <span style="width:28px; text-align:right; font-size:11px; font-weight:900; color:#DC2626">${curPct}%</span>
+                   </div>
+                   
+                   <div style="display:flex; align-items:center; gap:8px;">
+                     <span style="width:46px; font-size:11px; font-weight:800; color:#2563EB;">BP매장</span>
+                     <div style="flex:1; background:#F1F5F9; height:8px; border-radius:4px;">
+                       <div style="width:${bpPct}%; background:#2563EB; height:100%; border-radius:4px;"></div>
+                     </div>
+                     <span style="width:28px; text-align:right; font-size:11px; font-weight:900; color:#2563EB">${bpPct}%</span>
+                   </div>
+                 </div>
+               `;
+            });
+            
+            if (rowsHtml.length > 0) {
+               const curNameTitle = st.replace('NC','').replace('점','') + '점';
+               bpChartHtml = `
+                 <div style="border:1px solid #E5E7EB; border-radius:12px; overflow:hidden; margin-bottom:20px; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                    <div style="background:#1D1E1E; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                       <span style="font-weight:900; font-size:14px;">BP 매장 비교 분석</span>
+                       <span style="background:#E30019; font-size:10px; font-weight:900; padding:3px 8px; border-radius:12px;">BP 매장</span>
+                    </div>
+                    <div style="padding:16px;">
+                       <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:24px; font-size:12px; font-weight:800;">
+                         <span style="color:#DC2626; background:#FEF2F2; padding:4px 12px; border-radius:12px;">${curNameTitle} <span style="font-size:10px;">(현재)</span></span>
+                         <span style="color:#94A3B8; font-size:10px;">VS</span>
+                         <span style="color:#2563EB; background:#EFF6FF; padding:4px 12px; border-radius:12px;">BP 매장 <span style="font-size:10px;">(기준)</span></span>
+                       </div>
+                       ${rowsHtml}
+                    </div>
+                 </div>
+               `;
+            }
+          }
+
+          // 2. AI Action Insights
+          const actionsHtml = (res.actions || []).map(a => `
+            <div style="background:#FEF2F2; border-left:4px solid #DC2626; border-radius:8px; padding:14px; margin-bottom:10px; font-size:13px; font-weight:800; color:#111; line-height:1.5;">
+              ${a}
+            </div>
+          `).join('');
+
+          resultDiv.innerHTML = `
+            ${bpChartHtml}
+            ${actionsHtml}
+          `;
+          resultDiv.style.background = 'transparent';
+          resultDiv.style.border = 'none';
+          resultDiv.style.padding = '0';
+          resultDiv.style.display = 'block';
+        } else {
+          resultDiv.innerHTML = `<div style="color:#DC2626; font-weight:800;">❌ 진단 실패: ${data.error || '오류 발생'}</div>`;
+          resultDiv.style.display = 'block';
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `<div style="color:#DC2626; font-weight:800;">❌ 네트워크 오류: ${err.message}</div>`;
+        resultDiv.style.display = 'block';
+      } finally {
+        btnElem.disabled = false;
+        btnElem.textContent = 'AI 상세 진단';
+        btnElem.style.opacity = '1';
+      }
+    }
 
     function _loadData(d) {
       CATS = d.CATS || CATS; STORES = d.STORES || []; scoreData = d.scoreData || {};
