@@ -286,6 +286,7 @@
       padding-left: 24px;
       font-weight: 800;
       font-size: 14px;
+      white-space: nowrap;
     }
 
     .badge-score {
@@ -1262,7 +1263,7 @@
             <table class="table-wrap">
               <thead>
                 <tr>
-                  <th style="text-align:left;padding-left:24px">지점</th>
+                  <th style="text-align:left;padding-left:24px;white-space:nowrap;">지점</th>
                   <th>전체</th>
                   <th>여성</th>
                   <th>스포츠</th>
@@ -2436,7 +2437,10 @@
     }
 
     function _loadData(d) {
-      CATS = d.CATS || CATS; STORES = d.STORES || []; scoreData = d.scoreData || {};
+      CATS = d.CATS || CATS;
+      // [v2.0] 요청에 따라 'NC신구로점' 외 다른 지점은 숨김 처리
+      STORES = (d.STORES || []).filter(s => s === 'NC신구로점');
+      scoreData = d.scoreData || {};
       BRANDS = d.BRANDS || []; DETAIL = d.DETAIL || {};
       BP_DETAIL = d.BP_DETAIL || {}; BEST_ITEMS = d.BEST_ITEMS || {};
       if (BRANDS.length) currentBrand = BRANDS[0];
