@@ -223,8 +223,10 @@ class AssortmentScorer:
             best_styles.extend(extra_styles)
         
         # 선정된 베스트 스타일들의 실제 재고 보유액 합산
+        # [v10.0] BEST 10 목표 재고 비중 수정: 정상 10%, 상설 5% (기존 공통 25%에서 조정)
+        best_ratio = 0.05 if is_outlet else 0.10
         act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
-        tgt_best = target_total * 0.25
+        tgt_best = target_total * best_ratio
         best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
 
         # ────────── E. 아이템 지표 ──────────
