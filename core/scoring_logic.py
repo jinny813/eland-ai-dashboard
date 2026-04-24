@@ -222,9 +222,8 @@ class AssortmentScorer:
             extra_styles = stk_candidates.head(remaining_count).index.tolist()
             best_styles.extend(extra_styles)
         
-        # 선정된 베스트 스타일들의 실제 재고 보유액 합산
+        # [v105.7] BEST 10 styles: Adjust target inventory weight to 20%
         act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
-        // [v8.5] BEST 10 목표 재고 비중 조정: 25% -> 20%
         tgt_best = target_total * 0.20
         best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
 
