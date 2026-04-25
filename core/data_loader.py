@@ -77,7 +77,8 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         sheet = mgr.spreadsheet.worksheet("Records")
         all_recs = sheet.get_all_records()
         if not all_recs:
-            return {"error": "데이터가 없습니다."}
+            msg = mgr.error_msg if mgr and mgr.error_msg else "데이터가 없습니다."
+            return {"error": msg}
 
         df = pd.DataFrame(all_recs)
 
@@ -228,6 +229,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "type": "outlet" if _is_outlet_type(b_type) else "normal", "type_label": b_type,
                         "total": int(round(float(row.get('total_score', 0)))),
                         "item": int(round(float(row.get('item_score', 0)))),
+                        "zoning": cfg.get('zoning', '미분류'),
                         "dis": int(round(float(row.get('discount_score', 0)))),
                         "fresh": int(round(float(row.get('freshness_score', 0)))),
                         "best": int(round(float(row.get('best_score', 0)))),

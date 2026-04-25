@@ -92,13 +92,24 @@ class AssortmentScorer:
                 valid_cols = [c for c in d_cols if c in sub.columns]
                 return sub.drop_duplicates(subset=valid_cols) if valid_cols else sub
 
-        # 1. 지표별 대분류 가중치 설정
-        if is_outlet:
+        # [v107.8] 변수명 충돌 방지: 최종 점수용 가중치는 'final_weights'로 명명
+        if self.config.get('weight_discount') is not None:
+             final_weights = {
+                 'dis':   self.config.get('weight_discount', 0.40),
+                 'fresh': self.config.get('weight_freshness', 0.15),
+                 'sea':   self.config.get('weight_season', 0.15),
+                 'best':  self.config.get('weight_best', 0.20),
+                 'item':  self.config.get('weight_item', 0.10)
+             }
+        elif is_outlet:
             # 상설: 할인율(40%), 신선도(15%), 시즌(15%), 베스트10(20%), 아이템(10%)
-            weights = {'dis': 0.40, 'fresh': 0.15, 'sea': 0.15, 'best': 0.20, 'item': 0.10}
+            final_weights = {'dis': 0.40, 'fresh': 0.15, 'sea': 0.15, 'best': 0.20, 'item': 0.10}
         else:
             # 정상: 할인율(30%), 신선도(20%), 시즌(15%), 베스트10(25%), 아이템(10%)
-            weights = {'dis': 0.30, 'fresh': 0.20, 'sea': 0.15, 'best': 0.25, 'item': 0.10}
+            final_weights = {'dis': 0.30, 'fresh': 0.20, 'sea': 0.15, 'best': 0.25, 'item': 0.10}
+
+        # [v107.8] 재고 배분용 타겟 비중은 'inv_weights'로 명확히 분리
+        inv_weights = self.config.get('inv_weights', {})
 
         # [v8.7] 연차(Age) 계산: 설정된 year_base 또는 시스템 연도 기준
         year_base = self.config.get('year_base', 2026)
@@ -118,21 +129,22 @@ class AssortmentScorer:
 
         # ────────── A. 할인율 지표 ──────────
         df['_dis_rate'] = df['discount_rate'].apply(self._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
+        dis_inv = inv_weights.get('dis', {})
         if is_outlet:
             # 상설: 실시간 할인율(U열) 기준
             dis_cfg = [
-                {'m': (df['_dis_rate'] >= 70), 'r': 0.10},
-                {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': 0.20},
-                {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': 0.30},
-                {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': 0.10},
+                {'m': (df['_dis_rate'] >= 70), 'r': dis_inv.get('s70', 0.10)},
+                {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},
+                {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': dis_inv.get('s30', 0.30)},
+                {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': dis_inv.get('s10', 0.10)},
             ]
         else:
             # 정상: 연차(year) 기준 매핑 — 70%+(4년+), 50%+(3년), 30%+(2년), 1-30%(1년)
             dis_cfg = [
-                {'m': (df['_age'] >= 4), 'r': 0.00},
-                {'m': (df['_age'] == 3), 'r': 0.05},
-                {'m': (df['_age'] == 2), 'r': 0.10},
-                {'m': (df['_age'] == 1), 'r': 0.15},
+                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.00)},
+                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.05)},
+                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.10)},
+                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.15)},
             ]
         dis_atts = []
         for item in dis_cfg:
@@ -228,18 +240,18 @@ class AssortmentScorer:
         best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
 
         # ────────── E. 아이템 지표 ──────────
-        item_cfg = [
-            {'g': 'Outer',  'r': 0.30},
-            {'g': 'Top',    'r': 0.30},
-            {'g': 'Bottom', 'r': 0.20},
-            {'g': 'Skirt',  'r': 0.10},
-            {'g': 'Dress',  'r': 0.10},
-        ]
+        # ────────── E. 아이템 지표 (조닝별 가중치 적용) ──────────
+        # [v107.8] inv_weights에서 조닝별 비중을 안전하게 가져옴
+        item_w = inv_weights.get('item', {
+            'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.20, 'Skirt': 0.10, 'Dress': 0.10
+        })
+        
         item_atts = []
-        for item in item_cfg:
-            act = _get_record_ref(df['item_group'] == item['g'])['_amt'].sum()
-            tgt = target_total * item['r']
+        for g_name, r_val in item_w.items():
+            act = _get_record_ref(df['item_group'] == g_name)['_amt'].sum()
+            tgt = target_total * r_val
             item_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
+            
         item_score = (sum(item_atts) / len(item_atts)) if item_atts else 0.0
 
         # ──────────────────────────────────────────
@@ -252,11 +264,11 @@ class AssortmentScorer:
         df['item_score']      = round(item_score, 1)
 
         total_score = (
-            discount_score  * weights['dis']   +
-            freshness_score * weights['fresh'] +
-            season_score    * weights['sea']   +
-            best_score      * weights['best']  +
-            item_score      * weights['item']
+            discount_score  * final_weights['dis']   +
+            freshness_score * final_weights['fresh'] +
+            season_score    * final_weights['sea']   +
+            best_score      * final_weights['best']  +
+            item_score      * final_weights['item']
         )
         df['total_score'] = round(total_score, 1)
 

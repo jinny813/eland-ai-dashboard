@@ -8,10 +8,19 @@ config/scoring_config.py
   - _WOMEN_OUTLET_BASE : 여성/상설 매장 공통 파라미터
   - SCORING_CONFIG     : 브랜드별 개별 설정 딕셔너리 (메인 진입점)
 
-■ 핵심 진단 원칙:
-  - 목표 재고액(Target) = 목표 매출 * 2.0
-  - 점수(Score) = (실제 재고액 / 목표 재고액) * 100 (Max 100)
+■ 조닝(Zoning) 체계:
+  - Career(커리어), Casual(캐주얼), Character(캐릭터), Senior(시니어)
 """
+
+from config.brand_metadata import get_brand_zoning, get_eness_name
+
+# ──────────────────────────────────────────────────────
+# 조닝별 아이템별 목표 비중 (inv_weights.item 용)
+# ──────────────────────────────────────────────────────
+_ITEM_CAREER = {"Outer": 0.45, "Top": 0.25, "Bottom": 0.10, "Skirt": 0.05, "Dress": 0.15}
+_ITEM_CASUAL = {"Outer": 0.35, "Top": 0.25, "Bottom": 0.10, "Skirt": 0.15, "Dress": 0.15}
+_ITEM_CHARACTER = {"Outer": 0.25, "Top": 0.15, "Bottom": 0.15, "Skirt": 0.10, "Dress": 0.35}
+_ITEM_SENIOR = {"Outer": 0.30, "Top": 0.15, "Bottom": 0.15, "Skirt": 0.05, "Dress": 0.35}
 
 # ──────────────────────────────────────────────────────
 # 공통: 여성/정상 매장 파라미터
@@ -77,50 +86,53 @@ SCORING_CONFIG = {
     "기본_설정": _WOMEN_OUTLET_BASE,   # None 반환 방지용 최종 fallback
 
     # ── 로엠
-    "여성_정상_로엠": {**_WOMEN_NORMAL_BASE, "brand_name": "로엠"},
-    "여성_상설_로엠": {**_WOMEN_OUTLET_BASE, "brand_name": "로엠"},
+    "여성_정상_로엠": {**_WOMEN_NORMAL_BASE, "brand_name": "로엠", "zoning": "캐릭터", "eness_name": "로엠(ROEM)", "inv_weights": {**_WOMEN_NORMAL_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
+    "여성_상설_로엠": {**_WOMEN_OUTLET_BASE, "brand_name": "로엠", "zoning": "캐릭터", "eness_name": "로엠(ROEM)", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
 
-    # ── 미쏘 — 정상 매장
-    "여성_정상_미쏘": {**_WOMEN_NORMAL_BASE, "brand_name": "미쏘"},
+    # ── 미쏘
+    "여성_정상_미쏘": {**_WOMEN_NORMAL_BASE, "brand_name": "미쏘", "zoning": "캐주얼", "eness_name": "미쏘", "inv_weights": {**_WOMEN_NORMAL_BASE["inv_weights"], "item": _ITEM_CASUAL}},
 
-    # ── 인동팩토리(리스트,쉬즈미스) — 상설 매장
+    # ── 인동팩토리(리스트,쉬즈미스)
     "여성_상설_인동팩토리(리스트,쉬즈미스)": {
         **_WOMEN_OUTLET_BASE,
         "brand_name": "인동팩토리(리스트,쉬즈미스)",
+        "zoning": "캐주얼",
+        "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}
     },
 
-    # ── JJ지고트 — 상설 매장
-    "여성_상설_JJ지고트": {**_WOMEN_OUTLET_BASE, "brand_name": "JJ지고트"},
+    # ── JJ지고트
+    "여성_상설_JJ지고트": {**_WOMEN_OUTLET_BASE, "brand_name": "JJ지고트", "zoning": "캐릭터", "eness_name": "JJ지고트", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
 
-    # ── 나이스클랍 — 상설 매장
-    "여성_상설_나이스클랍": {**_WOMEN_OUTLET_BASE, "brand_name": "나이스클랍"},
+    # ── 나이스클랍
+    "여성_상설_나이스클랍": {**_WOMEN_OUTLET_BASE, "brand_name": "나이스클랍", "zoning": "캐릭터", "eness_name": "나이스클랍", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
 
-    # ── 바바팩토리 — 상설 매장
-    "여성_상설_바바팩토리": {**_WOMEN_OUTLET_BASE, "brand_name": "바바팩토리"},
+    # ── 바바팩토리
+    "여성_상설_바바팩토리": {**_WOMEN_OUTLET_BASE, "brand_name": "바바팩토리", "zoning": "시니어", "eness_name": "바바팩토리", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_SENIOR}},
 
-    # ── 미샤팩토리 — 상설 매장
-    "여성_상설_미샤팩토리": {**_WOMEN_OUTLET_BASE, "brand_name": "미샤팩토리"},
+    # ── 미샤팩토리
+    "여성_상설_미샤팩토리": {**_WOMEN_OUTLET_BASE, "brand_name": "미샤팩토리", "zoning": "캐릭터", "eness_name": "-", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
 
-    # ── 베네통 — 상설 매장
-    "여성_상설_베네통": {**_WOMEN_OUTLET_BASE, "brand_name": "베네통"},
+    # ── 베네통
+    "여성_상설_베네통": {**_WOMEN_OUTLET_BASE, "brand_name": "베네통", "zoning": "캐릭터", "eness_name": "베네통(영캐주얼)", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
 
-    # ── 시슬리 — 상설 매장
-    "여성_상설_시슬리": {**_WOMEN_OUTLET_BASE, "brand_name": "시슬리"},
+    # ── 시슬리
+    "여성_상설_시슬리": {**_WOMEN_OUTLET_BASE, "brand_name": "시슬리", "zoning": "캐주얼", "eness_name": "시슬리(영캐주얼)", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
 
     # ── 신규 신구로점 브랜드
-    "여성_정상_클라비스": {**_WOMEN_NORMAL_BASE, "brand_name": "클라비스"},
-    "여성_상설_더아이잗": {**_WOMEN_OUTLET_BASE, "brand_name": "더아이잗"},
-    "여성_상설_비씨비지": {**_WOMEN_OUTLET_BASE, "brand_name": "비씨비지"},
-    "여성_상설_발렌시아": {**_WOMEN_OUTLET_BASE, "brand_name": "발렌시아"},
-    "여성_상설_베스띠벨리": {**_WOMEN_OUTLET_BASE, "brand_name": "베스띠벨리"},
-    "여성_상설_올리비아로렌": {**_WOMEN_OUTLET_BASE, "brand_name": "올리비아로렌"},
-    "여성_상설_제시뉴욕": {**_WOMEN_OUTLET_BASE, "brand_name": "제시뉴욕"},
-    "여성_상설_에잇컨셉": {**_WOMEN_OUTLET_BASE, "brand_name": "에잇컨셉"},
-    "여성_상설_샤틴": {**_WOMEN_OUTLET_BASE, "brand_name": "샤틴"},
-    "여성_상설_보니스팍스": {**_WOMEN_OUTLET_BASE, "brand_name": "보니스팍스"},
-    "여성_상설_안지크": {**_WOMEN_OUTLET_BASE, "brand_name": "안지크"},
-    "여성_상설_플라스틱아일랜드": {**_WOMEN_OUTLET_BASE, "brand_name": "플라스틱아일랜드"},
+    "여성_정상_클라비스": {**_WOMEN_NORMAL_BASE, "brand_name": "클라비스", "zoning": "캐릭터", "eness_name": "클라비스(CLOVIS)", "inv_weights": {**_WOMEN_NORMAL_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
+    "여성_상설_더아이잗": {**_WOMEN_OUTLET_BASE, "brand_name": "더아이잗", "zoning": "캐릭터", "eness_name": "더아이잗", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
+    "여성_상설_비씨비지": {**_WOMEN_OUTLET_BASE, "brand_name": "비씨비지", "zoning": "커리어", "eness_name": "비씨비지", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CAREER}},
+    "여성_상설_발렌시아": {**_WOMEN_OUTLET_BASE, "brand_name": "발렌시아", "zoning": "커리어", "eness_name": "발렌시아", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CAREER}},
+    "여성_상설_베스띠벨리": {**_WOMEN_OUTLET_BASE, "brand_name": "베스띠벨리", "zoning": "커리어", "eness_name": "베스띠벨리", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CAREER}},
+    "여성_상설_올리비아로렌": {**_WOMEN_OUTLET_BASE, "brand_name": "올리비아로렌", "zoning": "커리어", "eness_name": "올리비아로렌", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CAREER}},
+    "여성_상설_제시뉴욕": {**_WOMEN_OUTLET_BASE, "brand_name": "제시뉴욕", "zoning": "커리어", "eness_name": "제시뉴욕", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CAREER}},
+    "여성_상설_에잇컨셉": {**_WOMEN_OUTLET_BASE, "brand_name": "에잇컨셉", "zoning": "캐주얼", "eness_name": "에잇컨셉", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
+    "여성_상설_샤틴": {**_WOMEN_OUTLET_BASE, "brand_name": "샤틴", "zoning": "캐주얼", "eness_name": "샤틴", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
+    "여성_상설_보니스팍스": {**_WOMEN_OUTLET_BASE, "brand_name": "보니스팍스", "zoning": "캐릭터", "eness_name": "보니스팍스", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
+    "여성_상설_안지크": {**_WOMEN_OUTLET_BASE, "brand_name": "안지크", "zoning": "커리어", "eness_name": "안지크", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CAREER}},
+    "여성_상설_플라스틱아일랜드": {**_WOMEN_OUTLET_BASE, "brand_name": "플라스틱아일랜드", "zoning": "캐주얼", "eness_name": "플라스틱아일랜드", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
+    
     # ── 추가 지점 브랜드
-    "여성_상설_리스트": {**_WOMEN_OUTLET_BASE, "brand_name": "리스트"},
-    "여성_상설_쉬즈미스": {**_WOMEN_OUTLET_BASE, "brand_name": "쉬즈미스"},
+    "여성_상설_리스트": {**_WOMEN_OUTLET_BASE, "brand_name": "리스트", "zoning": "캐주얼", "eness_name": "리스트", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
+    "여성_상설_쉬즈미스": {**_WOMEN_OUTLET_BASE, "brand_name": "쉬즈미스", "zoning": "캐릭터", "eness_name": "쉬즈미스", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
 }
