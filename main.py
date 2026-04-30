@@ -78,6 +78,9 @@ def main():
             "비씨비지 (상설)", "발렌시아 (상설)", "베스띠벨리 (상설)", "올리비아로렌 (상설)",
             "제시뉴욕 (상설)", "샤틴 (상설)", "보니스팍스 (상설)", "안지크 (상설)",
             "플라스틱아일랜드 (상설)"
+        ],
+        "스포츠": [
+            "스케쳐스 (정상)", "아디다스 (정상)", "뉴발란스 (정상)", "나이키 (정상)"
         ]
     }
 
@@ -102,15 +105,22 @@ def main():
             padding-left: 0rem !important;
             padding-right: 0rem !important;
         }
-        /* Iframe(대시보드)을 화면에 꽉 차게 설정 */
+        /* Iframe(대시보드)을 화면에 꽉 차게 설정하되, 최소 높이만 지정하여 스크롤 허용 */
         iframe {
             width: 100vw !important;
-            height: 100vh !important;
+            min-height: 100vh !important;
             border: none !important;
         }
         /* 사이드바 너비 조정 및 스타일 */
         [data-testid="stSidebar"] {
             background-color: #f8f9fa;
+        }
+        /* 스크롤 가로막는 요소 해제 */
+        [data-testid="stAppViewContainer"] {
+            overflow-y: auto !important;
+        }
+        .main {
+            overflow: visible !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -150,8 +160,11 @@ def main():
                     script_inject = f"<script>window.__INITIAL_DATA__ = {data_json};</script>"
                     final_html = html_template.replace('<script>', script_inject + '<script>', 1)
 
-                    # 여백 없는 전체 화면 렌더링 (CSS Injection에서 100vh로 강제 제어됨)
-                    components.html(final_html, height=1200, scrolling=True)
+                    # [v145.0] 하단 잘림 방지: 높이 2400px로 대폭 확장 및 스크롤 활성화
+                    components.html(final_html, height=2400, scrolling=True)
+                    
+                    # 최하단 여백 추가 (스크롤 끝 도달 시 여유 확보)
+                    st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"대시보드 생성 실패: {e}")
 
@@ -181,7 +194,7 @@ def main():
         with col_cat:
             st.caption("👚 2. 카테고리")
             if selected_store:
-                raw = st.selectbox("카테고리", ['여성', '잡화', '스포츠', '캐주얼', '아동', '신사', '골프웨어'],
+                raw = st.selectbox("카테고리", ['여성', '스포츠', '신사', '아동', '캐주얼', '잡화'],
                                    index=None, placeholder="진단할 카테고리를 선택하세요...", label_visibility="collapsed")
                 if raw: selected_category = raw
             else:

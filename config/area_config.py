@@ -46,5 +46,5 @@ AREA_CONFIG = {
 }
 
 def get_area(store_name: str, brand_name: str) -> float:
-    """지점 및 브랜드에 해당하는 평수를 반환합니다. (기본값 20.0평)"""
-    return AREA_CONFIG.get(store_name, {}).get(brand_name, 20.0)
+    """지점 및 브랜드에 해당하는 평수를 반환합니다. (미등록 시 0.0평)"""
+    return AREA_CONFIG.get(store_name, {}).get(brand_name, 0.0)

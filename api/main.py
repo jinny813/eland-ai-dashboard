@@ -103,7 +103,7 @@ async def upload_data(
 
 from pydantic import BaseModel
 from typing import Dict, Any
-from ai_agent import AIAgent
+from core.ai_agent import AIAgent
 
 class DiagnoseRequest(BaseModel):
     brand_name: str

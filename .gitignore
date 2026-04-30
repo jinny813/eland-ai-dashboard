@@ -1,62 +1,77 @@
-# [Python]
+# [Python & Environment]
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# [Virtual Environment]
+.env
 .venv/
 venv/
 ENV/
 
-# [Environment Variables & Credentials]
-.env
+# [Authentication & Security]
 credentials.json
 *.pem
+pk.pem
 *.key
 google_service_account.json
 
-# [IDE]
+# [Data & Reports]
+full_brand_report.json
+debug_brands.json
+Full_Brand_Report_*.json
+
+# [Node.js]
+node_modules/
+package-lock.json
+
+# [IDE & OS]
 .vscode/
 .idea/
-
-# [Streamlit]
-.streamlit/
-
-# [OS & Logs]
-*.log
 .DS_Store
 Thumbs.db
+*.log
+
+# [Python & Environment]
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv/
+venv/
+ENV/
+
+# [Authentication & Security]
+credentials.json
+*.pem
+pk.pem
+*.key
+google_service_account.json
+
+# [Data & Reports]
+full_brand_report.json
+debug_brands.json
+Full_Brand_Report_*.json
+
+# [Node.js]
+node_modules/
+package-lock.json
+
+# [IDE & OS]
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
 
 # [Others]
+.streamlit/
 tmp/
-debug_brands.json
-full_brand_report.json
-node_modules/
 .firebase/
 
-# ──────────────────────────────────────────────────────────
-# [Scratch / Local Dev] - 로컬 작업물은 원격 저장소에서 제외
-# ──────────────────────────────────────────────────────────
+# [Scratch / Local Dev]
 # 규칙: 모든 임시 코드는 scratch/ 에서만 작업한다.
 #        검증 완료된 코드는 core/, parsers/ 등 핵심 폴더로 이동 후
 #        scratch/ 내 임시 파일은 즉시 삭제한다.
-#        프로젝트 루트에 임시 파일 생성을 엄격히 금지한다.
 scratch/
+
+# [Auth]
+auth/

@@ -8,6 +8,9 @@ core/data_manager.py
   - 엑셀의 서식(천단위 구분기호) 때문에 데이터가 NaN으로 변하는 현상 원천 차단
 """
 
+import os
+import json
+import numpy as np
 import logging
 import pandas as pd
 from parsers.elandworld_parser import ElandWorldParser
@@ -49,6 +52,7 @@ class DataManager:
             "나이스클랍": "LotteGFR",
             "베네통":     "Generic",
             "시슬리":     "Generic",
+            "스케쳐스":   "ElandWorld",
             "직접 입력(범용)": "Generic",
         }
         self.COMPANY_PARSERS = {
@@ -173,3 +177,53 @@ class DataManager:
         df_merged = df_merged.fillna("") # 나머지 컬럼은 빈 문자열로
 
         return df_merged
+
+    # ── [데이터 정규화 및 무결성 관리 유틸리티] ──
+
+    def _load_style_master(self):
+        """style_master.json 로드 유틸리티"""
+        path = os.path.join(os.path.dirname(__file__), "style_master.json")
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    def update_style_master(self, new_data: dict) -> int:
+        """새로운 스타일 정보를 style_master.json에 저장"""
+        master = self._load_style_master()
+        master.update(new_data)
+        path = os.path.join(os.path.dirname(__file__), "style_master.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(master, f, ensure_ascii=False, indent=2)
+        logger.info(f"[DataManager] {len(new_data)}건의 스타일 정보 업데이트 완료")
+        return len(new_data)
+
+    def scan_missing_styles(self) -> list:
+        """DB(GSheet)를 스캔하여 품명이 누락된 상위 스타일 목록 추출"""
+        try:
+            from database.gsheet_manager import GSheetManager
+            gsm = GSheetManager(sheet_name="Records")
+            recs = gsm.spreadsheet.worksheet("Records").get_all_records()
+            if not recs: return []
+            
+            df = pd.DataFrame(recs)
+            master = self._load_style_master()
+            
+            # 판매량 기준으로 정렬하여 중요도 파악
+            df['sales_qty'] = pd.to_numeric(df.get('sales_qty', 0), errors='coerce').fillna(0)
+            unique_styles = df.groupby(['brand_name', 'style_code'])['sales_qty'].sum().reset_index()
+            unique_styles = unique_styles.sort_values(by='sales_qty', ascending=False)
+            
+            missing = []
+            for _, row in unique_styles.iterrows():
+                s = str(row['style_code'])
+                if s not in master or not master[s].get('style_name') or master[s].get('style_name') == '—':
+                    missing.append({
+                        "brand": row['brand_name'],
+                        "style": s,
+                        "sales": int(row['sales_qty'])
+                    })
+            return missing
+        except Exception as e:
+            logger.error(f"[DataManager] 스타일 스캔 실패: {e}")
+            return []

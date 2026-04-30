@@ -17,10 +17,11 @@ from config.brand_metadata import get_brand_zoning, get_eness_name
 # ──────────────────────────────────────────────────────
 # 조닝별 아이템별 목표 비중 (inv_weights.item 용)
 # ──────────────────────────────────────────────────────
-_ITEM_CAREER = {"Outer": 0.45, "Top": 0.25, "Bottom": 0.10, "Skirt": 0.05, "Dress": 0.15}
-_ITEM_CASUAL = {"Outer": 0.35, "Top": 0.25, "Bottom": 0.10, "Skirt": 0.15, "Dress": 0.15}
-_ITEM_CHARACTER = {"Outer": 0.25, "Top": 0.15, "Bottom": 0.15, "Skirt": 0.10, "Dress": 0.35}
-_ITEM_SENIOR = {"Outer": 0.30, "Top": 0.15, "Bottom": 0.15, "Skirt": 0.05, "Dress": 0.35}
+_ITEM_CAREER = {"Outer": 0.45, "Top": 0.25, "Dress": 0.15, "Bottom": 0.10}
+_ITEM_CASUAL = {"Outer": 0.35, "Top": 0.25, "Dress": 0.15, "Skirt": 0.15}
+_ITEM_CHARACTER = {"Dress": 0.35, "Outer": 0.25, "Top": 0.15, "Bottom": 0.15}
+_ITEM_SENIOR = {"Dress": 0.35, "Outer": 0.30, "Top": 0.15, "Bottom": 0.15}
+_ITEM_MENS = {"Suits": 0.40, "Shirts": 0.20, "Casual": 0.20, "Knit": 0.10, "Bottom": 0.10}
 
 # ──────────────────────────────────────────────────────
 # 공통: 여성/정상 매장 파라미터
@@ -39,8 +40,8 @@ _WOMEN_NORMAL_BASE = {
     "inv_weights": {
         "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15}, 
         "fresh":  {"new": 0.70},
-        "best":   {"store10": 0.25},
-        "season": {"current": 0.80, "sub": 0.50, "other": 0.30},
+        "best":   {"store10": 0.20},
+        "season": {"current": 0.50, "other": 0.30},
         "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
 
@@ -63,8 +64,8 @@ _WOMEN_OUTLET_BASE = {
     "inv_weights": {
         "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10}, 
         "fresh":  {"new": 0.10, "plan": 0.20},
-        "best":   {"store10": 0.25},
-        "season": {"current": 0.80, "sub": 0.50, "other": 0.30},
+        "best":   {"store10": 0.20},
+        "season": {"current": 0.50, "other": 0.30},
         "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
 
@@ -73,6 +74,82 @@ _WOMEN_OUTLET_BASE = {
     "weight_freshness": 0.15,
     "weight_season":    0.15,
     "weight_best":      0.20,
+    "weight_item":      0.10,
+}
+
+# ──────────────────────────────────────────────────────
+# 신규: 스포츠/정상 매장 파라미터
+# ──────────────────────────────────────────────────────
+_SPORTS_NORMAL_BASE = {
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
+        "fresh":  {"new": 0.70, "plan": 0.10},
+        "best":   {"store10": 0.10},
+        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
+        "item":   {"RunningShoes": 0.45, "CasualShoes": 0.30, "OtherShoes": 0.10, "Top": 0.10, "Bottom": 0.05}
+    },
+    "weight_discount":  0.25,
+    "weight_freshness": 0.25,
+    "weight_season":    0.15,
+    "weight_best":      0.25,
+    "weight_item":      0.10,
+}
+
+# ──────────────────────────────────────────────────────
+# 신규: 스포츠/상설 매장 파라미터
+# ──────────────────────────────────────────────────────
+_SPORTS_OUTLET_BASE = {
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s70": 0.00, "s50": 0.07, "s30": 0.13, "s10": 0.20},
+        "fresh":  {"new": 0.60, "plan": 0.05},
+        "best":   {"store10": 0.08},
+        "season": {"spring": 0.55, "summer": 0.20, "autumn": 0.05, "winter": 0.05},
+        "item":   {"Top": 0.55, "Bottom": 0.25, "RunningShoes": 0.12, "CasualShoes": 0.05, "OtherShoes": 0.03}
+    },
+    "weight_discount":  0.30,
+    "weight_freshness": 0.20,
+    "weight_season":    0.25,
+    "weight_best":      0.15,
+    "weight_item":      0.10,
+}
+
+# ──────────────────────────────────────────────────────
+# 신규: 남성복/정상 매장 파라미터 (스포츠와 가중치 동일 설정)
+# ──────────────────────────────────────────────────────
+_MENS_NORMAL_BASE = {
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
+        "fresh":  {"new": 0.70, "plan": 0.10},
+        "best":   {"store10": 0.10},
+        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
+        "item":   {"RunningShoes": 0.45, "CasualShoes": 0.30, "OtherShoes": 0.10, "Top": 0.10, "Bottom": 0.05}
+    },
+    "weight_discount":  0.25,
+    "weight_freshness": 0.25,
+    "weight_season":    0.15,
+    "weight_best":      0.25,
+    "weight_item":      0.10,
+}
+
+# ──────────────────────────────────────────────────────
+# 신규: 남성복/상설 매장 파라미터 (스포츠와 가중치 동일 설정)
+# ──────────────────────────────────────────────────────
+_MENS_OUTLET_BASE = {
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s70": 0.00, "s50": 0.07, "s30": 0.13, "s10": 0.20},
+        "fresh":  {"new": 0.60, "plan": 0.05},
+        "best":   {"store10": 0.08},
+        "season": {"spring": 0.55, "summer": 0.20, "autumn": 0.05, "winter": 0.05},
+        "item":   {"Top": 0.55, "Bottom": 0.25, "RunningShoes": 0.12, "CasualShoes": 0.05, "OtherShoes": 0.03}
+    },
+    "weight_discount":  0.30,
+    "weight_freshness": 0.20,
+    "weight_season":    0.25,
+    "weight_best":      0.15,
     "weight_item":      0.10,
 }
 
@@ -135,4 +212,26 @@ SCORING_CONFIG = {
     # ── 추가 지점 브랜드
     "여성_상설_리스트": {**_WOMEN_OUTLET_BASE, "brand_name": "리스트", "zoning": "캐주얼", "eness_name": "리스트", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
     "여성_상설_쉬즈미스": {**_WOMEN_OUTLET_BASE, "brand_name": "쉬즈미스", "zoning": "캐릭터", "eness_name": "쉬즈미스", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
+
+    # ── 지오지아
+    "신사_상설_지오지아": {**_MENS_OUTLET_BASE, "brand_name": "지오지아", "zoning": "남성", "eness_name": "지오지아", "inv_weights": {**_MENS_OUTLET_BASE["inv_weights"], "item": _ITEM_MENS}},
+    "신사_상설_지오지아팩토리": {**_MENS_OUTLET_BASE, "brand_name": "지오지아팩토리", "zoning": "남성", "eness_name": "지오지아팩토리", "inv_weights": {**_MENS_OUTLET_BASE["inv_weights"], "item": _ITEM_MENS}},
+
+    # ── 스케쳐스
+    "스포츠_정상_스케쳐스": {**_SPORTS_NORMAL_BASE, "brand_name": "스케쳐스", "zoning": "스포츠", "eness_name": "스케쳐스"},
 }
+
+def get_weights_by_category(category: str, store_type: str) -> dict:
+    """
+    category_group 및 store_type에 따른 기본 가중치/설정 딕셔너리를 반환.
+    브랜드 개별 설정(SCORING_CONFIG)이 없을 때 사용되는 베이스라인 설정입니다.
+    """
+    is_outlet = str(store_type).strip().lower() in ("상설", "outlet")
+    
+    if category == '스포츠':
+        return _SPORTS_OUTLET_BASE if is_outlet else _SPORTS_NORMAL_BASE
+    elif '남성' in category:
+        return _MENS_OUTLET_BASE if is_outlet else _MENS_NORMAL_BASE
+    else:
+        # 향후 아동, 잡화 등이 추가될 때 elif 분기로 확장
+        return _WOMEN_OUTLET_BASE if is_outlet else _WOMEN_NORMAL_BASE

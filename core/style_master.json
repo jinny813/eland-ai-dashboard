@@ -1,1112 +1,2017 @@
 {
   "SWJTSP12020": {
     "item_name": "스웨트셔츠",
-    "style_name": "레터링 스웨트 셔츠"
+    "style_name": "레터링 스웨트 셔츠",
+    "keywords": [
+      "스웨트셔츠"
+    ]
   },
   "SSMSLP32000": {
     "item_name": "팬츠",
-    "style_name": "사계절 슬림 슬랙스"
+    "style_name": "사계절 슬림 슬랙스",
+    "keywords": [
+      "슬림",
+      "팬츠"
+    ]
   },
   "TWEBLP72070": {
     "item_name": "팬츠",
-    "style_name": "벨티드 스트레이트 슬랙스"
+    "style_name": "벨티드 스트레이트 슬랙스",
+    "keywords": [
+      "스트레이트",
+      "팬츠"
+    ]
   },
   "T1BOD052010": {
     "item_name": "원피스",
-    "style_name": "미디 벨티드 원피스"
+    "style_name": "미디 벨티드 원피스",
+    "keywords": [
+      "미디",
+      "원피스"
+    ]
   },
   "SJKPOP52150": {
     "item_name": "원피스",
-    "style_name": "셔츠형 롱 원피스"
+    "style_name": "셔츠형 롱 원피스",
+    "keywords": [
+      "롱",
+      "원피스"
+    ]
   },
   "SSKPOP32020": {
     "item_name": "니트",
-    "style_name": "라운드넥 슬리브 니트"
+    "style_name": "라운드넥 슬리브 니트",
+    "keywords": [
+      "니트"
+    ]
   },
   "SSKPOP32130": {
     "item_name": "니트",
-    "style_name": "시스루 라운드넥 니트"
+    "style_name": "시스루 라운드넥 니트",
+    "keywords": [
+      "니트"
+    ]
   },
   "GS4M1PO901": {
     "item_name": "니트",
-    "style_name": "캡 슬리브 하프넥 풀오버 니트"
+    "style_name": "캡 슬리브 하프넥 풀오버 니트",
+    "keywords": [
+      "니트"
+    ]
   },
   "BN3A1PO07": {
     "item_name": "니트",
-    "style_name": "니트 풀오버"
+    "style_name": "니트 풀오버",
+    "keywords": [
+      "니트"
+    ]
   },
   "BM3A0BL06": {
     "item_name": "블라우스",
-    "style_name": "베이직 블라우스"
+    "style_name": "베이직 블라우스",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "SSMSLP32060": {
     "item_name": "팬츠",
-    "style_name": "슬림핏 슬랙스"
+    "style_name": "슬림핏 슬랙스",
+    "keywords": [
+      "슬림",
+      "팬츠"
+    ]
   },
   "BN3A0OP10": {
     "item_name": "원피스",
-    "style_name": "브이넥 원피스"
+    "style_name": "브이넥 원피스",
+    "keywords": [
+      "원피스"
+    ]
   },
   "BN3A0BL09": {
     "item_name": "블라우스",
-    "style_name": "프릴 블라우스"
+    "style_name": "프릴 블라우스",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "GS3A0OP211": {
     "item_name": "원피스",
-    "style_name": "패턴 원피스"
+    "style_name": "패턴 원피스",
+    "keywords": [
+      "원피스",
+      "패턴"
+    ]
   },
   "GS4A1PO361": {
     "item_name": "니트",
-    "style_name": "하프넥 니트"
+    "style_name": "하프넥 니트",
+    "keywords": [
+      "니트"
+    ]
   },
   "TWWSTQ62070": {
     "item_name": "티셔츠",
-    "style_name": "베이직 티셔츠"
+    "style_name": "베이직 티셔츠",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "BN3A0OP15": {
     "item_name": "원피스",
-    "style_name": "셔츠형 원피스"
+    "style_name": "셔츠형 원피스",
+    "keywords": [
+      "원피스"
+    ]
   },
   "TSKCDQ52010": {
     "item_name": "가디건",
-    "style_name": "라운드넥 가디건"
+    "style_name": "라운드넥 가디건",
+    "keywords": [
+      "가디건"
+    ]
   },
   "TWWSLP72040": {
     "item_name": "팬츠",
-    "style_name": "모던 히든 와이드 팬츠"
+    "style_name": "모던 히든 와이드 팬츠",
+    "keywords": [
+      "와이드",
+      "팬츠"
+    ]
   },
   "TWWSLP72070": {
     "item_name": "팬츠",
-    "style_name": "베이직 원턱 스트레이트 팬츠"
+    "style_name": "베이직 원턱 스트레이트 팬츠",
+    "keywords": [
+      "스트레이트",
+      "팬츠"
+    ]
   },
   "SSKPOP31710": {
     "item_name": "니트",
-    "style_name": "울 혼방 슬리브리스 니트"
+    "style_name": "울 혼방 슬리브리스 니트",
+    "keywords": [
+      "니트"
+    ]
   },
   "GS2A0SK111": {
     "item_name": "스커트",
-    "style_name": "벨티드 백 슬릿 펜슬 스커트"
+    "style_name": "벨티드 백 슬릿 펜슬 스커트",
+    "keywords": [
+      "스커트"
+    ]
   },
   "GR3M0SL901": {
     "item_name": "팬츠",
     "style_name": "모던 슬림핏 부츠컷 팬츠",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "슬림",
+      "팬츠"
+    ]
   },
   "GS4A0OP371": {
     "item_name": "원피스",
-    "style_name": "타이 레이어 재킷 H라인 원피스"
+    "style_name": "타이 레이어 재킷 H라인 원피스",
+    "keywords": [
+      "H라인",
+      "원피스"
+    ]
   },
   "GS4M0BL901": {
     "item_name": "블라우스",
-    "style_name": "셔츠 배색 뷔스티에 블라우스"
+    "style_name": "셔츠 배색 뷔스티에 블라우스",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "GS2M0JK901": {
     "item_name": "자켓",
-    "style_name": "울 블렌드 크롭 트위드 재킷"
+    "style_name": "울 블렌드 크롭 트위드 재킷",
+    "keywords": [
+      "자켓",
+      "크롭",
+      "트위드"
+    ]
   },
   "GS4A3LT361": {
     "item_name": "자켓",
-    "style_name": "오버핏 쓰리버튼 재킷"
+    "style_name": "오버핏 쓰리버튼 재킷",
+    "keywords": [
+      "버튼",
+      "오버핏",
+      "자켓"
+    ]
   },
   "GS3M0BL931": {
     "item_name": "블라우스",
-    "style_name": "레이어 패널 칼라 블라우스"
+    "style_name": "레이어 패널 칼라 블라우스",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "GSRA0SL011": {
     "item_name": "팬츠",
-    "style_name": "에센셜 레큘러핏 슬랙스 팬츠"
+    "style_name": "에센셜 레큘러핏 슬랙스 팬츠",
+    "keywords": [
+      "팬츠"
+    ]
   },
   "CM3A0TC72": {
     "item_name": "코트",
-    "style_name": "포켓 벨티드 트렌치 코트"
+    "style_name": "포켓 벨티드 트렌치 코트",
+    "keywords": [
+      "코트",
+      "포켓"
+    ]
   },
   "CMAA0OP02": {
     "item_name": "원피스",
-    "style_name": "크롭 재킷 셋업 원피스"
+    "style_name": "크롭 재킷 셋업 원피스",
+    "keywords": [
+      "셋업",
+      "원피스",
+      "크롭"
+    ]
   },
   "CN2A0SL70": {
     "item_name": "팬츠",
-    "style_name": "슬림핏 울 블렌드 팬츠슬랙스"
+    "style_name": "슬림핏 울 블렌드 팬츠슬랙스",
+    "keywords": [
+      "슬림",
+      "팬츠"
+    ]
   },
   "BN2A0BL81": {
     "item_name": "블라우스",
-    "style_name": "베이직 블라우스"
+    "style_name": "베이직 블라우스",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "BN3A0JK04": {
     "item_name": "자켓",
-    "style_name": "노카라 트위드 재킷"
+    "style_name": "노카라 트위드 재킷",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "BN3A0BL02": {
     "item_name": "블라우스",
-    "style_name": "타이 넥 블라우스"
+    "style_name": "타이 넥 블라우스",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "SSKCDP31710": {
     "item_name": "가디건",
-    "style_name": "울 혼방 브이넥 가디건"
+    "style_name": "울 혼방 브이넥 가디건",
+    "keywords": [
+      "가디건"
+    ]
   },
   "BADPA2611": {
     "item_name": "팬츠",
-    "style_name": "레더 패치 일자 데님 팬츠"
+    "style_name": "레더 패치 일자 데님 팬츠",
+    "keywords": [
+      "데님",
+      "레더",
+      "팬츠"
+    ]
   },
   "BAJPA3631": {
     "item_name": "점퍼",
-    "style_name": "자카드 블록 후드 점퍼"
+    "style_name": "자카드 블록 후드 점퍼",
+    "keywords": [
+      "점퍼",
+      "후드"
+    ]
   },
   "BAKPA5631": {
     "item_name": "니트",
-    "style_name": "모자 여인 자카드 반팔 니트"
+    "style_name": "모자 여인 자카드 반팔 니트",
+    "keywords": [
+      "니트"
+    ]
   },
   "BAJPA5631": {
     "item_name": "점퍼",
-    "style_name": "백 자수 스트링 후드 점퍼"
+    "style_name": "백 자수 스트링 후드 점퍼",
+    "keywords": [
+      "스트링",
+      "점퍼",
+      "후드"
+    ]
   },
   "BADPA9631": {
     "item_name": "팬츠",
-    "style_name": "포켓 와이드 데님 팬츠"
+    "style_name": "포켓 와이드 데님 팬츠",
+    "keywords": [
+      "데님",
+      "와이드",
+      "팬츠",
+      "포켓"
+    ]
   },
   "BADPA5611": {
     "item_name": "팬츠",
-    "style_name": "세미 배기핏 생지 데님 팬츠"
+    "style_name": "세미 배기핏 생지 데님 팬츠",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "BAJPA1611": {
     "item_name": "점퍼",
-    "style_name": "돛단배 니트 블럭 데님 점퍼"
+    "style_name": "돛단배 니트 블럭 데님 점퍼",
+    "keywords": [
+      "니트",
+      "데님",
+      "점퍼"
+    ]
   },
   "BAJPA6631": {
     "item_name": "점퍼",
-    "style_name": "메쉬 블록 스트링 집업 점퍼"
+    "style_name": "메쉬 블록 스트링 집업 점퍼",
+    "keywords": [
+      "스트링",
+      "점퍼"
+    ]
   },
   "BADPA3611": {
     "item_name": "팬츠",
-    "style_name": "부클 와펜 쉐브론 데님 팬츠"
+    "style_name": "부클 와펜 쉐브론 데님 팬츠",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "BADPA6611": {
     "item_name": "팬츠",
-    "style_name": "코끼리 자수 데님 팬츠"
+    "style_name": "코끼리 자수 데님 팬츠",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "SAJKC4531": {
     "item_name": "자켓",
-    "style_name": "셋업 노카라 벨티드 자켓"
+    "style_name": "셋업 노카라 벨티드 자켓",
+    "keywords": [
+      "셋업",
+      "자켓"
+    ]
   },
   "SACT35461": {
     "item_name": "코트",
-    "style_name": "아르떼 셔츠형 코트"
+    "style_name": "아르떼 셔츠형 코트",
+    "keywords": [
+      "코트"
+    ]
   },
   "SADPC3631": {
     "item_name": "팬츠",
-    "style_name": "사이드 라인 버뮤다 데님 팬츠"
+    "style_name": "사이드 라인 버뮤다 데님 팬츠",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "SATSC4631": {
     "item_name": "티셔츠",
-    "style_name": "하트 레터링 그래픽 반팔 티셔츠"
+    "style_name": "하트 레터링 그래픽 반팔 티셔츠",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "SAWS06511": {
     "item_name": "셔츠",
-    "style_name": "쥬시 크랍 셔츠"
+    "style_name": "쥬시 크랍 셔츠",
+    "keywords": [
+      "셔츠"
+    ]
   },
   "SATS81531": {
     "item_name": "티셔츠",
-    "style_name": "로즈 그래픽 스웨트셔츠"
+    "style_name": "로즈 그래픽 스웨트셔츠",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "SADK31461": {
     "item_name": "자켓",
-    "style_name": "히어로 패딩 패치 데님 자켓"
+    "style_name": "히어로 패딩 패치 데님 자켓",
+    "keywords": [
+      "데님",
+      "자켓",
+      "패딩"
+    ]
   },
   "SAWSF3631": {
     "item_name": "셔츠",
-    "style_name": "시즌 에센셜 셔츠 블라우스"
+    "style_name": "시즌 에센셜 셔츠 블라우스",
+    "keywords": [
+      "셔츠"
+    ]
   },
   "SAKC35531": {
     "item_name": "가디건",
-    "style_name": "라운드넥 니트 가디건"
+    "style_name": "라운드넥 니트 가디건",
+    "keywords": [
+      "가디건",
+      "니트"
+    ]
   },
   "SAKPA1611": {
     "item_name": "팬츠",
-    "style_name": "테이퍼드 슬림 데님 팬츠"
+    "style_name": "테이퍼드 슬림 데님 팬츠",
+    "keywords": [
+      "데님",
+      "슬림",
+      "팬츠"
+    ]
   },
   "BAJPB2631": {
     "item_name": "점퍼",
-    "style_name": "체로키 점퍼"
+    "style_name": "체로키 점퍼",
+    "keywords": [
+      "점퍼"
+    ]
   },
   "BAJPB1631": {
     "item_name": "점퍼",
-    "style_name": "소매 자수 포인트 야상점퍼"
+    "style_name": "소매 자수 포인트 야상점퍼",
+    "keywords": [
+      "점퍼"
+    ]
   },
   "BAJPB5631": {
     "item_name": "점퍼",
-    "style_name": "레이스 쉬폰배색 스포티 점퍼"
+    "style_name": "레이스 쉬폰배색 스포티 점퍼",
+    "keywords": [
+      "레이스",
+      "쉬폰",
+      "점퍼"
+    ]
   },
   "SWWJPP32010": {
     "item_name": "점퍼",
-    "style_name": "하이넥 스트링 집업점퍼"
+    "style_name": "하이넥 스트링 집업점퍼",
+    "keywords": [
+      "스트링",
+      "점퍼"
+    ]
   },
   "SWWSTP32020": {
     "item_name": "셔츠",
-    "style_name": "레귤러 오픈카라셔츠"
+    "style_name": "레귤러 오픈카라셔츠",
+    "keywords": [
+      "레귤러",
+      "셔츠"
+    ]
   },
   "SSKPOP32070": {
     "item_name": "니트",
-    "style_name": "루즈핏 브이넥 니트"
+    "style_name": "루즈핏 브이넥 니트",
+    "keywords": [
+      "니트",
+      "루즈"
+    ]
   },
   "SSMSLP32040": {
     "item_name": "팬츠",
-    "style_name": "세미 부츠컷 와이드 팬츠"
+    "style_name": "세미 부츠컷 와이드 팬츠",
+    "keywords": [
+      "와이드",
+      "팬츠"
+    ]
   },
   "SWWBLP32020": {
     "item_name": "블라우스",
-    "style_name": "소프트 새틴 타이 블라우스"
+    "style_name": "소프트 새틴 타이 블라우스",
+    "keywords": [
+      "블라우스",
+      "새틴"
+    ]
   },
   "SWWBYP12020": {
     "item_name": "코트",
-    "style_name": "벨티드 더블하프트렌치코트"
+    "style_name": "벨티드 더블하프트렌치코트",
+    "keywords": [
+      "코트"
+    ]
   },
   "SWWJKP22110": {
     "item_name": "자켓",
-    "style_name": "포켓 오버핏 자켓"
+    "style_name": "포켓 오버핏 자켓",
+    "keywords": [
+      "오버핏",
+      "자켓",
+      "포켓"
+    ]
   },
   "SWWJKP32030": {
     "item_name": "자켓",
-    "style_name": "테일러드 투 버튼 레더 자켓"
+    "style_name": "테일러드 투 버튼 레더 자켓",
+    "keywords": [
+      "레더",
+      "버튼",
+      "자켓"
+    ]
   },
   "TWWJPP72010": {
     "item_name": "점퍼",
-    "style_name": "레더 카라 블루종 점퍼"
+    "style_name": "레더 카라 블루종 점퍼",
+    "keywords": [
+      "레더",
+      "점퍼"
+    ]
   },
   "TWWJKP72510": {
     "item_name": "자켓",
-    "style_name": "울 라운드넥 크롭 자켓"
+    "style_name": "울 라운드넥 크롭 자켓",
+    "keywords": [
+      "자켓",
+      "크롭"
+    ]
   },
   "TSKVTP82040": {
     "item_name": "니트",
-    "style_name": "울 브이넥 글리터 니트 베스트"
+    "style_name": "울 브이넥 글리터 니트 베스트",
+    "keywords": [
+      "니트"
+    ]
   },
   "BADPC2631": {
     "item_name": "팬츠",
-    "style_name": "다잉 스판 데님팬츠"
+    "style_name": "다잉 스판 데님팬츠",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "A261PWC102": {
     "item_name": "자켓",
     "style_name": "카라 핸드메이드 숏 자켓",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "숏",
+      "자켓"
+    ]
   },
   "A262PWT305": {
     "item_name": "티셔츠",
     "style_name": "자수 밴딩 반팔티",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "밴딩",
+      "티셔츠"
+    ]
   },
   "A254PWS901": {
     "item_name": "스커트",
     "style_name": "턱디테일 벨티드 훌스커트",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "스커트"
+    ]
   },
   "A254MWCA55": {
     "item_name": "코트",
     "style_name": "투포켓 핸드메이드 싱글코트",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "코트",
+      "포켓"
+    ]
   },
   "A261MWP202": {
     "item_name": "팬츠",
     "style_name": "뒤오비 이밴드턱팬츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "팬츠"
+    ]
   },
   "A254PWP905": {
     "item_name": "팬츠",
     "style_name": "세미 와이드 코듀로이 팬츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "와이드",
+      "팬츠"
+    ]
   },
   "A261PWL201": {
     "item_name": "점퍼",
     "style_name": "하이넥 페이크 레더 라이크 점퍼",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "레더",
+      "점퍼"
+    ]
   },
   "A252PWN303": {
     "item_name": "팬츠",
     "style_name": "스트레이트핏 데님팬츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "데님",
+      "스트레이트",
+      "팬츠"
+    ]
   },
   "A252PWT307": {
     "item_name": "티셔츠",
     "style_name": "프린트 반팔티셔츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "A254PWP904": {
     "item_name": "팬츠",
     "style_name": "오비밴딩 턱팬츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "밴딩",
+      "팬츠"
+    ]
   },
   "SAWSF6431": {
     "item_name": "셔츠",
     "style_name": "베이직 루즈핏 셔츠",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "루즈",
+      "셔츠"
+    ]
   },
   "SAPTF3631": {
     "item_name": "팬츠",
     "style_name": "밴딩 슬림핏 팬츠",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "밴딩",
+      "슬림",
+      "팬츠"
+    ]
   },
   "SAJKF1611": {
     "item_name": "자켓",
     "style_name": "라운드넥 트위드 자켓",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "SADPA1611": {
     "item_name": "팬츠",
     "style_name": "워싱 디테일 와이드 데님 팬츠",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "데님",
+      "와이드",
+      "워싱",
+      "팬츠"
+    ]
   },
   "SATSF3631": {
     "item_name": "티셔츠",
     "style_name": "헤이니 포켓 린넨 티셔츠",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "린넨",
+      "티셔츠",
+      "포켓"
+    ]
   },
   "PQ1CL201": {
     "item_name": "티셔츠",
     "style_name": "스트라이프 보트넥 티셔츠",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "PQ1CL702": {
     "item_name": "가디건",
     "style_name": "배색 라운드넥 가디건",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "가디건"
+    ]
   },
   "PR2WS362": {
     "item_name": "스커트",
     "style_name": "트위드 A라인 미니 스커트",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "A라인",
+      "미니",
+      "스커트",
+      "트위드"
+    ]
   },
   "PR2WJ361": {
     "item_name": "자켓",
     "style_name": "벨트옵션 박시핏 싱글 반우라 자켓",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "벨트",
+      "자켓"
+    ]
   },
   "PR4HJ561": {
     "item_name": "자켓",
     "style_name": "트위드 숏 자켓",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "숏",
+      "자켓",
+      "트위드"
+    ]
   },
   "S261K153A": {
     "item_name": "원피스",
     "style_name": "레이스 배색 원피스",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "레이스",
+      "원피스"
+    ]
   },
   "S254K953A": {
     "item_name": "니트",
     "style_name": "진주 가디건 니트",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "니트"
+    ]
   },
   "S261K954A": {
     "item_name": "니트",
     "style_name": "프릴 배색 브이넥 니트",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "니트"
+    ]
   },
   "S261K959A": {
     "item_name": "가디건",
     "style_name": "라인 배색 크롭 가디건",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "가디건",
+      "크롭"
+    ]
   },
   "S261K752A": {
     "item_name": "스커트",
     "style_name": "플라워 패턴 벨티드 스커트",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "스커트",
+      "패턴"
+    ]
   },
   "ME45NRKG5190": {
     "item_name": "가디건",
     "style_name": "알렉시스앤 자가드 브이넥 니트 가디건",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "가디건",
+      "니트"
+    ]
   },
   "ME45NRKO6230": {
     "item_name": "니트",
     "style_name": "알렉시스앤 골지 라운드 니트",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "니트"
+    ]
   },
   "AEM5NSDP2280": {
     "item_name": "팬츠",
     "style_name": "밑단 디테일 와이드 데님 팬츠",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "데님",
+      "와이드",
+      "팬츠"
+    ]
   },
   "AEM5NSTZ2160": {
     "item_name": "팬츠",
     "style_name": "스트레이트핏 생지 데님",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "데님",
+      "스트레이트",
+      "팬츠"
+    ]
   },
   "BGM1OKPO5040": {
     "item_name": "니트",
     "style_name": "알렉시스앤 넥쉬폰 포인트 니트",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "니트",
+      "쉬폰"
+    ]
   },
   "AH4TS5120": {
     "item_name": "티셔츠",
     "style_name": "그래픽 베이직 티셔츠",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "AI3BR5130": {
     "item_name": "블라우스",
     "style_name": "셔츠형 레귤러 블라우스",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "레귤러",
+      "블라우스"
+    ]
   },
   "AK1BR5100": {
     "item_name": "코트",
     "style_name": "디테일꼬마후드집업코트",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "코트",
+      "후드"
+    ]
   },
   "AG4JK3000": {
     "item_name": "자켓",
     "style_name": "더블 코튼 트렌치 자켓",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "자켓",
+      "코튼"
+    ]
   },
   "AJ3LP5900": {
     "item_name": "팬츠",
     "style_name": "세미 배기 린넨 팬츠",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "린넨",
+      "팬츠"
+    ]
   },
   "RMCKF23R98": {
     "item_name": "가디건",
     "style_name": "[올데이가디건] 브이넥 가디건",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "가디건"
+    ]
   },
   "RMJKG12ST1": {
     "item_name": "자켓",
     "style_name": "칼라리스 트위드자켓",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "RMJKF4TR15": {
     "item_name": "자켓",
     "style_name": "테일러드 자켓",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "자켓"
+    ]
   },
   "RMCKF23R99": {
     "item_name": "가디건",
     "style_name": "[올데이가디건] 라운드넥 가디건",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "가디건"
+    ]
   },
   "RMTWG23R12": {
     "item_name": "팬츠",
     "style_name": "[올데이슬랙스] 원턱 와이드 밴딩슬랙스",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "밴딩",
+      "와이드",
+      "팬츠"
+    ]
   },
   "B3H12KVT010": {
-    "item_name": "가디건",
+    "item_name": "베스트",
     "style_name": "메탈사 배색 후드 니트 베스트",
-    "brand": "보니스팍스"
+    "brand": "보니스팍스",
+    "keywords": [
+      "니트",
+      "베스트",
+      "후드"
+    ]
   },
   "B3G22KPO010": {
     "item_name": "니트",
     "style_name": "반오픈 카라 5부 소매 니트",
-    "brand": "보니스팍스"
+    "brand": "보니스팍스",
+    "keywords": [
+      "니트"
+    ]
   },
   "B3H12KPO010": {
     "item_name": "니트",
-    "style_name": "라운드 팔부 소매 니트",
-    "brand": "보니스팍스"
+    "style_name": "라운드 꼬마포켓 7부소매 니트",
+    "brand": "보니스팍스",
+    "keywords": [
+      "7부소매",
+      "니트",
+      "포켓"
+    ]
   },
   "B3H12KPO020": {
     "item_name": "니트",
     "style_name": "반하이넥 배색 스티치 니트",
-    "brand": "보니스팍스"
+    "brand": "보니스팍스",
+    "keywords": [
+      "니트"
+    ]
   },
   "B1H11WBL020": {
     "item_name": "블라우스",
     "style_name": "니트카라 아우터형 블라우스",
-    "brand": "보니스팍스"
+    "brand": "보니스팍스",
+    "keywords": [
+      "니트",
+      "블라우스"
+    ]
   },
   "A241PWU205": {
     "item_name": "점퍼",
     "style_name": "디테일 점퍼",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "점퍼"
+    ]
   },
   "TSJTSQ52030": {
     "item_name": "티셔츠",
     "style_name": "코튼 골지 스트라이프 티셔츠",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "코튼",
+      "티셔츠"
+    ]
   },
   "TWWSKP72060": {
     "item_name": "스커트",
     "style_name": "포멀 슬릿 H라인 스커트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "H라인",
+      "스커트"
+    ]
   },
   "TWWOPP52010": {
     "item_name": "원피스",
     "style_name": "트위드 더블 브레스트 원피스",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "원피스",
+      "트위드"
+    ]
   },
   "JG15BWOP2630": {
     "item_name": "원피스",
     "style_name": "레이스 슬리브리스 튤 드레스",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "레이스",
+      "원피스"
+    ]
   },
   "RMJKG25R99": {
     "item_name": "자켓",
     "style_name": "[올데이자켓] 칼라리스 트위드 반팔자켓",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "RMBLG25NT2": {
     "item_name": "블라우스",
     "style_name": "오픈카라 랩 블라우스",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "RMTJG23YT1": {
     "item_name": "팬츠",
     "style_name": "플레어핏 데님 팬츠",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "데님",
+      "팬츠",
+      "플레어"
+    ]
   },
   "B6M5B49413": {
     "item_name": "블라우스",
     "style_name": "[26SU] 더블카라 볼륨소매 블라우스",
-    "brand": "비씨비지"
+    "brand": "비씨비지",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "265MJ06": {
     "item_name": "자켓",
     "style_name": "루즈핏 롤업 린넨 자켓",
-    "brand": "발렌시아"
+    "brand": "발렌시아",
+    "keywords": [
+      "루즈",
+      "린넨",
+      "자켓"
+    ]
   },
   "BKOAF2551": {
     "item_name": "원피스",
     "style_name": "페이즐리 케이프 원피스",
-    "brand": "베스띠벨리"
+    "brand": "베스띠벨리",
+    "keywords": [
+      "원피스"
+    ]
   },
   "C26B7FJK001": {
     "item_name": "자켓",
     "style_name": "가든 자켓",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "자켓"
+    ]
   },
   "O261T262": {
     "item_name": "블라우스",
     "style_name": "프릴 스트랩 카라 블라우스",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "AH3SL5100": {
     "item_name": "팬츠",
     "style_name": "사이드버튼 팬츠",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "버튼",
+      "팬츠"
+    ]
   },
   "PS7CH301": {
     "item_name": "티셔츠",
     "style_name": "실켓터치 자수포인트 티셔츠",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "RMKAF4VR01": {
     "item_name": "니트",
     "style_name": "올데이니트 울100 반하이넥 스웨터",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "니트"
+    ]
   },
   "RMCKG24R13": {
     "item_name": "가디건",
     "style_name": "스칼럽 배색 카라 가디건",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "가디건"
+    ]
   },
   "RMJKG23S11": {
     "item_name": "자켓",
     "style_name": "라운드넥 트위드 수술자켓",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "RMJKF4TR13": {
     "item_name": "자켓",
     "style_name": "테일러드 트위드 자켓",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "RMTWG23R14": {
     "item_name": "팬츠",
     "style_name": "[올데이슬랙스] 와이드 밴딩 슬랙스",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "밴딩",
+      "와이드",
+      "팬츠"
+    ]
   },
   "SWWBLQ12010": {
     "item_name": "블라우스",
     "style_name": "셔링 브이넥 타이 블라우스",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "블라우스",
+      "셔링"
+    ]
   },
   "GR3A0TCJ11": {
     "item_name": "아우터",
     "style_name": "레더 디테쳐블 칼라 트렌치 코트",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "레더",
+      "아우터"
+    ]
   },
   "GR3M0TC921": {
     "item_name": "아우터",
     "style_name": "트렌치 코트",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "아우터"
+    ]
   },
   "SWWJKQ12710": {
     "item_name": "자켓",
     "style_name": "테일러드 원 버튼 싱글 셋업 자켓",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "버튼",
+      "셋업",
+      "자켓"
+    ]
   },
   "SSKPOQ12540": {
     "item_name": "니트",
     "style_name": "브이넥 루즈핏 니트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트",
+      "루즈"
+    ]
   },
   "SWSSLQ22060": {
     "item_name": "자켓",
     "style_name": "셔츠형 자켓",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "자켓"
+    ]
   },
   "SSDJPP42010": {
     "item_name": "점퍼",
     "style_name": "폭스퍼 후드 벨티드 덕 다운 롱 패딩",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "롱",
+      "점퍼",
+      "패딩",
+      "후드"
+    ]
   },
   "TWUJPO82040": {
     "item_name": "자켓",
     "style_name": "배색 에코 퍼 라운드 자켓",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "자켓"
+    ]
   },
   "RMLWG23R12": {
     "item_name": "티셔츠",
     "style_name": "레이스 시스루 티셔츠",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "레이스",
+      "티셔츠"
+    ]
   },
   "RMJKG12R22": {
     "item_name": "자켓",
     "style_name": "페이크레더 미디자켓",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "레더",
+      "미디",
+      "자켓"
+    ]
   },
   "RMJKG23R11": {
     "item_name": "자켓",
     "style_name": "[올데이자켓] 트위드 자켓",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "RMBLG24R12": {
     "item_name": "블라우스",
     "style_name": "볼륨소매 스퀘어넥 블라우스",
-    "brand": "로엠"
+    "brand": "로엠",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "SSKPOQ12510": {
     "item_name": "니트",
     "style_name": "베이직 라운드넥 니트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트"
+    ]
   },
   "SSKPOQ12040": {
     "item_name": "니트",
     "style_name": "홀가먼트 라운드넥 니트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트"
+    ]
   },
   "SSKCDQ22110": {
     "item_name": "가디건",
     "style_name": "페이크 포켓 브이넥 가디건",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "가디건",
+      "포켓"
+    ]
   },
   "SSKPOQ12050": {
     "item_name": "니트",
     "style_name": "버튼 리브 니트 탑",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트",
+      "버튼"
+    ]
   },
   "SSMSLQ22080": {
     "item_name": "팬츠",
     "style_name": "히든 백 밴딩 와이드 데님 팬츠",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "데님",
+      "밴딩",
+      "와이드",
+      "팬츠"
+    ]
   },
   "SSJTSP32010": {
     "item_name": "티셔츠",
     "style_name": "베이직 하이넥 티셔츠",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "B1H12KPO040": {
     "item_name": "니트",
-    "style_name": "후드넥 5부 포켓 니트",
-    "brand": "보니스팍스"
+    "style_name": "앞중심 변형 무늬 7부 소매 니트",
+    "brand": "보니스팍스",
+    "keywords": [
+      "니트"
+    ]
   },
   "B3G22JTS050": {
     "item_name": "티셔츠",
     "style_name": "시스루 아트웍 자수 반팔 티셔츠",
-    "brand": "보니스팍스"
+    "brand": "보니스팍스",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "B3H22KPO010": {
     "item_name": "니트",
-    "style_name": "카라 반팔 밑단 세로조직 니트",
-    "brand": "보니스팍스"
+    "style_name": "카라 골조직 배색 니트",
+    "brand": "보니스팍스",
+    "keywords": [
+      "니트"
+    ]
   },
   "B3H21WVT010": {
     "item_name": "베스트",
     "style_name": "벌룬핏 후드 베스트",
-    "brand": "보니스팍스"
+    "brand": "보니스팍스",
+    "keywords": [
+      "베스트",
+      "후드"
+    ]
   },
   "B1G22DSL040": {
     "item_name": "팬츠",
-    "style_name": "세미 배기 데님팬츠",
-    "brand": "보니스팍스"
+    "style_name": "세미 배기 데님 팬츠",
+    "brand": "보니스팍스",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "S252K604A": {
     "item_name": "원피스",
     "style_name": "플로럴 자수 반팔 원피스",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "원피스"
+    ]
   },
   "S254K680A": {
     "item_name": "원피스",
     "style_name": "스퀘어넥 핀턱 원피스",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "원피스",
+      "핀턱"
+    ]
   },
   "S254K951A": {
     "item_name": "니트",
     "style_name": "진주 포인트 브이넥 니트",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "니트"
+    ]
   },
   "S261B103A": {
     "item_name": "자켓",
     "style_name": "프릴장식 페이크 레더 자켓",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "레더",
+      "자켓"
+    ]
   },
   "S261B356A": {
     "item_name": "블라우스",
     "style_name": "커프스 배색 리본 블라우스",
-    "brand": "샤틴"
+    "brand": "샤틴",
+    "keywords": [
+      "리본",
+      "블라우스"
+    ]
   },
   "PS7XA3B2": {
     "item_name": "블라우스",
     "style_name": "레이스 핀턱 블라우스",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "레이스",
+      "블라우스",
+      "핀턱"
+    ]
   },
   "PS7XA3B3": {
     "item_name": "블라우스",
     "style_name": "체크패턴 나시세트 셔츠",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "블라우스",
+      "체크",
+      "패턴"
+    ]
   },
   "PS7XA3G3": {
     "item_name": "티셔츠",
     "style_name": "스마일 자수 베이직 티셔츠",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "PR2DP432": {
     "item_name": "팬츠",
     "style_name": "제천벨트 와이드핏 데님 팬츠",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "데님",
+      "벨트",
+      "와이드",
+      "팬츠"
+    ]
   },
   "PS7XA3B0": {
     "item_name": "블라우스",
     "style_name": "시어서커 스트라이프 블라우스",
-    "brand": "플라스틱아일랜드"
+    "brand": "플라스틱아일랜드",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "AH2JK5150": {
     "item_name": "자켓",
     "style_name": "노칼라 린넨 배색 자켓",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "린넨",
+      "자켓"
+    ]
   },
   "AI3SL5200": {
     "item_name": "팬츠",
     "style_name": "빅포켓 밴딩 팬츠",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "밴딩",
+      "팬츠",
+      "포켓"
+    ]
   },
   "AK1BR5300": {
     "item_name": "코트",
     "style_name": "어반 에이라인 싱글 트렌치코트",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "코트"
+    ]
   },
   "AK1BR5310": {
     "item_name": "코트",
     "style_name": "베이직 스텐카라 코트",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "코트"
+    ]
   },
   "AK1SL5120": {
     "item_name": "팬츠",
     "style_name": "뒷밴딩 무드 와이드 팬츠",
-    "brand": "안지크"
+    "brand": "안지크",
+    "keywords": [
+      "밴딩",
+      "와이드",
+      "팬츠"
+    ]
   },
   "DD25NSBP5280": {
     "item_name": "팬츠",
     "style_name": "사이드 핀턱 와이드 팬츠",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "와이드",
+      "팬츠",
+      "핀턱"
+    ]
   },
   "DE1-NSPP0910": {
     "item_name": "팬츠",
     "style_name": "체인 프린트 슬랙스",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "팬츠"
+    ]
   },
   "JD15NSKG5101": {
     "item_name": "가디건",
     "style_name": "데일리 립 니트 가디건",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "가디건",
+      "니트"
+    ]
   },
   "JE3-NSJT0220": {
     "item_name": "자켓",
     "style_name": "스트라이프 블레이저 자켓",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "자켓"
+    ]
   },
   "ME2-NRJT0201": {
     "item_name": "자켓",
     "style_name": "테일러드 버클 자켓",
-    "brand": "제시뉴욕"
+    "brand": "제시뉴욕",
+    "keywords": [
+      "자켓"
+    ]
   },
   "C26D1FPT009": {
     "item_name": "팬츠",
     "style_name": "B스판 코튼 일자 면바지",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "코튼",
+      "팬츠"
+    ]
   },
   "C26C3FFP008": {
     "item_name": "팬츠",
     "style_name": "트레드 민무늬 조거 팬츠",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "레드",
+      "팬츠"
+    ]
   },
   "C26D6FJK003": {
     "item_name": "자켓",
     "style_name": "심플 포켓 면 자켓",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "자켓",
+      "포켓"
+    ]
   },
   "C24J2FPT001": {
     "item_name": "팬츠",
     "style_name": "코듀로이 투버튼 배기 팬츠",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "버튼",
+      "팬츠"
+    ]
   },
   "C26B3FKT001": {
     "item_name": "니트",
     "style_name": "스카치 배색 라운드 니트",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "니트"
+    ]
   },
   "C26D2FPT001": {
     "item_name": "팬츠",
     "style_name": "베이직 코튼 일자 팬츠",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "코튼",
+      "팬츠"
+    ]
   },
   "C26C1FVE011": {
     "item_name": "베스트",
     "style_name": "애플 자수 니트 조끼",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "니트",
+      "베스트"
+    ]
   },
   "C26D1FNB003": {
     "item_name": "셔츠",
     "style_name": "뉴블랑 루즈핏 남방",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "루즈",
+      "셔츠"
+    ]
   },
   "C23K2FPT001": {
     "item_name": "팬츠",
     "style_name": "앞포켓 골덴 배기 팬츠",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "팬츠",
+      "포켓"
+    ]
   },
   "C26C1FKT024": {
     "item_name": "니트",
     "style_name": "하찌 성형 브이넥 크롭 니트",
-    "brand": "에잇컨셉"
+    "brand": "에잇컨셉",
+    "keywords": [
+      "니트",
+      "크롭"
+    ]
   },
   "A262PWT302": {
     "item_name": "티셔츠",
     "style_name": "후로피 나염 베이직 반팔티",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "A262PWT301": {
     "item_name": "티셔츠",
     "style_name": "자수 베이직 티셔츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "A262PWJ304": {
     "item_name": "자켓",
     "style_name": "투포켓 트위드 자켓",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "자켓",
+      "트위드",
+      "포켓"
+    ]
   },
   "A262PWN301": {
     "item_name": "팬츠",
     "style_name": "일자핏 데님팬츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "A262PWP304": {
     "item_name": "팬츠",
     "style_name": "투턱 코튼팬츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "코튼",
+      "팬츠"
+    ]
   },
   "A262MWP302": {
     "item_name": "팬츠",
     "style_name": "일자핏 셋업 팬츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "셋업",
+      "팬츠"
+    ]
   },
   "A261PWT204": {
     "item_name": "티셔츠",
     "style_name": "후로피 반팔티",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "A262PWJ301": {
     "item_name": "자켓",
     "style_name": "원버튼 크롭 자켓",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "버튼",
+      "자켓",
+      "크롭"
+    ]
   },
   "A262PWT303": {
     "item_name": "티셔츠",
     "style_name": "스트라이프 프린트 티셔츠",
-    "brand": "나이스클랍"
+    "brand": "나이스클랍",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "TWWJKQ62010": {
     "item_name": "자켓",
     "style_name": "린넨 싱글 원버튼 자켓",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "린넨",
+      "버튼",
+      "자켓"
+    ]
   },
   "TWWOPO62210": {
     "item_name": "원피스",
     "style_name": "코튼 컷 아웃 백 원피스",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "원피스",
+      "코튼"
+    ]
   },
   "TWWSKQ62070": {
     "item_name": "스커트",
     "style_name": "코튼 밴딩 플레어 스커트",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "밴딩",
+      "스커트",
+      "코튼",
+      "플레어"
+    ]
   },
   "TWWBLO60740": {
     "item_name": "블라우스",
     "style_name": "트위드 슬리브리스 크롭 블라우스",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "블라우스",
+      "크롭",
+      "트위드"
+    ]
   },
   "TWSSLO80030": {
     "item_name": "팬츠",
     "style_name": "노턱 와이드 셋업 팬츠",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "셋업",
+      "와이드",
+      "팬츠"
+    ]
   },
   "TWUJPO82010": {
     "item_name": "점퍼",
     "style_name": "시어링 레더 배색 점퍼",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "레더",
+      "점퍼"
+    ]
   },
   "TWWJPQ62030": {
     "item_name": "점퍼",
     "style_name": "하이넥 후드 오버핏 크롭 점퍼",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "오버핏",
+      "점퍼",
+      "크롭",
+      "후드"
+    ]
   },
   "TWWOPO72020": {
     "item_name": "원피스",
     "style_name": "허리 스트링 오픈 칼라 원피스",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "스트링",
+      "원피스"
+    ]
   },
   "TSKPOQ62140": {
     "item_name": "니트",
     "style_name": "부클 스트라이프 라운드넥 니트",
-    "brand": "리스트"
+    "brand": "리스트",
+    "keywords": [
+      "니트"
+    ]
   },
   "GP4A0OP811": {
     "item_name": "원피스",
     "style_name": "브레이드 패치 포켓 원피스",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "원피스",
+      "포켓"
+    ]
   },
   "GP4A0OP331": {
     "item_name": "원피스",
     "style_name": "벨티드 플리츠 원피스+재킷 세트",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "원피스",
+      "플리츠"
+    ]
   },
   "GP3A0JKJ41": {
     "item_name": "자켓",
     "style_name": "롤업 슬리브 트위드 재킷",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "GS3M0TC911": {
     "item_name": "아우터",
     "style_name": "플랩 더블 하프 트렌치 코트",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "아우터"
+    ]
   },
   "GP3A0OP111": {
     "item_name": "원피스",
     "style_name": "샤 레이어드 재킷 원피스",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "원피스"
+    ]
   },
   "GR2A0OP251": {
     "item_name": "원피스",
     "style_name": "배색 뷔스티에 A라인 원피스",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "A라인",
+      "원피스"
+    ]
   },
   "GP4A0SLR51": {
     "item_name": "팬츠",
     "style_name": "롤업 일자핏 데님 팬츠",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "데님",
+      "팬츠"
+    ]
   },
   "GSRA0BL071": {
     "item_name": "블라우스",
     "style_name": "시스루 건플랩 타이넥 블라우스",
-    "brand": "JJ지고트"
+    "brand": "JJ지고트",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "SWWBLQ12050": {
     "item_name": "블라우스",
     "style_name": "셔링 브이넥 블라우스",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "블라우스",
+      "셔링"
+    ]
   },
   "SSKPOQ12010": {
     "item_name": "니트",
     "style_name": "배색 스트라이프 니트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트"
+    ]
   },
   "SSKPOQ22230": {
     "item_name": "니트",
     "style_name": "부클 라운드넥 하프 슬리브 니트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트"
+    ]
   },
   "SSKCDQ12030": {
     "item_name": "가디건",
     "style_name": "클래식 버튼 니트 가디건",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "가디건",
+      "니트",
+      "버튼"
+    ]
   },
   "SSKPOQ12530": {
     "item_name": "니트",
     "style_name": "모크넥 골지 하프 니트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트"
+    ]
   },
   "SSKPOP32080": {
     "item_name": "니트",
     "style_name": "베이직 라운드넥 니트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "니트"
+    ]
   },
   "SWHCTP42030": {
     "item_name": "코트",
     "style_name": "투버튼 테일러드 코트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "버튼",
+      "코트"
+    ]
   },
   "SWSJKQ22010": {
     "item_name": "자켓",
     "style_name": "피크드 라벨 싱글 셋업 자켓",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "셋업",
+      "자켓"
+    ]
   },
   "SWWBLQ22010": {
     "item_name": "블라우스",
     "style_name": "글로우 하프 슬리브 블라우스",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "블라우스"
+    ]
   },
   "SWHCTP42180": {
     "item_name": "코트",
     "style_name": "울 혼방 싱글 코트",
-    "brand": "쉬즈미스"
+    "brand": "쉬즈미스",
+    "keywords": [
+      "코트"
+    ]
   },
   "BATSA4611": {
     "item_name": "티셔츠",
     "style_name": "레터링 루즈핏 티셔츠",
-    "brand": "베네통"
+    "brand": "베네통",
+    "keywords": [
+      "루즈",
+      "티셔츠"
+    ]
   },
   "BAJPB4611": {
     "item_name": "점퍼",
     "style_name": "그린비 후드 점퍼",
-    "brand": "베네통"
+    "brand": "베네통",
+    "keywords": [
+      "그린",
+      "점퍼",
+      "후드"
+    ]
   },
   "BAKPA3611": {
     "item_name": "니트",
     "style_name": "자수 커프스 루즈핏 니트",
-    "brand": "베네통"
+    "brand": "베네통",
+    "keywords": [
+      "니트",
+      "루즈"
+    ]
   },
   "BAJPB3611": {
     "item_name": "점퍼",
     "style_name": "라컨 니트 배색 점퍼",
-    "brand": "베네통"
+    "brand": "베네통",
+    "keywords": [
+      "니트",
+      "점퍼"
+    ]
   },
   "BATSA3611": {
     "item_name": "티셔츠",
     "style_name": "오퍼드 티셔츠",
-    "brand": "베네통"
+    "brand": "베네통",
+    "keywords": [
+      "티셔츠"
+    ]
   },
   "BACTA2611": {
     "item_name": "코트",
     "style_name": "백 벨트포인트 트렌치 코트",
-    "brand": "베네통"
+    "brand": "베네통",
+    "keywords": [
+      "벨트",
+      "코트"
+    ]
   },
   "SAWSF2611": {
     "item_name": "셔츠",
     "style_name": "백 카라 포인트 셔츠",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "셔츠"
+    ]
   },
   "106NM103Y-36": {
     "item_name": "니트",
     "style_name": "베이직 라운드 니트",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "니트"
+    ]
   },
   "SAJK06311": {
     "item_name": "자켓",
     "style_name": "캔디 트위드 자켓",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "자켓",
+      "트위드"
+    ]
   },
   "SAJK34331": {
     "item_name": "자켓",
     "style_name": "실비아 스퀘어넥 자켓",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "자켓"
+    ]
   },
   "SAJKC1631": {
     "item_name": "자켓",
     "style_name": "소매 포인트 싱글 자켓",
-    "brand": "시슬리"
+    "brand": "시슬리",
+    "keywords": [
+      "자켓"
+    ]
   }
 }

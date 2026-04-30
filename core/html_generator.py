@@ -1,8 +1,10 @@
 import os
 import json
+import sqlite3
 import pandas as pd
 from datetime import datetime, timedelta
 from core.scoring_logic import AssortmentScorer, _is_outlet
+from core.analyzer import ActionAnalyzer
 from config.scoring_config import SCORING_CONFIG
 
 # ── [v8.0] 다중 팔레트 기반 동적 색상 유틸리티
@@ -62,7 +64,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     # 1. 아이템 점수 세부
     scorer = AssortmentScorer(config)
     df['item_group'] = df['item_code'].apply(scorer._get_item_group) if 'item_code' in df.columns else 'Others'
+    
+    # [v130.0] 카테고리별 레이블 맵 동적 생성
     item_map = {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트', 'Dress':'원피스'}
+    if 'Suits' in inv_w.get('item', {}):
+        item_map = {'Suits':'정장', 'Shirts':'셔츠', 'Casual':'캐주얼', 'Knit':'니트', 'Bottom':'하의'}
+    
     item_weights = inv_w.get('item', {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10})
     item_segs = []
     for i, (eng, kor) in enumerate(item_map.items()):
@@ -93,18 +100,22 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     # 2. 할인율 세부
     df['_dis_rate'] = df['discount_rate'].apply(AssortmentScorer._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
-    if outlet:
-        # 상설: 실시간 할인율 필드 활용
-        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), 0.10), 
-                   ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), 0.20),
-                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), 0.30), 
-                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), 0.10)]
+    category_group = str(df['category_group'].iloc[0]) if 'category_group' in df.columns else ""
+    is_sports = "스포츠" in category_group
+    dis_inv = inv_w.get('dis', {})
+
+    if outlet or is_sports:
+        # 상설 또는 스포츠: 실시간 할인율 필드 활용
+        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)), 
+                   ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
+                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)), 
+                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10))]
     else:
         # 정상: 연차(year) 기준 매핑 — 70%+(4년+), 50%+(3년), 30%+(2년), 1-30%(1년), 정상가(0년)
-        dis_cfg = [('d70', '70% 이상', (df['_age']>=4), 0.00), 
-                   ('d50', '50~70% 미만', (df['_age']==3), 0.05),
-                   ('d30', '30~50% 미만', (df['_age']==2), 0.10), 
-                   ('d10', '1~30% 미만', (df['_age']==1), 0.15),
+        dis_cfg = [('d70', '70% 이상', (df['_age']>=4), dis_inv.get('s70', 0.00)), 
+                   ('d50', '50~70% 미만', (df['_age']==3), dis_inv.get('s50', 0.05)),
+                   ('d30', '30~50% 미만', (df['_age']==2), dis_inv.get('s30', 0.10)), 
+                   ('d10', '1~30% 미만', (df['_age']==1), dis_inv.get('s10', 0.15)),
                    ('d0',  '정상가 (신규)', (df['_age']==0), 0.00)]
     
     dis_segs = []
@@ -189,6 +200,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         })
 
     # 5. BEST 세부
+    # [v128.0] scoring_logic.py와 동일하게 config의 inv_weights 참조 (하드코딩 0.25 제거)
     best_styles = []
     if 'sales_qty' in df.columns:
         sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
@@ -197,12 +209,15 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     
     ref_best = _get_stock_ref_gen(df[df['style_code'].isin(best_styles)], outlet)
     best_amt = ref_best['_amt'].sum()
-    tgt_best = target_total * 0.25
+    # scoring_logic과 동일한 비율 사용 (상설: 0.20, 정상: config 기본값)
+    best_ratio = inv_w.get('best', {}).get('store10', 0.25)
+    tgt_best = target_total * best_ratio
     best_pct = (best_amt / tgt_best * 100) if tgt_best > 0 else 0
     best_segs = [{
         "key": "best", "l": "판매 BEST 10", "valM": round(best_amt/1_000_000, 1), "qty": int(ref_best['_qty'].sum()),
-        "c": "#8B5CF6", "weight": 25, "pct": min(100.0, round(best_pct, 1)), "targetM": round(tgt_best/1_000_000, 1),
-        "mix_pct": round(best_amt/total_amt*100, 1), "opt_pct": 25
+        "c": "#8B5CF6", "weight": int(best_ratio * 100), "pct": min(100.0, round(best_pct, 1)),
+        "targetM": round(tgt_best/1_000_000, 1),
+        "mix_pct": round(best_amt/total_amt*100, 1), "opt_pct": int(best_ratio * 100)
     }]
 
     return {
@@ -214,16 +229,28 @@ def _build_bp_detail(config: dict, bp_df=None) -> dict:
     if bp_df is not None and not bp_df.empty: return _build_detail(bp_df, config)
     return { "item":{"segs":[]}, "dis":{"segs":[]}, "fresh":{"segs":[]}, "best":{"segs":[]}, "season":{"segs":[]} }
 
-def _load_style_master():
-    """style_master.json 로드 유틸리티"""
+def _get_product_info(style_codes: list) -> dict:
+    """DB에서 스타일 정보를 딕셔너리 형태로 일괄 로드"""
+    if not style_codes: return {}
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
     try:
-        path = os.path.join(os.path.dirname(__file__), "style_master.json")
-        if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
+        conn = sqlite3.connect(db_path)
+        codes_str = "', '".join(style_codes)
+        query = f"SELECT * FROM products WHERE style_code IN ('{codes_str}')"
+        df_p = pd.read_sql(query, conn)
+        conn.close()
+        
+        res = {}
+        for _, row in df_p.iterrows():
+            res[row['style_code']] = {
+                "item_name": row['category'],
+                "style_name": row['product_name'],
+                "keywords": row['keywords'].split(", ") if row['keywords'] else [],
+                "normal_price": row.get('normal_price', 0)
+            }
+        return res
     except:
-        pass
-    return {}
+        return {}
 
 def _build_best_items(df) -> dict:
     if df is None or df.empty or "sales_qty" not in df.columns: return {"store":[], "nc":[]}
@@ -236,31 +263,64 @@ def _build_best_items(df) -> dict:
     ref_df = _get_stock_ref_gen(df[df['style_code'].isin(best_styles)], outlet)
     
     res = []
-    # 마스터 데이터 로드
-    master = _load_style_master()
+    # DB에서 명칭 정보 로드
+    p_map = _get_product_info(best_styles)
     
     for s in best_styles:
         sub = ref_df[ref_df['style_code'] == s]
         if sub.empty: continue
         row = sub.iloc[0]
-        
         # 명칭 보완 로직
         raw_item_name = str(row.get('item_name','—'))
         raw_style_name = str(row.get('style_name','—'))
         
-        if (raw_item_name == '—' or not raw_item_name) and s in master:
-            raw_item_name = master[s].get('item_name', '—')
-            
-        if (raw_style_name == '—' or not raw_style_name) and s in master:
-            raw_style_name = master[s].get('style_name', '—')
+        if s in p_map:
+            raw_item_name = p_map[s].get('item_name') or raw_item_name
+            raw_style_name = p_map[s].get('style_name') or raw_style_name
+
+        # [v131.0] 단가 보완 로직 강화:
+        # 1. DB 마스터 정보(p_map)에 유효 단가가 있는지 우선 확인
+        db_price = p_map.get(s, {}).get('normal_price', 0)
+        
+        # 2. 해당 스타일의 전체 데이터(df)에서 0보다 큰 유효 단가가 있는지 검색
+        style_all = df[df['style_code'] == s]
+        valid_prices = style_all['normal_price'].apply(_safe_float)
+        valid_prices = valid_prices[valid_prices > 0]
+        
+        if db_price and db_price > 0:
+            raw_price = db_price
+        elif not valid_prices.empty:
+            raw_price = valid_prices.iloc[0]
+        else:
+            # 2. 단가 정보가 전혀 없으면 재고액/재고수량으로 역산
+            s_amt = style_all['stock_amt'].apply(_safe_float).sum()
+            s_qty = style_all['stock_qty'].apply(_safe_float).sum()
+            if s_qty > 0:
+                raw_price = s_amt / s_qty
+            else:
+                # 3. 재고도 없으면 판매액/판매수량으로 역산 (BEST 아이템이므로 판매 데이터는 존재함)
+                sales_amt_sum = style_all['sales_amt'].apply(_safe_float).sum()
+                sales_qty_sum = style_all['sales_qty'].apply(_safe_float).sum()
+                if sales_qty_sum > 0:
+                    raw_price = sales_amt_sum / sales_qty_sum
+                else:
+                    raw_price = 0
 
         res.append({
-            "rank": len(res)+1, "item_name": raw_item_name, "style_code": str(s),
-            "style_name": raw_style_name, "price": int(_safe_float(row.get('normal_price',0))),
+            "rank": len(res)+1, "item_name": str(raw_item_name), "style_code": str(s),
+            "style_name": str(raw_style_name), "price": int(raw_price),
             "sales": int(df[df['style_code']==s]['sales_qty'].apply(_safe_float).sum()),
             "valWon": int(sub['stock_amt'].apply(_safe_float).sum()), "qty": int(sub['stock_qty'].apply(_safe_float).sum())
         })
     return {"store": res, "nc": res}
+
+def _build_action_plan(b_df: pd.DataFrame, bp_brand_df: pd.DataFrame = None) -> dict:
+    """
+    [v200.0] 분석 엔진 분리: core/analyzer.py의 ActionAnalyzer에 분석 위임
+    """
+    analyzer = ActionAnalyzer()
+    return analyzer.get_action_recommendations(b_df, bp_brand_df)
+
 
 def render_dashboard_html(df) -> str:
     path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui", "dashboard_template.html")
