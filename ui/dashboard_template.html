@@ -1694,9 +1694,8 @@
             </div>
             <div class="kpi-grid" id="kpiGrid"></div>
           </div>
-          <!-- [ACTION GUIDE] 층장 액션 가이드 패널 (5개 지표 카드 위에 위치) -->
-          <div id="actionPanel" style="margin-top:-10px; margin-bottom:20px;"></div>
           <div class="metrics-4-grid" id="detailGrid"></div>
+          <div id="actionPanel" style="margin-top:24px; margin-bottom:24px;"></div>
 
           <!-- BEST 10 품번 기반 판매 순위 -->
           <div style="margin-top:24px;">
@@ -2440,7 +2439,7 @@
 
       document.getElementById('kpiGrid').style.display = 'block'; 
       document.getElementById('kpiGrid').innerHTML = `
-    <div style="display: grid; grid-template-columns: 43fr 57fr; gap: 20px; width: 100%;">
+    <div style="display: grid; grid-template-columns: 3fr 7fr; gap: 20px; width: 100%;">
       <!-- [좌측 섹션] 매출현황 -->
       <div style="background: #F8FAFF; border: 1.5px solid #E0E7FF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:0px;">
@@ -2853,9 +2852,9 @@
               <div class="action-panel-title" style="margin-bottom:0; font-size:16px; font-weight:800; color:#1e293b;">🎯 층장 액션 가이드</div>
               <div class="action-panel-badge" style="margin-left:12px; background:#EEF2FF; color:#4338CA; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:800;">자사 판매 데이터 기반 정밀 진단</div>
             </div>
-            <div class="toggle-icon" style="font-size:12px; font-weight:800; color:#475569; background:#fff; padding:6px 12px; border-radius:20px; border:1px solid #E2E8F0; transition:all 0.2s;">▼ 열기</div>
+            <div class="toggle-icon" style="font-size:12px; font-weight:800; color:#475569; background:#fff; padding:6px 12px; border-radius:20px; border:1px solid #E2E8F0; transition:all 0.2s;">▲ 닫기</div>
           </div>
-          <div class="action-panel" style="display: none; padding: 24px; border-top: 1px solid #E2E8F0; display: none; gap: 24px;">
+          <div class="action-panel" style="display: grid; padding: 24px; border-top: 1px solid #E2E8F0; gap: 24px;">
             <!-- 추가 확보 필요 -->
             <div class="action-col secure">
               <div class="action-col-header" style="margin-bottom:20px;">
