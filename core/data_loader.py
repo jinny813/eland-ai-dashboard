@@ -301,6 +301,10 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                     row = scored.iloc[0]
                     cur_sales_sum = b_df['brand_month_sales'].iloc[0] if 'brand_month_sales' in b_df.columns else 0.0
 
+                    # [v3.3] 성장세 계산 로직 강화: YoY 우선, 없으면 MoM(PREV_MONTH_SALES) 참조
+                    base_sales = PREV_YEAR_SALES.get(store, {}).get(b_name) or PREV_MONTH_SALES.get(store, {}).get(b_name)
+                    g_pct = ((cur_sales_sum - base_sales) / base_sales * 100) if (base_sales and base_sales > 0) else 0.0
+
                     brands_list.append({
                         "name": b_name, "store": store, "category": b_cat,
                         "type": "outlet" if _is_outlet_type(b_type) else "normal", "type_label": b_type,
@@ -318,7 +322,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "sQ": int(stock_qty),
                         "sales_amt": cur_sales_sum / 1_000_000,
                         "prev_sales": prev_benchmark_sales / 1_000_000,
-                        "growth_pct": ((cur_sales_sum - PREV_YEAR_SALES.get(store, {}).get(b_name, cur_sales_sum)) / PREV_YEAR_SALES.get(store, {}).get(b_name, cur_sales_sum) * 100) if PREV_YEAR_SALES.get(store, {}).get(b_name, 0) > 0 else 0.0,
+                        "growth_pct": float(g_pct),
                         "area": get_area(store, b_name),
                         "month": diag_month, "data_month": b_data_month
                     })

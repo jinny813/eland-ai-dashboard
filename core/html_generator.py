@@ -1,11 +1,9 @@
 import os
-import json
 import sqlite3
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from core.scoring_logic import AssortmentScorer, _is_outlet
 from core.analyzer import ActionAnalyzer
-from config.scoring_config import SCORING_CONFIG
 
 # ── [v8.0] 다중 팔레트 기반 동적 색상 유틸리티
 def _get_dynamic_color(pct: float, p_type: str = "default") -> str:
@@ -61,16 +59,48 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     target_total = tM * 2.0  # 목표 재고액 (200%)
     inv_w = config.get('inv_weights', {})
 
-    # 1. 아이템 점수 세부
+    # 1. 아이템 점수 세부 (조닝별 특화 로직 반영)
     scorer = AssortmentScorer(config)
-    df['item_group'] = df['item_code'].apply(scorer._get_item_group) if 'item_code' in df.columns else 'Others'
+    zoning = config.get('zoning', '여성')
+
+    # [v135.0] 스마트 아이템 그룹핑 (scoring_logic과 동일하게 동기화)
+    def _get_group_smart(row):
+        # item_code 우선, 비어있으면 style_code fallback
+        ic = str(row.get('item_code', '')).strip()
+        code = ic if ic and ic not in ('nan', '0') else str(row.get('style_code', '')).strip()
+        group = scorer._get_item_group(code)
+        
+        is_sports = (zoning == '스포츠')
+        if is_sports and group in ['Top', 'Bottom', 'Others']:
+            name = str(row.get('style_name', row.get('item_name', ''))).strip()
+            cat = str(row.get('category_group', '')).strip()
+            full_text = (name + cat).upper()
+            
+            # 신발류 키워드 감지 (스포츠 브랜드 특화)
+            if any(k in full_text for k in ['러닝', 'RUNNING', '맥스', 'MAX', '쿠셔닝', '퍼포먼스', '신발', '슈즈', '운동화', 'SHOES']):
+                return 'RunningShoes'
+            if any(k in full_text for k in ['워킹', 'WALKING', '고워크', 'GOWALK', '슬립온', '캐주얼', '라이프']):
+                return 'CasualShoes'
+            if any(k in full_text for k in ['스니커즈', 'SNEAKERS', '샌들', 'SANDAL', '슬리퍼']):
+                return 'OtherShoes'
+        return group
+
+    df['item_group'] = df.apply(_get_group_smart, axis=1)
     
-    # [v130.0] 카테고리별 레이블 맵 동적 생성
-    item_map = {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트', 'Dress':'원피스'}
-    if 'Suits' in inv_w.get('item', {}):
-        item_map = {'Suits':'정장', 'Shirts':'셔츠', 'Casual':'캐주얼', 'Knit':'니트', 'Bottom':'하의'}
-    
+    # [v136.0] 조닝별 레이블 맵 정의
+    zoning_map = {
+        '스포츠': {'RunningShoes':'러닝화', 'CasualShoes':'워킹화', 'OtherShoes':'기타신발', 'Top':'상의', 'Bottom':'하의'},
+        '남성':   {'Suits':'정장', 'Shirts':'셔츠', 'Casual':'캐주얼', 'Knit':'니트', 'Bottom':'하의'},
+        '아동':   {'아우터':'아우터', '상의':'상의', '하의':'하의', '원피스':'원피스', '세트':'세트'},
+        '캐릭터': {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
+        '커리어': {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Bottom':'하의'},
+        '시니어': {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
+        '캐주얼': {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Skirt':'스커트'},
+        '일반':   {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트', 'Dress':'원피스'}
+    }
+    item_map = zoning_map.get(zoning, zoning_map['일반'])
     item_weights = inv_w.get('item', {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10})
+    
     item_segs = []
     for i, (eng, kor) in enumerate(item_map.items()):
         ref = _get_stock_ref_gen(df[df['item_group'] == eng], outlet)
@@ -81,7 +111,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         item_segs.append({
             "key": eng, "l": kor, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
             "c": ITEM_COLORS[i % len(ITEM_COLORS)], "weight": int(target_ratio*100), "pct": min(100.0, round(pct, 1)),
-            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(target_ratio*100)
+            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(target_ratio*100)
         })
 
     # [v8.7] 연차(Age) 계산: 기준 연도 정규화 (자릿수 보정)
@@ -155,8 +185,6 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     month = datetime.now().month
     # [v8.8] 새로운 계절 구분: 봄(1,2,3), 여름(4,5,6), 가을(7,8,9), 겨울(10,11,12)
     # 1-6월: SS 시즌, 7-12월: FW 시즌
-    is_ss = 1 <= month <= 6
-    
     # 계절 정의 및 코드 매핑
     season_map = [
         {'key': 'spring', 'l': '봄 (SS)',  'codes': ['봄', '1', '9']},
@@ -322,6 +350,6 @@ def _build_action_plan(b_df: pd.DataFrame, bp_brand_df: pd.DataFrame = None) -> 
     return analyzer.get_action_recommendations(b_df, bp_brand_df)
 
 
-def render_dashboard_html(df) -> str:
+def render_dashboard_html(_df=None) -> str:
     path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui", "dashboard_template.html")
     with open(path, "r", encoding="utf-8") as f: return f.read()

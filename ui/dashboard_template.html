@@ -461,6 +461,15 @@
       margin-bottom: 6px;
     }
 
+    .brand-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 500;
+    }
+
     .p2-header {
       display: flex;
       justify-content: space-between;
@@ -511,8 +520,7 @@
       border: 1px solid rgba(0, 0, 0, 0.1);
       padding: 18px;
       border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
-      z-index: 1000;
+      z-index: 999999;
       color: #1e293b;
       text-align: left;
       margin-left: 20px;
@@ -2391,48 +2399,28 @@
     </div>` : '';
 
       // KPI 4종 카드 (원 단위) — 유일한 dStore/d/typeLabel 선언 지점
+      // [v3.2] 방어적 코드: 데이터 누락 시 기본 객체 할당하여 렌더링 중단 방지
       const dStore = DETAIL[st] || {};
       const dBrand = dStore[b.name] || {};
       const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
-      const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
-      
-      // [v104.0] 매장 평수 및 효율 지표 추가
-      const area = b.area || 0.0;
-      const salesAmt = b.sales_amt || 0.0;
-      const dataMonthStr = b.data_month || "3월"; // 데이터가 입력된 월
+      const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {
+        item: { segs: [] }, dis: { segs: [] }, fresh: { segs: [] }, best: { segs: [] }, season: { segs: [] }
+      };
+
+      const area = b.area || 0;
+      const salesAmt = b.sales_amt || 0;
+      const dataMonthStr = b.data_month || "3월";
       const days = dataMonthStr.includes('3월') ? 31 : (dataMonthStr.includes('2월') ? 28 : (dataMonthStr.includes('4월') || dataMonthStr.includes('6월') || dataMonthStr.includes('9월') || dataMonthStr.includes('11월') ? 30 : 31));
       const val = area > 0 ? (salesAmt * 1000000 / days / area) : 0;
       
-      // [v104.2] 다음 달 목표 매출 라벨 계산
-      function getNextMonthLabel(mStr) {
-        const m = mStr.match(/(\d+)월/);
-        if (m) {
-          let next = parseInt(m[1]) + 1;
-          if (next > 12) next = 1;
-          return next + "월";
-        }
-        return "4월"; //Fallback
-      }
-      const targetMonthLabel = getNextMonthLabel(dataMonthStr);
-
-      // [v104.8] 일평매출 색상 및 배지 로직 (재고 현황 색상과 동기화)
-      const EFF_RED = '#B91C1C';
-      const EFF_GREEN = '#065F46';
-      const EFF_BLACK = '#111827';
-      
-      const efficiencyColor = val < 40000 ? EFF_RED : (val >= 100000 ? EFF_GREEN : EFF_BLACK);
+      const efficiencyColor = val < 40000 ? '#B91C1C' : (val >= 100000 ? '#065F46' : '#111827');
       const efficiencyBadge = val < 40000 ? '저조' : (val >= 100000 ? '양호' : '평균수준');
 
-      // [v74.3] 세그먼트 합산이 아닌 서버에서 제공하는 중복 제거된 유일 수량 사용
       const totalQty = d.total_qty_unique || b.sQ || 0;
 
-      // [v140.0] 매출 및 성장률 계산 (전월 실적 데이터 활용)
-      const salesAmtWon = (b.sales_amt || 0) * 1000000;
+      const salesAmtWon = salesAmt * 1000000;
       const prevSalesWon = (b.prev_sales || 0) * 1000000;
-      let growthPct = 0;
-      if (prevSalesWon > 0) {
-        growthPct = ((salesAmtWon / prevSalesWon) - 1) * 100;
-      }
+      let growthPct = (prevSalesWon > 0) ? (((salesAmtWon / prevSalesWon) - 1) * 100) : 0;
       const growthColor = growthPct >= 0 ? '#DC2626' : '#2563EB';
       const growthArrow = growthPct >= 0 ? '▲' : '▼';
       const growthDisplay = `${growthArrow} ${Math.abs(growthPct).toFixed(1)}%`;
@@ -2553,39 +2541,49 @@
 
       // [v2.7] 로직 설명 팝업 업데이트 함수
       function updateScoreBubble(brand) {
+        if (!brand) return;
         const title = document.getElementById('bubble-title');
         const weights = document.getElementById('bubble-weights');
         const details = document.getElementById('bubble-details');
-        const order = document.getElementById('bubble-order');
         if(!title || !weights || !details) return;
 
         const cat = brand.category || '여성';
-        title.textContent = `${cat} 카테고리 정밀 채점 로직`;
+        
+        // [v3.2] 사용자 요청: 제목은 여성 카테고리 로직으로 통일
+        title.textContent = `여성 카테고리 정밀 채점 로직`;
 
-        if (cat === '스포츠' || cat === '신사') {
-          weights.innerHTML = `
-            <div class="weight-row" style="color:#EF4444; font-size:11px;"><span>■ 상설 매장</span> <span>할인30 / BEST15 / 시즌25 / 신선20 / 아이템10</span></div>
-            <div class="weight-row" style="color:#3B82F6; font-size:11px; margin-bottom:12px;"><span>■ 정상 매장</span> <span>할인25 / BEST25 / 시즌15 / 신선25 / 아이템10</span></div>
-          `;
-          details.innerHTML = `
-            <p style="font-size:11px; margin-bottom:5px;">- <b>할인율</b>: 실제 할인율 기준 (70%↑, 50%↑, 30%↑, 1~30%)</p>
-            <p style="font-size:11px; margin-bottom:5px;">- <b>신선도</b>: [상설] 신상(10%), 기획(20%) | [정상] 신상(50%)</p>
-            <p style="font-size:11px; margin-bottom:5px;">- <b>시즌</b>: 당월 계절(50%), 타 계절(30%)</p>
-            <p style="font-size:11px; margin-bottom:10px;">- <b>BEST</b>: 직전 2주 판매 상위 10개 품번(25%)</p>
-          `;
+        // 카테고리별 아이템 가이드 필터링
+        let itemGuideHtml = '';
+        if (cat === '스포츠') {
+          itemGuideHtml = `<p style="margin-top:5px; padding-left:10px; border-left:2px solid #E2E8F0;">• <b>스포츠</b>: 러닝화(45%), 워킹화(30%), 기타신발(10%), 상의(10%), 하의(5%)</p>`;
+        } else if (cat === '남성') {
+          itemGuideHtml = `<p style="margin-top:5px; padding-left:10px; border-left:2px solid #E2E8F0;">• <b>남성</b>: 정장(40%), 셔츠(20%), 캐주얼(20%), 니트(10%), 하의(10%)</p>`;
+        } else if (cat === '아동' || cat === '아동의류') {
+          itemGuideHtml = `<p style="margin-top:5px; padding-left:10px; border-left:2px solid #E2E8F0;">• <b>아동</b>: 아우터(30%), 상의(30%), 하의(25%), 원피스(5%), 세트(10%)</p>`;
         } else {
-          // 여성/캐주얼 등 기본
-          weights.innerHTML = `
-            <div class="weight-row" style="color:#EF4444; font-size:11px;"><span>■ 상설 매장</span> <span>할인40 / BEST20 / 시즌15 / 신선15 / 아이템10</span></div>
-            <div class="weight-row" style="color:#3B82F6; font-size:11px; margin-bottom:12px;"><span>■ 정상 매장</span> <span>할인30 / BEST25 / 시즌15 / 신선20 / 아이템10</span></div>
-          `;
-          details.innerHTML = `
-            <p style="font-size:11px; margin-bottom:3px;">- <b>할인율</b>: [상설] 실제 할인율 | [정상] 생산 연차(Age)</p>
-            <p style="font-size:11px; margin-bottom:5px;">- <b>신선도</b>: [상설] 신상(10%), 기획(20%) | [정상] 신상(70%)</p>
-            <p style="font-size:11px; margin-bottom:5px;">- <b>시즌</b>: 당월 계절(50%), 타 계절(30%)</p>
-            <p style="font-size:11px; margin-bottom:10px;">- <b>BEST</b>: 직전 2주 판매 상위 10개 품번(20%)</p>
+          // 여성 브랜드인 경우 4대 조닝 통합 노출
+          itemGuideHtml = `
+            <div style="margin-top:5px; padding-left:10px; border-left:2px solid #E2E8F0;">
+              <p style="margin-bottom:2px;">• <b>캐릭터</b>: 원피스(35%), 아우터(25%), 상의(15%), 하의(15%)</p>
+              <p style="margin-bottom:2px;">• <b>커리어</b>: 아우터(45%), 상의(25%), 원피스(15%), 하의(10%)</p>
+              <p style="margin-bottom:2px;">• <b>캐주얼</b>: 아우터(35%), 상의(25%), 원피스(15%), 스커트(15%)</p>
+              <p style="margin-bottom:2px;">• <b>시니어</b>: 원피스(35%), 아우터(30%), 상의(15%), 하의(15%)</p>
+            </div>
           `;
         }
+
+        weights.innerHTML = `
+          <div class="weight-row" style="color:#EF4444; font-size:11px;"><span>■ 상설 매장</span> <span>할인40% / BEST20% / 시즌15% / 신선15% / 아이템10%</span></div>
+          <div class="weight-row" style="color:#3B82F6; font-size:11px; margin-bottom:12px;"><span>■ 정상 매장</span> <span>할인30% / BEST25% / 시즌15% / 신선20% / 아이템10%</span></div>
+        `;
+        
+        details.innerHTML = `
+          <p style="font-size:11px; margin-bottom:3px;">- <b>할인율</b>: [상설] 70%↑(10%), 50%↑(20%), 30%↑(30%), 1~30%(10%)</p>
+          <p style="font-size:11px; margin-bottom:3px;">- <b>신선도</b>: [상설] 신상(10%), 기획(20%) | [정상] 신상(70%)</p>
+          <p style="font-size:11px; margin-bottom:3px;">- <b>시즌</b>: 당월 계절(50%), 타 계절(30%) (4월: 봄50%/여름30%)</p>
+          <p style="font-size:11px; margin-bottom:3px;">- <b>BEST</b>: 직전 2주 판매 상위 10개 품번(20%)</p>
+          <p style="font-size:11px; margin-bottom:5px;">- <b>아이템 (조닝별 최적 비중)</b>: ${itemGuideHtml}</p>
+        `;
       }
 
       const grid = document.getElementById('detailGrid');
@@ -2595,8 +2593,8 @@
         if (m.id === 'best') segs = segs.filter(s => !s.key.includes('worst'));
 
         // [v35.0] 그룹 내 최대 비중(maxOptPct) 추출 (상대적 바 길이 계산용)
-        // [v58.0] 필터링 완화: 할인율(dis) 및 시즌(season)의 경우 목표 비중이 0이더라도 모두 노출
-        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season');
+        // [v58.0] 필터링 완화: 할인율(dis), 시즌(season), 아이템(item)의 경우 목표 비중이 0이더라도 모두 노출
+        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season' || m.id === 'item');
         const maxOptPct = Math.max(...validSegs.map(s => s.opt_pct || 0), 1);
 
         let shortageHtml = '';

@@ -12,16 +12,21 @@ class AssortmentScorer:
     """상품구색 5개 지표 채점 엔진 — v11.0 평매출 반영 이중 채점 체계 도입"""
 
     ITEM_GROUPS = {
-        'Outer': ['JK', 'JA', 'JD', 'JE', 'JH', 'JJ', 'JL', 'JP', 'JT', 'JV', 'JW', 'SJ', 'VK', 'VW', 'CK', 'CM', 'VT', 'CT', 'CD', 'BY', 'KC', 'PD', 'FU', 'U', 'E', 'J', 'C', 'D', 'Y', 'L'],
-        'Top': ['BL', 'BA', 'BB', 'BN', 'BW', 'DR', 'GM', 'HA', 'HS', 'HW', 'KA', 'KN', 'KR', 'KV', 'KW', 'LA', 'LS', 'LW', 'MA', 'MB', 'MH', 'MW', 'MZ', 'RA', 'RB', 'RN', 'RP', 'RS', 'RW', 'SM', 'YA', 'YC', 'YH', 'YS', 'YW', 'XH', 'MN', 'MR', 'PP', 'GN', 'BR', 'FZ', 'FW', 'TS', 'ST', 'PO', 'SH', 'WS', 'KO', 'KP', 'B', 'K', 'T'],
+        'Outer':  ['JK', 'JA', 'JD', 'JE', 'JH', 'JJ', 'JL', 'JP', 'JT', 'JV', 'JW', 'SJ', 'VK', 'VW', 'CK', 'CM', 'VT', 'CT', 'CD', 'BY', 'KC', 'PD', 'FU', 'U', 'E', 'J', 'C', 'D', 'Y', 'L'],
+        'Top':    ['BL', 'BA', 'BB', 'BN', 'BW', 'DR', 'GM', 'HA', 'HS', 'HW', 'KA', 'KN', 'KR', 'KV', 'KW', 'LA', 'LS', 'LW', 'MA', 'MB', 'MH', 'MW', 'MZ', 'RA', 'RB', 'RN', 'RP', 'RS', 'RW', 'SM', 'YA', 'YC', 'YH', 'YS', 'YW', 'XH', 'MN', 'MR', 'PP', 'GN', 'BR', 'FZ', 'FW', 'TS', 'ST', 'PO', 'SH', 'WS', 'KO', 'KP', 'B', 'K', 'T'],
         'Bottom': ['SL', 'PT', 'TA', 'TC', 'TH', 'TJ', 'TM', 'TN', 'TR', 'ST', 'IL', 'YI', 'YF', 'XF', 'XD', 'WP', 'WQ', 'XV', 'YV', 'SP', 'LE', 'DK', 'N', 'P'],
-        'Skirt': ['SK', 'TS', 'WH', 'WJ', 'WK', 'WM', 'KS', 'S'],
-        'Dress': ['OP', 'OJ', 'OK', 'OM', 'ON', 'OW', 'YO', 'LO', 'SP', 'YJ', 'DP', 'O']
+        'Skirt':  ['SK', 'TS', 'WH', 'WJ', 'WK', 'WM', 'KS', 'S'],
+        'Dress':  ['OP', 'OJ', 'OK', 'OM', 'ON', 'OW', 'YO', 'LO', 'SP', 'YJ', 'DP', 'O'],
     }
+    # 잡화·소품 등 계산 제외 코드
+    ITEM_EXCLUDE = {'SO','SF','MF','HT','BT','BG','GL','CP','ET','WL','XP','ZY',
+                    'AY','AS','AU','AW','AP','AG','AJ','AK','AM','ARJ'}
+
+    DIAG_MONTH = 4  # 진단 기준월 고정 (4월 = SS봄 현시즌)
 
     def __init__(self, config: dict = None):
         self.today = datetime.now()
-        self.current_month = self.today.month
+        self.current_month = self.DIAG_MONTH
         self.config = config if config else {}
         self.best_cutoff = self.today - timedelta(days=14)
 
@@ -47,41 +52,67 @@ class AssortmentScorer:
         except (TypeError, ValueError):
             return 0.0
 
-    def _get_item_group(self, item_code: str) -> str:
-        """item_code(주로 앞 2자리) 기반 아이템 그룹 매핑"""
-        if not item_code or pd.isna(item_code):
-            return 'Others'
-        code = str(item_code).strip().upper()[:2]
-        c1 = str(item_code).strip().upper()[:1]
-        
-        # 스포츠 전용 분류 체계 분기
-        is_sports = "RunningShoes" in self.config.get("inv_weights", {}).get("item", {})
-        if is_sports:
-            # 임의의 기준 적용 (향후 사용자 피드백을 통해 고도화 예정)
-            if code in ['RN', 'RS']: return 'RunningShoes'
-            elif code in ['CS', 'CR']: return 'CasualShoes'
-            elif c1 == 'S': return 'OtherShoes'
-            # 의류
-            if c1 in ['T', 'J', 'O'] or code in self.ITEM_GROUPS['Top'] or code in self.ITEM_GROUPS['Outer']:
-                return 'Top'
-            if c1 in ['P', 'B'] or code in self.ITEM_GROUPS['Bottom']:
-                return 'Bottom'
-            return 'Top'  # 기본 할당
+    # 알려진 모든 아이템 코드 집합 (fast-lookup용 캐시)
+    _ALL_ITEM_CODES: dict = {}  # {'코드': '그룹명'} — 첫 호출 시 빌드
 
-        # 신사(남성복) 분류 체계
-        is_mens = "Suits" in self.config.get("inv_weights", {}).get("item", {})
-        if is_mens:
-            if code in ['JK', 'SJ', 'ST']: return 'Suits'
-            if code in ['SH', 'WS']: return 'Shirts'
-            if code in ['JP', 'JA', 'JH']: return 'Casual'
-            if code in ['KN', 'KA', 'KR']: return 'Knit'
-            if c1 in ['P', 'B'] or code in ['PT', 'SL']: return 'Bottom'
+    def _build_code_index(self):
+        if not self._ALL_ITEM_CODES:
+            for grp, codes in self.ITEM_GROUPS.items():
+                for c in codes:
+                    AssortmentScorer._ALL_ITEM_CODES[c] = grp
+
+    def _lookup(self, candidate: str) -> str:
+        """candidate(1-2자리 대문자) → 그룹명 or ''"""
+        if not candidate or candidate in self.ITEM_EXCLUDE:
+            return ''
+        return self._ALL_ITEM_CODES.get(candidate, '')
+
+    def _get_item_group(self, raw_code: str) -> str:
+        """
+        item_code 또는 style_code → 아이템 그룹 매핑.
+        단순 복종코드("JK") 뿐 아니라 풀 스타일코드("GR3M0JK921")도 처리:
+        - 1-3자 → 직접 매핑
+        - 4자 이상 → 위치 2-8에서 2자리 슬라이딩 윈도우로 스캔
+        """
+        self._build_code_index()
+        if not raw_code or (isinstance(raw_code, float) and pd.isna(raw_code)):
+            return 'Others'
+
+        raw = str(raw_code).strip().upper()
+
+        # 스포츠 전용
+        if "RunningShoes" in self.config.get("inv_weights", {}).get("item", {}):
+            return 'Top'
+
+        # 아동복 전용
+        if "아우터" in self.config.get("inv_weights", {}).get("item", {}):
+            c2 = raw[:2]
+            if c2 in ['JK','JA','JH','JP']: return '아우터'
+            if c2 in ['TS','SH','BL','KN']: return '상의'
+            if c2 in ['PT','SL']:            return '하의'
+            if c2 == 'OP':                   return '원피스'
+            return '상의'
+
+        # 남성복 전용
+        if "Suits" in self.config.get("inv_weights", {}).get("item", {}):
+            c2 = raw[:2]
+            if c2 in ['JK','SJ','ST']: return 'Suits'
+            if c2 in ['SH','WS']:      return 'Shirts'
+            if c2 in ['JP','JA','JH']: return 'Casual'
+            if c2 in ['KN','KA','KR']: return 'Knit'
+            if c2 in ['PT','SL'] or raw[:1] in ['P','B']: return 'Bottom'
             return 'Casual'
 
-        # 여성복(기본) 분류 체계
-        for group, codes in self.ITEM_GROUPS.items():
-            if code in codes or str(item_code).strip().upper() in codes:
-                return group
+        # 여성복: 1-3자 복종코드 직접 매핑
+        if len(raw) <= 3:
+            hit = self._lookup(raw) or self._lookup(raw[:2]) or self._lookup(raw[:1])
+            return hit if hit else 'Others'
+
+        # 풀 스타일코드: 위치 2~8에서 2자리 슬라이딩 윈도우 스캔
+        for start in range(2, min(len(raw) - 1, 9)):
+            hit = self._lookup(raw[start:start + 2])
+            if hit:
+                return hit
         return 'Others'
 
     def score(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -90,12 +121,34 @@ class AssortmentScorer:
 
         df = df.copy()
         
-        # [v8.0] 기본 수치 변환
+        # [v12.5] 아이템 그룹 매핑 (스포츠/아동 등 브랜드 특성 반영 고도화)
         df['_amt'] = df['stock_amt'].apply(self._safe_float)
-        if 'item_code' in df.columns:
-            df['item_group'] = df['item_code'].apply(self._get_item_group)
-        else:
-            df['item_group'] = 'Others'
+        def _get_group_smart(row):
+            # item_code 우선, 비어있으면 style_code fallback
+            ic = str(row.get('item_code', '')).strip()
+            code = ic if ic and ic not in ('nan', '0') else str(row.get('style_code', '')).strip()
+            group = self._get_item_group(code)
+            
+            # 2. 스포츠 브랜드 특화: 품번 매핑 실패 시 상품명/카테고리 키워드 분석
+            is_sports = "RunningShoes" in self.config.get("inv_weights", {}).get("item", {})
+            if is_sports and group in ['Top', 'Bottom', 'Others']:
+                name = str(row.get('style_name', row.get('item_name', ''))).strip()
+                cat = str(row.get('category_group', '')).strip()
+                full_text = (name + cat).upper()
+                
+                # 러닝/기능성 슈즈 판별
+                if any(k in full_text for k in ['러닝', 'RUNNING', '맥스', 'MAX', '쿠셔닝', '퍼포먼스', '신발', '슈즈', '운동화', 'SHOES']):
+                    return 'RunningShoes'
+                # 캐주얼/라이프스타일 슈즈 판별
+                if any(k in full_text for k in ['워킹', 'WALKING', '고워크', 'GOWALK', '슬립온', '캐주얼', '라이프']):
+                    return 'CasualShoes'
+                # 기타 신발류
+                if any(k in full_text for k in ['스니커즈', 'SNEAKERS', '샌들', 'SANDAL', '슬리퍼']):
+                    return 'OtherShoes'
+            
+            return group
+
+        df['item_group'] = df.apply(_get_group_smart, axis=1)
 
         # 목표 매출액(tM) 추출 및 목표 총액 설정
         tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
@@ -191,33 +244,40 @@ class AssortmentScorer:
             fresh_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
         freshness_score = (sum(fresh_atts) / len(fresh_atts)) if fresh_atts else 0.0
 
-        # C. 시즌
-        month = self.current_month
+        # C. 시즌 — DIAG_MONTH(4월) 고정 기준, SS/FW 2시즌 동적 매핑
+        month = self.current_month  # 항상 DIAG_MONTH(4)
         sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
-        CO_SPRING = ['봄', '1', '9']; CO_SUMMER = ['여름', '2', '9']
-        CO_AUTUMN = ['가을', '3', '8', '9']; CO_WINTER = ['겨울', '4', '9']
-
-        if month in [1, 2, 3]: curr_codes, other_codes = CO_SPRING, CO_SUMMER
-        elif month == 4: curr_codes, other_codes = CO_SPRING, CO_SUMMER
-        elif month in [5, 6]: curr_codes, other_codes = CO_SUMMER, CO_SPRING
-        elif month in [7, 8, 9]: curr_codes, other_codes = CO_AUTUMN, CO_WINTER
-        else: curr_codes, other_codes = CO_WINTER, CO_AUTUMN
+        CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
+        CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
 
         sea_inv = inv_weights.get('season', {})
-        if 'spring' in sea_inv:
-            # 스포츠 방식
+        non_zero_seasons = sum(1 for v in sea_inv.values() if v > 0)
+
+        if non_zero_seasons <= 2:
+            # SS/FW 2시즌 브랜드: 현시즌=primary(0.50), 보조시즌=secondary(0.30) 동적 매핑
+            primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
+            secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
+            if month in [1, 2, 3, 4]:   curr_codes, sub_codes = CO_SPRING, CO_SUMMER
+            elif month in [5, 6]:        curr_codes, sub_codes = CO_SUMMER, CO_SPRING
+            elif month in [7, 8, 9]:     curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
+            else:                         curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
+            season_cfg = [
+                {'m': sc.isin(curr_codes), 'r': primary_r},
+                {'m': sc.isin(sub_codes),  'r': secondary_r},
+            ]
+        else:
+            # 스포츠 등 계절별 고정 비중 (3개 이상 non-zero)
             season_cfg = [
                 {'m': sc.isin(CO_SPRING), 'r': sea_inv.get('spring', 0.0)},
                 {'m': sc.isin(CO_SUMMER), 'r': sea_inv.get('summer', 0.0)},
                 {'m': sc.isin(CO_AUTUMN), 'r': sea_inv.get('autumn', 0.0)},
-                {'m': sc.isin(CO_WINTER), 'r': sea_inv.get('winter', 0.0)}
+                {'m': sc.isin(CO_WINTER), 'r': sea_inv.get('winter', 0.0)},
             ]
-        else:
-            # 여성복 방식
-            season_cfg = [ {'m': sc.isin(curr_codes), 'r': sea_inv.get('current', 0.50)}, {'m': sc.isin(other_codes), 'r': sea_inv.get('other', 0.30)} ]
-            
+
         season_atts = []
         for item in season_cfg:
+            if item['r'] <= 0:
+                continue
             act = _get_record_ref(item['m'])['_amt'].sum()
             tgt = target_total * item['r']
             season_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
@@ -255,7 +315,6 @@ class AssortmentScorer:
         
         # [v12.0] 평매출(eff_score) 및 종합점수(total_score) 로직 사용자 요청으로 완전 삭제
         df['product_score'] = int(round(product_score))
-        # 시스템 호환성을 위해 total_score를 product_score와 동일하게 설정 (안전장치)
         df['total_score'] = df['product_score']
 
         # 지표별 개별 점수 보존
@@ -311,24 +370,30 @@ class AssortmentScorer:
         for label, mask, r_val in fresh_cfg:
             if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
 
-        # 시즌 부족
+        # 시즌 부족 — score()와 동일한 DIAG_MONTH 기준 매핑
         sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
-        CO_SPRING = ['봄', '1', '9']; CO_SUMMER = ['여름', '2', '9']; CO_AUTUMN = ['가을', '3', '8', '9']; CO_WINTER = ['겨울', '4', '9']
-        month = self.current_month
+        CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
+        CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
+        month = self.current_month  # DIAG_MONTH(4) 고정
         sea_inv = inv_weights.get('season', {})
-        if 'spring' in sea_inv:
+        non_zero_seasons = sum(1 for v in sea_inv.values() if v > 0)
+
+        if non_zero_seasons <= 2:
+            primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
+            secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
+            if month in [1, 2, 3, 4]:   curr_codes, sub_codes = CO_SPRING, CO_SUMMER
+            elif month in [5, 6]:        curr_codes, sub_codes = CO_SUMMER, CO_SPRING
+            elif month in [7, 8, 9]:     curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
+            else:                         curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
+            season_checks = [('봄(현시즌)', curr_codes, primary_r), ('여름(보조)', sub_codes, secondary_r)]
+        else:
             season_checks = [
                 ('봄', CO_SPRING, sea_inv.get('spring', 0.0)),
                 ('여름', CO_SUMMER, sea_inv.get('summer', 0.0)),
                 ('가을', CO_AUTUMN, sea_inv.get('autumn', 0.0)),
-                ('겨울', CO_WINTER, sea_inv.get('winter', 0.0))
+                ('겨울', CO_WINTER, sea_inv.get('winter', 0.0)),
             ]
-        else:
-            if month in [1,2,3,4]: season_checks = [('봄', CO_SPRING, sea_inv.get('current', 0.50)), ('여름', CO_SUMMER, sea_inv.get('sub', 0.30))]
-            elif month in [5,6]: season_checks = [('여름', CO_SUMMER, sea_inv.get('current', 0.50)), ('봄', CO_SPRING, sea_inv.get('sub', 0.30))]
-            elif month in [7,8,9]: season_checks = [('가을', CO_AUTUMN, sea_inv.get('current', 0.50)), ('겨울', CO_WINTER, sea_inv.get('sub', 0.30))]
-            else: season_checks = [('겨울', CO_WINTER, sea_inv.get('current', 0.50)), ('가을', CO_AUTUMN, sea_inv.get('sub', 0.30))]
-            
+
         for label, codes, r_val in season_checks:
             if r_val > 0 and _get_ref_count(sc.isin(codes)) < (target_total * r_val): res["season"].append(label)
 
