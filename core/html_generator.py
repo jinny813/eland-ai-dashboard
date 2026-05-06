@@ -49,8 +49,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     if df is None or df.empty: return {}
 
     df = df.copy()
-    df['_amt'] = df['stock_amt'].apply(_safe_float)
-    df['_qty'] = df['stock_qty'].apply(_safe_float) if 'stock_qty' in df.columns else 0
+    df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, _safe_float(x)))
+    df['_qty'] = df['stock_qty'].apply(lambda x: max(0.0, _safe_float(x))) if 'stock_qty' in df.columns else 0
     total_amt = df['_amt'].sum()
     if total_amt <= 0: return {}
 

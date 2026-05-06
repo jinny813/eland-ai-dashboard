@@ -248,7 +248,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 
                 # [v107.0] 특정 브랜드는 DB 설정과 무관하게 '정상/상설' 유형 고정 적용
                 # 지오지아는 신사 카테고리 상설매장으로 고정 (사용자 요청)
-                normals = ["로엠", "미쏘", "더아이잗", "에잇컨셉"]
+                normals = ["로엠", "미쏘", "더아이잗", "에잇컨셉", "폴햄키즈"]
                 outlets = ["지오지아", "지오지아팩토리", "인동팩토리(리스트,쉬즈미스)"]
                 
                 if b_name in normals:
@@ -275,8 +275,8 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                     dedup_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
                     stock_ref = b_df.drop_duplicates(subset=[c for c in dedup_cols if c in b_df.columns])
                 
-                stock_amt = stock_ref['stock_amt'].apply(_try_float).sum()
-                stock_qty = stock_ref['stock_qty'].apply(_try_float).sum()
+                stock_amt = stock_ref['stock_amt'].apply(lambda x: max(0.0, _try_float(x))).sum()
+                stock_qty = stock_ref['stock_qty'].apply(lambda x: max(0.0, _try_float(x))).sum()
                 
                 # [v104.5] 매출 데이터 소급 적용 로직 (벤치마크 실적 우선 적용)
                 b_data_month = str(b_df.iloc[0].get('data_month', '')).strip()

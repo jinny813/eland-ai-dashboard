@@ -2260,22 +2260,23 @@
       const tb = document.getElementById('modalTbody');
       const thRow = document.querySelector('#storeModal thead tr');
 
-      // 헤더 개편 (브랜드명, 종합 점수, 평매출 등급, 상품 점수, 재고 비중 + 5대 지표 점수)
+      // 헤더 개편 (브랜드명, 월 매출(성장률), 종합 점수, 재고 비중 + 5대 지표 점수)
       thRow.innerHTML = `
-    <th style="text-align:left;padding-left:24px;background:#1D1E1E;">브랜드명</th>
-    <th style="background:#1D1E1E; color:#FFFFFF; width:90px; font-size:14px; font-weight:900;">상품 점수</th>
-    <th style="background:#1D1E1E;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
-    <th style="background:#E30019; width:130px;">할인율</th>
-    <th style="background:#2563EB; width:130px;">신선도</th>
-    <th style="background:#F59E0B; width:130px;">시즌</th>
-    <th style="background:#16A34A; width:130px;">BEST</th>
-    <th style="background:#8B5CF6; width:130px;">아이템</th>
+    <th style="text-align:left;padding-left:24px;background:#1D1E1E;width:16%;">브랜드명</th>
+    <th style="background:#1D1E1E; width:14%; font-size:13px; color:#FFFFFF;">월 매출(성장률)</th>
+    <th style="background:#1D1E1E; color:#FFFFFF; width:9%; font-size:14px; font-weight:900;">종합 점수</th>
+    <th style="background:#1D1E1E; width:16%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
+    <th style="background:#E30019; width:9%;">할인율</th>
+    <th style="background:#2563EB; width:9%;">신선도</th>
+    <th style="background:#F59E0B; width:9%;">시즌</th>
+    <th style="background:#16A34A; width:9%;">BEST</th>
+    <th style="background:#8B5CF6; width:9%;">아이템</th>
   `;
 
       tb.innerHTML = '';
 
       if (!storeBrands.length) {
-        tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
       } else {
         storeBrands.forEach(b => {
           const tM2 = +(b.tM * 2).toFixed(1);
@@ -2296,6 +2297,13 @@
           const getTotalColor = (s) => '#111827';
           const totalColor = getTotalColor(b.product_score || b.total || 0);
 
+          // 월 매출(성장률)
+          const salesAmtM = b.sales_amt || 0; // 백만원 단위
+          const growthPct = b.growth_pct || 0;
+          const growthColor = growthPct >= 0 ? '#DC2626' : '#2563EB';
+          const growthArrow = growthPct >= 0 ? '▲' : '▼';
+          const growthDisplay = `(${growthArrow}${Math.abs(growthPct).toFixed(0)}%)`;
+
           const tr = document.createElement('tr');
           tr.onclick = () => { closeStoreModal(); selectBrand(store, b.name); };
           // 성과 지표 구획을 위한 인라인 스타일 추가
@@ -2304,6 +2312,12 @@
           <div class="brand-row-name">
             ${b.name}
             <span class="type-badge ${typeClass}">${typeLabel}</span>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <span style="font-size:14px; font-weight:900; color:#111;">${salesAmtM.toFixed(1)}<span style="font-size:11px; color:#6B7280;">백만원</span></span>
+            <span style="font-size:11px; font-weight:800; color:${growthColor}; margin-top:2px;">(${growthArrow}${Math.abs(growthPct).toFixed(1)}%)</span>
           </div>
         </td>
         <td><span class="score-cell" style="color:${totalColor}; font-weight:950; font-size:18px;">${b.product_score || b.total}</span></td>

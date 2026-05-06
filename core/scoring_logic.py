@@ -122,7 +122,7 @@ class AssortmentScorer:
         df = df.copy()
         
         # [v12.5] 아이템 그룹 매핑 (스포츠/아동 등 브랜드 특성 반영 고도화)
-        df['_amt'] = df['stock_amt'].apply(self._safe_float)
+        df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, self._safe_float(x)))
         def _get_group_smart(row):
             # item_code 우선, 비어있으면 style_code fallback
             ic = str(row.get('item_code', '')).strip()
@@ -331,7 +331,7 @@ class AssortmentScorer:
         """현재 브랜드의 구색 부족 세그먼트(Shortage) 분석"""
         if df is None or df.empty: return {}
         df = df.copy()
-        df['_amt'] = df['stock_amt'].apply(self._safe_float)
+        df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, self._safe_float(x)))
         df['item_group'] = df['item_code'].apply(self._get_item_group) if 'item_code' in df.columns else 'Others'
         
         tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0

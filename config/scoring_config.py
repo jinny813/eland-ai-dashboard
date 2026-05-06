@@ -82,6 +82,7 @@ _WOMEN_OUTLET_BASE = {
 # 신규: 스포츠/정상 매장 파라미터
 # ──────────────────────────────────────────────────────
 _SPORTS_NORMAL_BASE = {
+    "zoning": "스포츠",
     "year_base": 2026,
     "inv_weights": {
         "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
@@ -101,6 +102,7 @@ _SPORTS_NORMAL_BASE = {
 # 신규: 스포츠/상설 매장 파라미터
 # ──────────────────────────────────────────────────────
 _SPORTS_OUTLET_BASE = {
+    "zoning": "스포츠",
     "year_base": 2026,
     "inv_weights": {
         "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
@@ -120,6 +122,7 @@ _SPORTS_OUTLET_BASE = {
 # 신규: 남성복/정상 매장 파라미터 (스포츠와 가중치 동일 설정)
 # ──────────────────────────────────────────────────────
 _MENS_NORMAL_BASE = {
+    "zoning": "남성",
     "year_base": 2026,
     "inv_weights": {
         "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
@@ -139,6 +142,7 @@ _MENS_NORMAL_BASE = {
 # 신규: 남성복/상설 매장 파라미터 (스포츠와 가중치 동일 설정)
 # ──────────────────────────────────────────────────────
 _MENS_OUTLET_BASE = {
+    "zoning": "남성",
     "year_base": 2026,
     "inv_weights": {
         "dis":    {"s70": 0.00, "s50": 0.07, "s30": 0.13, "s10": 0.20},
@@ -222,7 +226,7 @@ SCORING_CONFIG = {
     "스포츠_정상_스케쳐스": {**_SPORTS_NORMAL_BASE, "brand_name": "스케쳐스", "zoning": "스포츠", "eness_name": "스케쳐스"},
 
     # ── 폴햄키즈
-    "아동_상설_폴햄키즈": {**_WOMEN_OUTLET_BASE, "brand_name": "폴햄키즈", "zoning": "아동", "eness_name": "폴햄키즈", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_KIDS}},
+    "아동_정상_폴햄키즈": {**_WOMEN_NORMAL_BASE, "brand_name": "폴햄키즈", "zoning": "아동", "eness_name": "폴햄키즈", "inv_weights": {**_WOMEN_NORMAL_BASE["inv_weights"], "item": _ITEM_KIDS}},
 }
 
 def get_weights_by_category(category: str, store_type: str) -> dict:
