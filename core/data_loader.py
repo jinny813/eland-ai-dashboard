@@ -253,8 +253,10 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 
                 if b_name in normals:
                     b_type = "정상"
+                    b_df['store_type'] = "정상"
                 elif b_name in outlets:
                     b_type = "상설"
+                    b_df['store_type'] = "상설"
                 else:
                     b_type = str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설'
 
