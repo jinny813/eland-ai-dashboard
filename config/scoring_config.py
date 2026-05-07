@@ -243,7 +243,7 @@ SCORING_CONFIG = {
     "남성_상설_지오지아팩토리": {**_MENS_OUTLET_BASE, "brand_name": "지오지아팩토리", "zoning": "남성", "eness_name": "지오지아팩토리", "inv_weights": {**_MENS_OUTLET_BASE["inv_weights"], "item": _ITEM_MENS}},
 
     # ── 스케쳐스
-    "스포츠_정상_스케쳐스": {**_SPORTS_NORMAL_BASE, "brand_name": "스케쳐스", "zoning": "스포츠", "eness_name": "스케쳐스"},
+    "스포츠_상설_스케쳐스": {**_SPORTS_OUTLET_BASE, "brand_name": "스케쳐스", "zoning": "스포츠", "eness_name": "스케쳐스"},
 
     # ── 폴햄키즈
     "아동_정상_폴햄키즈": {**_WOMEN_NORMAL_BASE, "brand_name": "폴햄키즈", "zoning": "아동", "eness_name": "폴햄키즈", "inv_weights": {**_WOMEN_NORMAL_BASE["inv_weights"], "item": _ITEM_KIDS}},
