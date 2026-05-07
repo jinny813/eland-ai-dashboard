@@ -308,11 +308,18 @@ class AssortmentScorer:
         best_styles = []
         if 'sales_qty' in df.columns:
             sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
-            best_styles = df.assign(_sq=sq).groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
+            # [v3.8] 판매량이 0보다 큰 상품들만 베스트 후보군으로 선정
+            sq_df = df.assign(_sq=sq)
+            best_candidates = sq_df[sq_df['_sq'] > 0]
+            if not best_candidates.empty:
+                best_styles = best_candidates.groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
         
-        act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
-        tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
-        best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
+        if not best_styles:
+            best_score = 0.0
+        else:
+            act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
+            tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
+            best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
 
         # E. 아이템
         item_w = inv_weights.get('item', {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.20, 'Skirt': 0.10, 'Dress': 0.10})
