@@ -127,6 +127,18 @@ class AssortmentScorer:
         def _get_group_smart(row):
             # item_code 우선, 비어있으면 style_code fallback
             ic = str(row.get('item_code', '')).strip()
+            # [v3.7] 네파 전용 아이템코드 매핑 (사용자 요청)
+            b_name = str(row.get('brand_name', '')).strip()
+            if "네파" in b_name:
+                nepa_map = {
+                    '05': 'Outer', '06': 'Outer', '09': 'Outer', '10': 'Outer', '13': 'Outer', '14': 'Outer', '20': 'Outer',
+                    '15': 'Top', '51': 'Top', '52': 'Top', '53': 'Top', '54': 'Top', '56': 'Top', '57': 'Top', '60': 'Top',
+                    '16': 'Bottom', '17': 'Bottom', '18': 'Bottom'
+                }
+                ic_key = ic.zfill(2) if ic.isdigit() else ic
+                if ic_key in nepa_map:
+                    return nepa_map[ic_key]
+
             code = ic if ic and ic not in ('nan', '0') else str(row.get('style_code', '')).strip()
             group = self._get_item_group(code)
             
