@@ -42,7 +42,7 @@ def _get_config(category: str, store_type: str, brand: str) -> dict:
     normalized_type = "상설" if _is_outlet_type(store_type) else "정상"
     key_brand = f"{category}_{normalized_type}_{brand}"
     key_type  = f"{category}_{normalized_type}"
-    base = get_weights_by_category(category, store_type)
+    base = get_weights_by_category(category, store_type, brand)
     return (
         SCORING_CONFIG.get(key_brand)
         or SCORING_CONFIG.get(key_type)
@@ -249,7 +249,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 # [v107.0] 특정 브랜드는 DB 설정과 무관하게 '정상/상설' 유형 고정 적용
                 # 지오지아는 신사 카테고리 상설매장으로 고정 (사용자 요청)
                 normals = ["로엠", "미쏘", "더아이잗", "에잇컨셉", "폴햄키즈"]
-                outlets = ["지오지아", "지오지아팩토리", "인동팩토리(리스트,쉬즈미스)"]
+                outlets = ["지오지아", "지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스"]
                 
                 if b_name in normals:
                     b_type = "정상"

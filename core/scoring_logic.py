@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 def _is_outlet(store_type_val: str) -> bool:
     """상설 매장 여부 판단. DB 실제 값: '상설', 'outlet' 모두 처리"""
     v = str(store_type_val).strip().lower()
-    return v in ("상설") or "outlet" in v
+    # [v3.6] 인코딩 문제 대응 및 판별 로직 보강
+    return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory"]) or v.startswith("상")
 
 
 class AssortmentScorer:
@@ -145,6 +146,14 @@ class AssortmentScorer:
                 # 기타 신발류
                 if any(k in full_text for k in ['스니커즈', 'SNEAKERS', '샌들', 'SANDAL', '슬리퍼']):
                     return 'OtherShoes'
+                
+                # [v3.6] 의류 키워드 보강 (아웃도어/스포츠 의류 대응)
+                if any(k in full_text for k in ['티셔츠', 'T-SHIRT', '상의', 'TOP', '폴로', 'POLO', '반팔', '긴팔']):
+                    return 'Top'
+                if any(k in full_text for k in ['팬츠', 'PANTS', '바지', '하의', 'BOTTOM', '레깅스', '트레이닝']):
+                    return 'Bottom'
+                if any(k in full_text for k in ['자켓', 'JACKET', '점퍼', 'JUMPER', '아우터', 'OUTER', '코트', '베스트', 'VEST', '고어텍스', 'GORE-TEX', '다운', 'DOWN', '파카']):
+                    return 'Outer'
             
             return group
 

@@ -89,14 +89,17 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     
     # [v136.0] 조닝별 레이블 맵 정의
     zoning_map = {
-        '스포츠': {'RunningShoes':'러닝화', 'CasualShoes':'워킹화', 'OtherShoes':'기타신발', 'Top':'상의', 'Bottom':'하의'},
-        '남성':   {'Suits':'정장', 'Shirts':'셔츠', 'Casual':'캐주얼', 'Knit':'니트', 'Bottom':'하의'},
-        '아동':   {'아우터':'아우터', '상의':'상의', '하의':'하의', '원피스':'원피스', '세트':'세트'},
-        '캐릭터': {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
-        '커리어': {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Bottom':'하의'},
-        '시니어': {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
-        '캐주얼': {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Skirt':'스커트'},
-        '일반':   {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트', 'Dress':'원피스'}
+        '스포츠':   {'RunningShoes':'러닝화', 'CasualShoes':'워킹화', 'OtherShoes':'기타신발', 'Top':'상의', 'Bottom':'하의'},
+        '아웃도어': {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'RunningShoes':'트레킹화', 'CasualShoes':'라이프스타일화'},
+        '애슬레저': {'Top':'상의', 'Bottom':'하의', 'OtherShoes':'잡화'},
+        '신발':     {'RunningShoes':'운동화', 'CasualShoes':'캐주얼화', 'OtherShoes':'샌들/슬리퍼'},
+        '남성':     {'Suits':'정장', 'Shirts':'셔츠', 'Casual':'캐주얼', 'Knit':'니트', 'Bottom':'하의'},
+        '아동':     {'아우터':'아우터', '상의':'상의', '하의':'하의', '원피스':'원피스', '세트':'세트'},
+        '캐릭터':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
+        '커리어':   {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Bottom':'하의'},
+        '시니어':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
+        '캐주얼':   {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Skirt':'스커트'},
+        '일반':     {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트', 'Dress':'원피스'}
     }
     item_map = zoning_map.get(zoning, zoning_map['일반'])
     item_weights = inv_w.get('item', {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10})

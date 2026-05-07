@@ -119,6 +119,26 @@ _SPORTS_OUTLET_BASE = {
 }
 
 # ──────────────────────────────────────────────────────
+# 신규: 아웃도어/상설 매장 파라미터 (네파, 블랙야크 등)
+# ──────────────────────────────────────────────────────
+_OUTDOOR_OUTLET_BASE = {
+    "zoning": "스포츠",
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
+        "fresh":  {"new": 0.10, "plan": 0.20},
+        "best":   {"store10": 0.20},
+        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "item":   {"Outer": 0.40, "Top": 0.40, "Bottom": 0.20}
+    },
+    "weight_discount":  0.40,
+    "weight_freshness": 0.15,
+    "weight_season":    0.15,
+    "weight_best":      0.20,
+    "weight_item":      0.10,
+}
+
+# ──────────────────────────────────────────────────────
 # 신규: 남성복/정상 매장 파라미터 (스포츠와 가중치 동일 설정)
 # ──────────────────────────────────────────────────────
 _MENS_NORMAL_BASE = {
@@ -229,7 +249,7 @@ SCORING_CONFIG = {
     "아동_정상_폴햄키즈": {**_WOMEN_NORMAL_BASE, "brand_name": "폴햄키즈", "zoning": "아동", "eness_name": "폴햄키즈", "inv_weights": {**_WOMEN_NORMAL_BASE["inv_weights"], "item": _ITEM_KIDS}},
 }
 
-def get_weights_by_category(category: str, store_type: str) -> dict:
+def get_weights_by_category(category: str, store_type: str, brand_name: str = "") -> dict:
     """
     category_group 및 store_type에 따른 기본 가중치/설정 딕셔너리를 반환.
     브랜드 개별 설정(SCORING_CONFIG)이 없을 때 사용되는 베이스라인 설정입니다.
@@ -237,6 +257,11 @@ def get_weights_by_category(category: str, store_type: str) -> dict:
     is_outlet = str(store_type).strip().lower() in ("상설", "outlet")
     
     if category == '스포츠':
+        # [v3.6] 아웃도어 브랜드는 전용 가중치(Outer 포함) 적용
+        from config.brand_metadata import get_brand_zoning
+        zoning = get_brand_zoning(brand_name)
+        if zoning == "아웃도어":
+            return _OUTDOOR_OUTLET_BASE
         return _SPORTS_OUTLET_BASE if is_outlet else _SPORTS_NORMAL_BASE
     elif '남성' in category:
         return _MENS_OUTLET_BASE if is_outlet else _MENS_NORMAL_BASE
