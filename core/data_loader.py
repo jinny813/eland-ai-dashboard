@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 def _try_float(v) -> float:
     try:
         if isinstance(v, (int, float)): return float(v)
-        return float(str(v).replace(',', '').replace(' ', '').replace('%', '').strip())
+        s = str(v).replace(',', '').replace(' ', '').replace('%', '').strip()
+        if s in ('', '#N/A', '#REF!', '#VALUE!', 'nan', 'None'): return 0.0
+        return float(s)
     except (TypeError, ValueError):
         return 0.0
 
@@ -33,7 +35,8 @@ def _try_float(v) -> float:
 def _is_outlet_type(store_type: str) -> bool:
     """상설 매장 판단 — scoring_logic._is_outlet 과 동일 기준"""
     v = str(store_type).strip().lower()
-    return v in ("상설") or "outlet" in v
+    # [v3.9] 인코딩 문제 및 다양한 키워드 대응
+    return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory"]) or v.startswith("상")
 
 
 def _get_config(category: str, store_type: str, brand: str) -> dict:

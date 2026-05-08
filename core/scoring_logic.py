@@ -43,8 +43,8 @@ class AssortmentScorer:
     @staticmethod
     def _parse_discount_rate(val) -> float:
         try:
-            s = str(val).replace('%', '').strip()
-            if not s or s in ('nan', 'None', ''):
+            s = str(val).replace('%', '').replace(' ', '').strip()
+            if not s or s in ('nan', 'None', '', '#N/A', '#REF!', '#VALUE!'):
                 return 0.0
             f = float(s)
             if 0.0 < f <= 1.0:
@@ -129,7 +129,8 @@ class AssortmentScorer:
             ic = str(row.get('item_code', '')).strip()
             # [v3.7] 네파 전용 아이템코드 매핑 (사용자 요청)
             b_name = str(row.get('brand_name', '')).strip()
-            if "네파" in b_name:
+            # 인코딩 문제 대응: '네파'라는 글자가 포함되거나 특정 깨진 패턴 대응 (v3.9)
+            if "네파" in b_name or b_name.startswith("네") or b_name.startswith("네파"):
                 nepa_map = {
                     '05': 'Outer', '06': 'Outer', '09': 'Outer', '10': 'Outer', '13': 'Outer', '14': 'Outer', '20': 'Outer',
                     '15': 'Top', '51': 'Top', '52': 'Top', '53': 'Top', '54': 'Top', '56': 'Top', '57': 'Top', '60': 'Top',
@@ -142,9 +143,10 @@ class AssortmentScorer:
             code = ic if ic and ic not in ('nan', '0') else str(row.get('style_code', '')).strip()
             group = self._get_item_group(code)
             
-            # 2. 스포츠 브랜드 특화: 품번 매핑 실패 시 상품명/카테고리 키워드 분석
-            is_sports = "RunningShoes" in self.config.get("inv_weights", {}).get("item", {})
-            if is_sports and group in ['Top', 'Bottom', 'Others']:
+            # 2. 스포츠/아웃도어 브랜드 특화: 품번 매핑 실패 시 상품명/카테고리 키워드 분석
+            zoning = self.config.get('zoning', '')
+            is_sports_logic = zoning in ["스포츠", "아웃도어", "애슬레저"]
+            if is_sports_logic and group in ['Top', 'Bottom', 'Others']:
                 name = str(row.get('style_name', row.get('item_name', ''))).strip()
                 cat = str(row.get('category_group', '')).strip()
                 full_text = (name + cat).upper()
@@ -211,7 +213,7 @@ class AssortmentScorer:
 
         def _get_age_sync(y):
             try:
-                if not y or pd.isna(y): return 0
+                if not y or pd.isna(y) or str(y).strip() in ('#N/A', '#REF!', '#VALUE!'): return 0
                 val = str(y).replace('년','').replace('20','', 1).strip() # '2024' -> '24' 대응
                 y_num = int(val)
                 if y_num < 100: y_num += 2000
@@ -224,12 +226,15 @@ class AssortmentScorer:
         df['_dis_rate'] = df['discount_rate'].apply(self._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
         dis_inv = inv_weights.get('dis', {})
         
-        # [v11.1] 스포츠 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용
-        is_sports = False
-        if 'category_group' in df.columns and not df['category_group'].empty:
-            is_sports = "스포츠" in str(df['category_group'].iloc[0])
+        # [v11.1] 스포츠/아동 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용
+        zoning = self.config.get('zoning', '')
+        is_rate_based = zoning in ["스포츠", "아웃도어", "아동", "토들러", "애슬레저"]
+        if not is_rate_based and 'category_group' in df.columns and not df['category_group'].empty:
+            cg = str(df['category_group'].iloc[0])
+            if any(k in cg for k in ["스포츠", "아웃도어", "아동", "토들러"]):
+                is_rate_based = True
 
-        if is_outlet or is_sports:
+        if is_outlet or is_rate_based:
             dis_cfg = [
                 {'m': (df['_dis_rate'] >= 70), 'r': dis_inv.get('s70', 0.10)},
                 {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},

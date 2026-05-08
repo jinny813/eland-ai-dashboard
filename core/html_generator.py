@@ -33,7 +33,9 @@ ITEM_COLORS = ["#7C3AED","#A78BFA","#C4B5FD","#DDD6FE","#EDE9FE","#6D28D9","#8B5
 def _safe_float(v) -> float:
     try:
         if pd.isna(v): return 0.0
-        return float(str(v).replace(',', '').strip())
+        s = str(v).replace(',', '').strip()
+        if s in ('', '#N/A', '#REF!', '#VALUE!', 'nan', 'None'): return 0.0
+        return float(s)
     except: return 0.0
 
 def _get_stock_ref_gen(df, outlet):
@@ -102,7 +104,15 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         '일반':     {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트', 'Dress':'원피스'}
     }
     item_map = zoning_map.get(zoning, zoning_map['일반'])
-    item_weights = inv_w.get('item', {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10})
+    
+    # [v3.9] 조닝별 기본 아이템 구성 정의 (설정 누락 시 대비)
+    default_item_w = {
+        '스포츠':   {'Top': 0.40, 'Bottom': 0.30, 'RunningShoes': 0.20, 'OtherShoes': 0.10},
+        '아웃도어': {'Outer': 0.40, 'Top': 0.40, 'Bottom': 0.20},
+        '애슬레저': {'Top': 0.50, 'Bottom': 0.40, 'OtherShoes': 0.10},
+        '일반':     {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10}
+    }
+    item_weights = inv_w.get('item', default_item_w.get(zoning, default_item_w['일반']))
     
     item_segs = []
     for i, (eng, kor) in enumerate(item_map.items()):
@@ -134,10 +144,14 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     # 2. 할인율 세부
     df['_dis_rate'] = df['discount_rate'].apply(AssortmentScorer._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
     category_group = str(df['category_group'].iloc[0]) if 'category_group' in df.columns else ""
-    is_sports = "스포츠" in category_group
+    # [v11.1] 스포츠/아동 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용
+    is_rate_based = zoning in ["스포츠", "아웃도어", "아동", "토들러", "애슬레저"]
+    if not is_rate_based and any(k in category_group for k in ["스포츠", "아웃도어", "아동", "토들러"]):
+        is_rate_based = True
+
     dis_inv = inv_w.get('dis', {})
 
-    if outlet or is_sports:
+    if outlet or is_rate_based:
         # 상설 또는 스포츠: 실시간 할인율 필드 활용
         dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)), 
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
