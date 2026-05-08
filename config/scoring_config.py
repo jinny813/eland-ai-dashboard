@@ -22,7 +22,7 @@ _ITEM_CASUAL = {"Outer": 0.35, "Top": 0.25, "Dress": 0.15, "Skirt": 0.15}
 _ITEM_CHARACTER = {"Dress": 0.35, "Outer": 0.25, "Top": 0.15, "Bottom": 0.15}
 _ITEM_SENIOR = {"Dress": 0.35, "Outer": 0.30, "Top": 0.15, "Bottom": 0.15}
 _ITEM_MENS = {"Suits": 0.40, "Shirts": 0.20, "Casual": 0.20, "Knit": 0.10, "Bottom": 0.10}
-_ITEM_KIDS = {"아우터": 0.30, "상의": 0.30, "하의": 0.25, "원피스": 0.05, "세트": 0.10}
+_ITEM_KIDS = {"Outer": 0.30, "Top": 0.30, "Bottom": 0.25, "Dress": 0.05, "Set": 0.10}
 
 # ──────────────────────────────────────────────────────
 # 공통: 여성/정상 매장 파라미터
@@ -39,7 +39,7 @@ _WOMEN_NORMAL_BASE = {
 
     # ── 최종 재고 로직 (v8) 목표 비중
     "inv_weights": {
-        "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15}, 
+        "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15}, 
         "fresh":  {"new": 0.70},
         "best":   {"store10": 0.20},
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
@@ -138,14 +138,53 @@ _OUTDOOR_OUTLET_BASE = {
     "weight_item":      0.10,
 }
 
+
 # ──────────────────────────────────────────────────────
+# 신규: 아동/상설 매장 파라미터
+# ──────────────────────────────────────────────────────
+_KIDS_OUTLET_BASE = {
+    "zoning": "아동",
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
+        "fresh":  {"new": 0.10, "plan": 0.20},
+        "best":   {"store10": 0.20},
+        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "item":   _ITEM_KIDS
+    },
+    "weight_discount":  0.40,
+    "weight_freshness": 0.15,
+    "weight_season":    0.15,
+    "weight_best":      0.20,
+    "weight_item":      0.10,
+}
+
+_KIDS_NORMAL_BASE = {
+    "zoning": "아동",
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
+        "fresh":  {"new": 0.70, "plan": 0.10},
+        "best":   {"store10": 0.20},
+        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "item":   _ITEM_KIDS
+    },
+    "weight_discount":  0.25,
+    "weight_freshness": 0.25,
+    "weight_season":    0.15,
+    "weight_best":      0.25,
+    "weight_item":      0.10,
+}
+
+# ──────────────────────────────────────────────────────
+
 # 신규: 남성복/정상 매장 파라미터 (스포츠와 가중치 동일 설정)
 # ──────────────────────────────────────────────────────
 _MENS_NORMAL_BASE = {
     "zoning": "남성",
     "year_base": 2026,
     "inv_weights": {
-        "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
+        "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
         "fresh":  {"new": 0.70, "plan": 0.10},
         "best":   {"store10": 0.10},
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
@@ -246,7 +285,7 @@ SCORING_CONFIG = {
     "스포츠_상설_스케쳐스": {**_SPORTS_OUTLET_BASE, "brand_name": "스케쳐스", "zoning": "스포츠", "eness_name": "스케쳐스"},
 
     # ── 폴햄키즈
-    "아동_정상_폴햄키즈": {**_WOMEN_NORMAL_BASE, "brand_name": "폴햄키즈", "zoning": "아동", "eness_name": "폴햄키즈", "inv_weights": {**_WOMEN_NORMAL_BASE["inv_weights"], "item": _ITEM_KIDS}},
+    "아동_정상_폴햄키즈": {**_KIDS_NORMAL_BASE, "brand_name": "폴햄키즈", "zoning": "아동", "eness_name": "폴햄키즈"},
 }
 
 def get_weights_by_category(category: str, store_type: str, brand_name: str = "") -> dict:
@@ -265,6 +304,7 @@ def get_weights_by_category(category: str, store_type: str, brand_name: str = ""
         return _SPORTS_OUTLET_BASE if is_outlet else _SPORTS_NORMAL_BASE
     elif '남성' in category:
         return _MENS_OUTLET_BASE if is_outlet else _MENS_NORMAL_BASE
+    elif '아동' in category or '토들러' in category:
+        return _KIDS_OUTLET_BASE if is_outlet else _KIDS_NORMAL_BASE
     else:
-        # 향후 아동, 잡화 등이 추가될 때 elif 분기로 확장
         return _WOMEN_OUTLET_BASE if is_outlet else _WOMEN_NORMAL_BASE

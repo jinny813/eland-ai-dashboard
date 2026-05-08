@@ -102,9 +102,14 @@ BRAND_METADATA = {
     "아이러브제이": {"eness_name": "아이러브제이", "zoning": "아동", "category": "아동의류"},
     "스파오키즈": {"eness_name": "스파오키즈", "zoning": "아동", "category": "아동의류"},
     "스케쳐스키즈": {"eness_name": "스케쳐스키즈", "zoning": "아동잡화", "category": "아동의류"},
-    "모이몰른": {"eness_name": "모이몰른", "zoning": "아동잡화", "category": "아동의류"},
-    "행텐틴즈": {"eness_name": "행텐틴즈", "zoning": "토들러", "category": "아동의류"},
+    "모이몰른": {"eness_name": "모이몰른", "zoning": "유아", "category": "아동의류"},
+    "행텐틴즈": {"eness_name": "행텐틴즈", "zoning": "아동", "category": "아동의류"},
     "프로젝트키즈": {"eness_name": "프로젝트키즈", "zoning": "토들러", "category": "아동의류"},
+    "컬리수": {"eness_name": "컬리수", "zoning": "토들러", "category": "아동의류"},
+    "페리미츠": {"eness_name": "페리미츠", "zoning": "토들러", "category": "아동의류"},
+    "MLB키즈": {"eness_name": "MLB키즈", "zoning": "아동", "category": "아동의류"},
+    "아디다스키즈": {"eness_name": "아디다스키즈", "zoning": "아동", "category": "아동의류"},
+    "지프키즈": {"eness_name": "지프키즈", "zoning": "아동", "category": "아동의류"},
 
     # ── 스포츠
     "아디다스(ADIDAS)": {"eness_name": "아디다스(ADIDAS)", "zoning": "스포츠", "category": "스포츠"},

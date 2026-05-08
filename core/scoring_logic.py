@@ -85,14 +85,23 @@ class AssortmentScorer:
         if "RunningShoes" in self.config.get("inv_weights", {}).get("item", {}):
             return 'Top'
 
-        # 아동복 전용
-        if "아우터" in self.config.get("inv_weights", {}).get("item", {}):
+        # 아동복 전용 (접두어 NK/PK/SP 등 대응)
+        if "Outer" in self.config.get("inv_weights", {}).get("item", {}) or "아우터" in self.config.get("inv_weights", {}).get("item", {}):
+            # 브랜드 접두어 2자리 제외 후 품종코드(3~4자리) 분석 (예: PKJK... -> JK)
+            c2 = raw[2:4] if len(raw) >= 4 else raw[:2]
+            if c2 in ['JK','JA','JH','JP']: return 'Outer'
+            if c2 in ['TS','SH','BL','KN']: return 'Top'
+            if c2 in ['PT','SL']:            return 'Bottom'
+            if c2 == 'OP':                   return 'Dress'
+            if c2 == 'ST':                   return 'Set'
+            # fallback for 2-char codes
             c2 = raw[:2]
-            if c2 in ['JK','JA','JH','JP']: return '아우터'
-            if c2 in ['TS','SH','BL','KN']: return '상의'
-            if c2 in ['PT','SL']:            return '하의'
-            if c2 == 'OP':                   return '원피스'
-            return '상의'
+            if c2 in ['JK','JA','JH','JP']: return 'Outer'
+            if c2 in ['TS','SH','BL','KN']: return 'Top'
+            if c2 in ['PT','SL']:            return 'Bottom'
+            if c2 == 'OP':                   return 'Dress'
+            if c2 == 'ST':                   return 'Set'
+            return 'Top'
 
         # 남성복 전용
         if "Suits" in self.config.get("inv_weights", {}).get("item", {}):
@@ -226,15 +235,19 @@ class AssortmentScorer:
         df['_dis_rate'] = df['discount_rate'].apply(self._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
         dis_inv = inv_weights.get('dis', {})
         
-        # [v11.1] 스포츠/아동 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용
+        # [v11.1] 스포츠 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용 (아동은 정상매장 시 연차기반 허용)
         zoning = self.config.get('zoning', '')
-        is_rate_based = zoning in ["스포츠", "아웃도어", "아동", "토들러", "애슬레저"]
+        is_rate_based = zoning in ["스포츠", "아웃도어", "애슬레저"]
         if not is_rate_based and 'category_group' in df.columns and not df['category_group'].empty:
             cg = str(df['category_group'].iloc[0])
-            if any(k in cg for k in ["스포츠", "아웃도어", "아동", "토들러"]):
+            if any(k in cg for k in ["스포츠", "아웃도어"]):
                 is_rate_based = True
 
-        if is_outlet or is_rate_based:
+        # [v4.1] 할인율 데이터가 모두 0인 상설 매장의 경우 연차(Age) 기준으로 자동 Fallback 처리
+        has_dis_data = (df['_dis_rate'] > 0).any()
+        use_age_for_dis = is_outlet and not has_dis_data
+
+        if (is_outlet and not use_age_for_dis) or is_rate_based:
             dis_cfg = [
                 {'m': (df['_dis_rate'] >= 70), 'r': dis_inv.get('s70', 0.10)},
                 {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},
@@ -243,15 +256,17 @@ class AssortmentScorer:
             ]
         else:
             dis_cfg = [
-                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.00)},
-                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.05)},
-                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.10)},
-                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.15)},
+                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.70)},
+                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.10 if use_age_for_dis else 0.00)},
+                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.20 if use_age_for_dis else 0.05)},
+                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
+                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.10 if use_age_for_dis else 0.15)},
             ]
         dis_atts = []
         for item in dis_cfg:
             act = _get_record_ref(item['m'])['_amt'].sum()
             tgt = target_total * item['r']
+            # [v12.5] tgt가 0인 경우(가중치가 0인 구간): 실제 재고가 있다면 0점, 없다면 100점 처리 (방어적 채점)
             dis_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else (100.0 if act <= 0 else 0.0))
         discount_score = (sum(dis_atts) / len(dis_atts)) if dis_atts else 0.0
 
@@ -259,9 +274,16 @@ class AssortmentScorer:
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
         fresh_inv = inv_weights.get('fresh', {})
         if is_outlet:
-            fresh_cfg = [{'m': (ft == '신상'), 'r': fresh_inv.get('new', 0.10)}, {'m': (ft == '기획'), 'r': fresh_inv.get('plan', 0.20)}]
+            fresh_cfg = [
+                {'m': (ft.str.contains('신상', na=False)), 'r': fresh_inv.get('new', 0.10)},
+                {'m': (ft.str.contains('기획', na=False)), 'r': fresh_inv.get('plan', 0.20)},
+                {'m': (ft.str.contains('이월', na=False)), 'r': fresh_inv.get('off', 0.50)}
+            ]
         else:
-            fresh_cfg = [{'m': (df['_age'] == 0) | (ft == '신상'), 'r': fresh_inv.get('new', 0.70)}, {'m': (ft == '기획'), 'r': fresh_inv.get('plan', 0.10)}]
+            fresh_cfg = [
+                {'m': (df['_age'] == 0) | (ft.str.contains('신상', na=False)), 'r': fresh_inv.get('new', 0.70)},
+                {'m': (ft.str.contains('기획', na=False)), 'r': fresh_inv.get('plan', 0.10)}
+            ]
         
         fresh_atts = []
         for item in fresh_cfg:
@@ -320,7 +342,13 @@ class AssortmentScorer:
                 best_styles = best_candidates.groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
         
         if not best_styles:
-            best_score = 0.0
+            # [v4.2] 스타일별 판매 데이터 부재 시 전체 매출 실적을 기반으로 보정 점수 부여 (0점 방지)
+            brand_sales = df['brand_month_sales'].iloc[0] if 'brand_month_sales' in df.columns else 0.0
+            if brand_sales > 0:
+                overall_perf = (brand_sales / target_total) if target_total > 0 else 0
+                best_score = min(40.0, overall_perf * 100)  # [v4.3] 데이터 부족 시 보정 점수 대폭 축소 (0점 방지용 최소치)
+            else:
+                best_score = 0.0
         else:
             act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
             tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)

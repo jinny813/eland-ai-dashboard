@@ -1,0 +1,502 @@
+[
+  {
+    "brand": "로엠",
+    "style": "RMJHF4VR22",
+    "sales": 192
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG23R12",
+    "sales": 181
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWF49R13",
+    "sales": 176
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF49RT3",
+    "sales": 173
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG23ST1",
+    "sales": 168
+  },
+  {
+    "brand": "로엠",
+    "style": "RMYWG23R11",
+    "sales": 154
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF4VR52",
+    "sales": 137
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG24R16",
+    "sales": 132
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWE49R15",
+    "sales": 112
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJG23G02",
+    "sales": 111
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJTG23R11",
+    "sales": 110
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJF49G08",
+    "sales": 104
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG24R13",
+    "sales": 103
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG24R13",
+    "sales": 100
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF49R16",
+    "sales": 96
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG23R11",
+    "sales": 93
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG24R12",
+    "sales": 88
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWF4VR14",
+    "sales": 77
+  },
+  {
+    "brand": "베네통",
+    "style": "BATSA4611",
+    "sales": 74
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLF49RT5",
+    "sales": 70
+  },
+  {
+    "brand": "로엠",
+    "style": "RMCKG23R98",
+    "sales": 68
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJE49G05",
+    "sales": 63
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF49RT2",
+    "sales": 60
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWG23R11",
+    "sales": 60
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJG23G01",
+    "sales": 58
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWG24R11",
+    "sales": 57
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWF49R14",
+    "sales": 56
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWF4TR11",
+    "sales": 55
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF4VR54",
+    "sales": 54
+  },
+  {
+    "brand": "로엠",
+    "style": "RMLWF12R01",
+    "sales": 53
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJG24G12",
+    "sales": 52
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF4TR21",
+    "sales": 48
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJG24G11",
+    "sales": 47
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJG23G13",
+    "sales": 46
+  },
+  {
+    "brand": "로엠",
+    "style": "RMOWG23S11",
+    "sales": 43
+  },
+  {
+    "brand": "로엠",
+    "style": "RMLWG23R11",
+    "sales": 42
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG11S11",
+    "sales": 42
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJDF4TR12",
+    "sales": 42
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG24R02",
+    "sales": 42
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG11R12",
+    "sales": 42
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLF4TR12",
+    "sales": 42
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG23R15",
+    "sales": 40
+  },
+  {
+    "brand": "로엠",
+    "style": "RMCKF12R11",
+    "sales": 40
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG23S99",
+    "sales": 39
+  },
+  {
+    "brand": "로엠",
+    "style": "RMCKG23R99",
+    "sales": 38
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWF49RT1",
+    "sales": 37
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG23R12",
+    "sales": 37
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG12ST1",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLF49R15",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMKAF4VR02",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG12R23",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG24R11",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMKAF49R11",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWG24R13",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJG23GT1",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWG11R11",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG12R03",
+    "sales": 36
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWG23R15",
+    "sales": 35
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF4TR16",
+    "sales": 35
+  },
+  {
+    "brand": "로엠",
+    "style": "RMWHF4TRT4",
+    "sales": 35
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SWWBLQ12050",
+    "sales": 32
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SSKPOQ12010",
+    "sales": 31
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJE4TG12",
+    "sales": 30
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKG11R13",
+    "sales": 30
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SSKPOQ22230",
+    "sales": 30
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJG24G14",
+    "sales": 30
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SSKCDQ12030",
+    "sales": 27
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SSKPOQ12530",
+    "sales": 26
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLF4VS11",
+    "sales": 26
+  },
+  {
+    "brand": "로엠",
+    "style": "RMLWG23R02",
+    "sales": 26
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SSKPOP32080",
+    "sales": 26
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLF49RT3",
+    "sales": 25
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLF4TRT1",
+    "sales": 25
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJF4VG02",
+    "sales": 25
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PQ2EJ463",
+    "sales": 25
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJF12G05",
+    "sales": 25
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJF4CG11",
+    "sales": 25
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTJF49G05",
+    "sales": 25
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF4VR11",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJHG11R99",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMTWF4VR12",
+    "sales": 24
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PR2WB403",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF4VR13",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMBLG23R14",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMWHF49R15",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJPF4TR13",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMCKG12R12",
+    "sales": 24
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PQ1KG262",
+    "sales": 24
+  },
+  {
+    "brand": "시슬리",
+    "style": "SAWSF2611",
+    "sales": 24
+  },
+  {
+    "brand": "로엠",
+    "style": "RMJKF11S51",
+    "sales": 24
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PR2WS363",
+    "sales": 23
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SWHCTP42030",
+    "sales": 23
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SWSJKQ22010",
+    "sales": 23
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SWWBLQ22010",
+    "sales": 22
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PP7XD304",
+    "sales": 22
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PR2WJ362",
+    "sales": 22
+  },
+  {
+    "brand": "쉬즈미스",
+    "style": "SWHCTP42180",
+    "sales": 22
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PR2WZ362",
+    "sales": 22
+  },
+  {
+    "brand": "베네통",
+    "style": "BAJPB4611",
+    "sales": 22
+  },
+  {
+    "brand": "플라스틱아일랜드",
+    "style": "PR2WZ431",
+    "sales": 22
+  }
+]

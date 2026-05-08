@@ -2216,9 +2216,13 @@
       const tb = document.getElementById('mainTbody'); if (!tb) return;
       tb.innerHTML = '';
       STORES.forEach(st => {
+        let badgeHtml = '';
+        if (st === 'NC신구로점' || st === 'NC부천점') {
+          badgeHtml = `<span style="background-color:#EF4444; color:white; font-size:10px; padding:2px 8px; border-radius:10px; margin-right:6px; font-weight:600; display:inline-block; vertical-align:middle;">진척중</span>`;
+        }
         // 지점명 셀: 클릭 시 모달 오픈
         let r = `<td style="cursor:pointer;" onclick="openStoreModal('${st}','전체')">
-      <span style="font-weight:800; color:#111; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#D1D5DB;">${st}</span>
+      ${badgeHtml}<span style="font-weight:800; color:#111; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#D1D5DB; vertical-align:middle;">${st}</span>
     </td>`;
         (scoreData[st] || []).forEach((v, ci) => {
           if (v > 0) {
@@ -2573,7 +2577,7 @@
         } else if (cat === '남성') {
           itemGuideHtml = `<p style="margin-top:5px; padding-left:10px; border-left:2px solid #E2E8F0;">• <b>남성</b>: 정장(40%), 셔츠(20%), 캐주얼(20%), 니트(10%), 하의(10%)</p>`;
         } else if (cat === '아동' || cat === '아동의류') {
-          itemGuideHtml = `<p style="margin-top:5px; padding-left:10px; border-left:2px solid #E2E8F0;">• <b>아동</b>: 아우터(30%), 상의(30%), 하의(25%), 원피스(5%), 세트(10%)</p>`;
+          itemGuideHtml = `<p style="margin-top:5px; padding-left:10px; border-left:2px solid #E2E8F0;">• <b>아동</b>: 아우터(30%), 상의(30%), 하의(25%), 원피스(5%), 상하세트(10%)</p>`;
         } else {
           // 여성 브랜드인 경우 4대 조닝 통합 노출
           itemGuideHtml = `

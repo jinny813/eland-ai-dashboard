@@ -1,0 +1,57 @@
+[
+  {
+    "item_code": "SWJTSP12020",
+    "product_name": "레터링 스웨트 셔츠",
+    "category": "스웨트셔츠",
+    "fit": "",
+    "material": "",
+    "detail": "",
+    "color": "",
+    "is_best": 1,
+    "old_name": "레터링 스웨트 셔츠"
+  },
+  {
+    "item_code": "SSMSLP32000",
+    "product_name": "사계절 슬림 슬랙스",
+    "category": "팬츠",
+    "fit": "슬림",
+    "material": "",
+    "detail": "",
+    "color": "",
+    "is_best": 1,
+    "old_name": "사계절 슬림 슬랙스"
+  },
+  {
+    "item_code": "TWEBLP72070",
+    "product_name": "벨티드 스트레이트 슬랙스",
+    "category": "팬츠",
+    "fit": "스트레이트",
+    "material": "",
+    "detail": "벨티드",
+    "color": "",
+    "is_best": 1,
+    "old_name": "벨티드 스트레이트 슬랙스"
+  },
+  {
+    "item_code": "T1BOD052010",
+    "product_name": "미디 벨티드 원피스",
+    "category": "원피스",
+    "fit": "미디",
+    "material": "",
+    "detail": "벨티드",
+    "color": "",
+    "is_best": 1,
+    "old_name": "미디 벨티드 원피스"
+  },
+  {
+    "item_code": "SJKPOP52150",
+    "product_name": "셔츠형 롱 원피스",
+    "category": "원피스",
+    "fit": "롱",
+    "material": "",
+    "detail": "",
+    "color": "",
+    "is_best": 1,
+    "old_name": "셔츠형 롱 원피스"
+  }
+]

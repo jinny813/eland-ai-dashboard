@@ -96,7 +96,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         '애슬레저': {'Top':'상의', 'Bottom':'하의', 'OtherShoes':'잡화'},
         '신발':     {'RunningShoes':'운동화', 'CasualShoes':'캐주얼화', 'OtherShoes':'샌들/슬리퍼'},
         '남성':     {'Suits':'정장', 'Shirts':'셔츠', 'Casual':'캐주얼', 'Knit':'니트', 'Bottom':'하의'},
-        '아동':     {'아우터':'아우터', '상의':'상의', '하의':'하의', '원피스':'원피스', '세트':'세트'},
+        '아동':     {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Dress':'원피스', 'Set':'상하세트'},
         '캐릭터':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
         '커리어':   {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Bottom':'하의'},
         '시니어':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
@@ -110,7 +110,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         '스포츠':   {'Top': 0.40, 'Bottom': 0.30, 'RunningShoes': 0.20, 'OtherShoes': 0.10},
         '아웃도어': {'Outer': 0.40, 'Top': 0.40, 'Bottom': 0.20},
         '애슬레저': {'Top': 0.50, 'Bottom': 0.40, 'OtherShoes': 0.10},
-        '일반':     {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10}
+        '일반':     {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10},
+        '아동':     {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.25, 'Dress': 0.05, 'Set': 0.10}
     }
     item_weights = inv_w.get('item', default_item_w.get(zoning, default_item_w['일반']))
     
@@ -143,27 +144,32 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     # 2. 할인율 세부
     df['_dis_rate'] = df['discount_rate'].apply(AssortmentScorer._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
+    
+    # [v4.1] 할인율 데이터가 모두 0인 상설 매장의 경우 연차(Age) 기준으로 자동 Fallback 처리
+    has_dis_data = (df['_dis_rate'] > 0).any()
+    use_age_for_dis = outlet and not has_dis_data
+
     category_group = str(df['category_group'].iloc[0]) if 'category_group' in df.columns else ""
-    # [v11.1] 스포츠/아동 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용
-    is_rate_based = zoning in ["스포츠", "아웃도어", "아동", "토들러", "애슬레저"]
-    if not is_rate_based and any(k in category_group for k in ["스포츠", "아웃도어", "아동", "토들러"]):
+    # [v11.1] 스포츠 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용 (아동은 제외)
+    is_rate_based = zoning in ["스포츠", "아웃도어", "애슬레저"]
+    if not is_rate_based and any(k in category_group for k in ["스포츠", "아웃도어"]):
         is_rate_based = True
 
     dis_inv = inv_w.get('dis', {})
 
-    if outlet or is_rate_based:
+    if (outlet and not use_age_for_dis) or is_rate_based:
         # 상설 또는 스포츠: 실시간 할인율 필드 활용
         dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)), 
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
                    ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)), 
                    ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10))]
     else:
-        # 정상: 연차(year) 기준 매핑 — 70%+(4년+), 50%+(3년), 30%+(2년), 1-30%(1년), 정상가(0년)
-        dis_cfg = [('d70', '70% 이상', (df['_age']>=4), dis_inv.get('s70', 0.00)), 
-                   ('d50', '50~70% 미만', (df['_age']==3), dis_inv.get('s50', 0.05)),
-                   ('d30', '30~50% 미만', (df['_age']==2), dis_inv.get('s30', 0.10)), 
-                   ('d10', '1~30% 미만', (df['_age']==1), dis_inv.get('s10', 0.15)),
-                   ('d0',  '정상가 (신규)', (df['_age']==0), 0.00)]
+        # 정상 또는 할인율 데이터 없는 상설: 연차(year) 기준 매핑
+        dis_cfg = [('d70', '70% 이상 (4년↑)', (df['_age']>=4), dis_inv.get('s70', 0.00)), 
+                   ('d50', '50~70% (3년차)', (df['_age']==3), dis_inv.get('s50', 0.05)),
+                   ('d30', '30~50% (2년차)', (df['_age']==2), dis_inv.get('s30', 0.10)), 
+                   ('d10', '1~30% (1년차)', (df['_age']==1), dis_inv.get('s10', 0.15)),
+                   ('d0',  '정상가 (신상)', (df['_age']==0), dis_inv.get('s0', 0.70))]
     
     dis_segs = []
     for key, lbl, mask, ratio in dis_cfg:
@@ -180,8 +186,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     # 3. 신선도 세부
     ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series(['']*len(df))
     if outlet: 
-        # 상설: 명시적 필드
-        fresh_cfg = [('new', '신상', (ft == '신상'), 0.10), ('plan', '기획', (ft == '기획'), 0.20)]
+        # 상설: 명시적 필드 (키워드 대응 강화)
+        fresh_cfg = [
+            ('new', '신상', (ft.str.contains('신상', na=False)), 0.10), 
+            ('plan', '기획', (ft.str.contains('기획', na=False)), 0.20),
+            ('off', '이월', (ft.str.contains('이월', na=False)), 0.50)
+        ]
     else: 
         # 정상: 연차 0년차를 신상으로 간주
         fresh_cfg = [('new', '신상', (df['_age'] == 0), 0.70)]

@@ -122,18 +122,43 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         # [v125.0] 카테고리 통합 및 자동 매핑
         if 'category_group' in df.columns:
             df.loc[df['category_group'] == '골프웨어', 'category_group'] = '신사'
+            df.loc[df['category_group'] == '아동의류(특정매입)', 'category_group'] = '아동'
             # 스케쳐스 스포츠 카테고리 강제 매핑 (데이터 유실 방지)
             df.loc[df['brand_name'].str.contains('스케쳐스', na=False), 'category_group'] = '스포츠'
         
+        # [v4.3] 이랜드월드 브랜드(스파오키즈, 뉴발란스키즈) 정상 매장 로직 적용 (사용자 요청)
+        eland_world_brands = ['스파오키즈', '뉴발란스키즈']
+        for b in eland_world_brands:
+            mask = df['brand_name'].str.contains(b, na=False)
+            df.loc[mask, 'store_type'] = '정상'
+            
         all_stores = [s for s in df['store_name'].unique()
                       if s and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
-        stores = sorted(all_stores, key=lambda s: (0 if s == 'NC신구로점' else 1, s))
+        stores = sorted(all_stores, key=lambda s: (0 if s == 'NC신구로점' else (1 if s == 'NC부천점' else 2), s))
         
         bp_stores = [s for s in all_stores if s.startswith("__BP__")]
         bp_df = df[df['store_name'].isin(bp_stores)] if bp_stores else pd.DataFrame()
 
         cats = ['전체', '여성', '스포츠', '신사', '아동', '캐주얼', '잡화']
-        diag_month = f"{datetime.now().month}월"
+        # [v4.0] 데이터가 있는 최신 월 자동 선택 (현재 월 데이터 부재 시 대응)
+        available_months = df['data_month'].unique()
+        current_month = f"{datetime.now().month}월"
+        
+        # 월 이름에서 숫자 추출하여 정렬 (12월 > 1월 방지)
+        def _get_m_num(m_str):
+            try: return int(str(m_str).replace('월','').strip())
+            except: return 0
+            
+        sorted_months = sorted([m for m in available_months if m], key=_get_m_num, reverse=True)
+        
+        if current_month in available_months:
+            diag_month = current_month
+        elif sorted_months:
+            diag_month = sorted_months[0]
+        else:
+            diag_month = current_month
+            
+        print(f"DEBUG: Selected diag_month = {diag_month}")
 
         # [v68.4] 마스터 브랜드 리스트 (데이터 유무와 상관없이 노출할 브랜드 명시)
         MASTER_CATEGORY_BRANDS = {
@@ -151,6 +176,13 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             "NC야탑점": { "여성": ["베네통", "시슬리"] },
             "NC강서점": { "여성": ["JJ지고트"] },
             "NC평촌점": { "여성": ["바바팩토리"] },
+            "NC부천점": {
+                "아동": [
+                    "컬리수", "페리미츠", "베네통키즈", "아가방", "모이몰른", "뉴발란스키즈",
+                    "탑텐키즈", "스파오키즈", "행텐틴즈", "NBA키즈", "폴햄키즈", "MLB키즈",
+                    "앙팡스(압소바)", "블랙야크키즈", "휠라키즈", "아디다스키즈", "지프키즈", "에어워크주니어"
+                ]
+            },
         }
 
         score_data  = {}
@@ -251,7 +283,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 
                 # [v107.0] 특정 브랜드는 DB 설정과 무관하게 '정상/상설' 유형 고정 적용
                 # 지오지아는 신사 카테고리 상설매장으로 고정 (사용자 요청)
-                normals = ["로엠", "미쏘", "더아이잗", "에잇컨셉", "폴햄키즈"]
+                normals = ["로엠", "미쏘", "더아이잗", "에잇컨셉", "폴햄키즈", "스파오키즈", "뉴발란스키즈"]
                 outlets = ["지오지아", "지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스", "스케쳐스"]
                 
                 if b_name in normals:
