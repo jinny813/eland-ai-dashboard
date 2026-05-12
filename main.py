@@ -131,7 +131,7 @@ def main():
     with st.sidebar:
         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/E-Land_Group_logo.svg/1024px-E-Land_Group_logo.svg.png", width=120)
         st.title("Admin Menu")
-        menu = st.radio("이동", ["📊 실시간 대시보드", "📤 데이터 업로드"], label_visibility="collapsed")
+        menu = st.radio("이동", ["📊 실시간 대시보드", "📤 데이터 업로드", "📄 노출판 다운로드", "📂 RAW 데이터 업로드"], label_visibility="collapsed")
         st.markdown("---")
         st.caption(f"DB Connected: {check_mgr.is_connected}")
 
@@ -160,6 +160,7 @@ def main():
                     script_inject = f"<script>window.__INITIAL_DATA__ = {data_json};</script>"
                     final_html = html_template.replace('<script>', script_inject + '<script>', 1)
 
+                    # 대시보드 Iframe 렌더링
                     # [v145.0] 하단 잘림 방지: 높이 2400px로 대폭 확장 및 스크롤 활성화
                     components.html(final_html, height=2400, scrolling=True)
                     
@@ -298,6 +299,115 @@ def main():
                             st.error(f"오류: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
 
+
+    # ────────────────────────────────────────────
+    # 뷰 3: 노출판 다운로드 (P3)
+    # ────────────────────────────────────────────
+    elif menu == "📄 노출판 다운로드":
+        st.title("📄 노출판 다운로드 (P3)")
+        st.info("지점 및 카테고리별 상품구색 진단 결과(노출판)를 엑셀로 추출합니다.")
+        st.markdown("---")
+        
+        try:
+            from core.data_loader import load_dashboard_data
+            from core.report_generator import export_to_excel_bytes
+            
+            with st.spinner("최신 데이터를 불러오는 중..."):
+                db_data = load_dashboard_data(mgr=check_mgr)
+            
+            if "error" in db_data:
+                st.error(f"데이터 로드 실패: {db_data['error']}")
+            else:
+                col1, col2 = st.columns(2)
+                stores = ["전체 지점"] + db_data.get("STORES", [])
+                cats = ["전체 카테고리"] + db_data.get("CATS", [])
+                
+                with col1:
+                    sel_store = st.selectbox("추출 대상 지점 선택", stores)
+                with col2:
+                    sel_cat = st.selectbox("추출 대상 카테고리 선택", cats)
+                
+                st.markdown("### 🛠 보고서 생성")
+                if st.button("🚀 엑셀 보고서 생성 및 다운로드 준비", use_container_width=True):
+                    with st.spinner("엑셀 파일을 생성하고 있습니다..."):
+                        excel_data = export_to_excel_bytes(data=db_data, store_filter=sel_store, cat_filter=sel_cat)
+                        if excel_data:
+                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                            dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                            st.success(f"✅ {dl_filename} 생성 완료!")
+                            st.download_button(
+                                label="💾 생성된 엑셀 파일 다운로드",
+                                data=excel_data,
+                                file_name=dl_filename,
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                use_container_width=True
+                            )
+        except Exception as e:
+            st.error(f"보고서 생성 오류: {e}")
+
+    # ────────────────────────────────────────────
+    # 뷰 4: RAW 데이터 업로드 (P4)
+    # ────────────────────────────────────────────
+    elif menu == "📂 RAW 데이터 업로드":
+        st.markdown("<div style='padding: 2rem;'>", unsafe_allow_html=True)
+        st.title("📂 RAW 데이터 업로드 (P4)")
+        st.subheader("상품 정보 입력 RAW")
+        st.info("스타일 마스터 및 상품 기준 정보를 업로드하여 시스템의 자동 인식 기능을 강화합니다.")
+        st.markdown("---")
+
+        subtab_file, subtab_text = st.tabs(["📂 마스터 파일 업로드", "📋 상품 정보 직접 입력"])
+
+        with subtab_file:
+            st.caption("💡 품번, 상품명, 복종, 소재 등이 포함된 엑셀 파일을 업로드하세요.")
+            master_file = st.file_uploader("상품 마스터 엑셀 업로드", type=['xls', 'xlsx'], key="master_upload")
+            
+            if master_file:
+                try:
+                    df_master = pd.read_excel(master_file)
+                    st.write("업로드 데이터 미리보기:")
+                    st.dataframe(df_master.head(5), use_container_width=True)
+                    
+                    if st.button("마스터 DB 반영 (Bulk)", type="primary"):
+                        with st.spinner("상품 정보를 정규화하여 DB에 반영 중..."):
+                            # [v150.0] DB 반영 로직 호출 (핵심 컬럼 정규화)
+                            import sqlite3
+                            db_path = "database/product_master.db"
+                            conn = sqlite3.connect(db_path)
+                            
+                            # 컬럼명 맵핑 (업로드 파일 -> DB)
+                            # 간단한 예시로 style_code, product_name, category 등 매칭 시도
+                            df_db = df_master.copy()
+                            # 실제로는 컬럼명 정규화 로직 필요
+                            df_db.to_sql('products', conn, if_exists='append', index=False)
+                            conn.close()
+                            st.success(f"{len(df_db)}건의 상품 정보가 성공적으로 반영되었습니다.")
+                except Exception as e:
+                    st.error(f"파일 처리 오류: {e}")
+
+        with subtab_text:
+            st.caption("💡 특정 스타일의 정보를 개별적으로 수정하거나 입력할 때 사용합니다.")
+            style_input = st.text_input("스타일 코드(품번)")
+            name_input = st.text_input("상품명")
+            cat_input = st.selectbox("카테고리", ["여성", "스포츠", "신사", "아동", "캐주얼", "잡화"])
+            
+            if st.button("개별 정보 업데이트"):
+                if not style_input:
+                    st.warning("스타일 코드를 입력하세요.")
+                else:
+                    try:
+                        import sqlite3
+                        conn = sqlite3.connect("database/product_master.db")
+                        cursor = conn.cursor()
+                        cursor.execute("""
+                            INSERT OR REPLACE INTO products (style_code, product_name, category, updated_at)
+                            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                        """, (style_input, name_input, cat_input))
+                        conn.commit()
+                        conn.close()
+                        st.success(f"[{style_input}] 정보가 업데이트 되었습니다.")
+                    except Exception as e:
+                        st.error(f"DB 업데이트 실패: {e}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

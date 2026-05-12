@@ -187,10 +187,10 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series(['']*len(df))
     if outlet: 
         # 상설: 명시적 필드 (키워드 대응 강화)
+        # [v4.5] 사용자 요청: 상설매장의 경우 '이월' 항목은 노출판 및 대시보드에서 제외
         fresh_cfg = [
             ('new', '신상', (ft.str.contains('신상', na=False)), 0.10), 
-            ('plan', '기획', (ft.str.contains('기획', na=False)), 0.20),
-            ('off', '이월', (ft.str.contains('이월', na=False)), 0.50)
+            ('plan', '기획', (ft.str.contains('기획', na=False)), 0.20)
         ]
     else: 
         # 정상: 연차 0년차를 신상으로 간주

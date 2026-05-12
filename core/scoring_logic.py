@@ -274,10 +274,10 @@ class AssortmentScorer:
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
         fresh_inv = inv_weights.get('fresh', {})
         if is_outlet:
+            # [v4.5] 사용자 요청: 상설매장의 경우 '이월' 항목은 채점 및 노출에서 제외 (신상/기획 중심 관리)
             fresh_cfg = [
                 {'m': (ft.str.contains('신상', na=False)), 'r': fresh_inv.get('new', 0.10)},
-                {'m': (ft.str.contains('기획', na=False)), 'r': fresh_inv.get('plan', 0.20)},
-                {'m': (ft.str.contains('이월', na=False)), 'r': fresh_inv.get('off', 0.50)}
+                {'m': (ft.str.contains('기획', na=False)), 'r': fresh_inv.get('plan', 0.20)}
             ]
         else:
             fresh_cfg = [
