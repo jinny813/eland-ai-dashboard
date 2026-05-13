@@ -369,7 +369,22 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "prev_sales": prev_benchmark_sales / 1_000_000,
                         "growth_pct": float(g_pct),
                         "area": get_area(store, b_name),
-                        "month": diag_month, "data_month": b_data_month
+                        "month": diag_month, "data_month": b_data_month,
+                        "scoring_guide": {
+                            "score_weights": {
+                                "dis":   round(cfg.get('weight_discount',  0.30) * 100),
+                                "fresh": round(cfg.get('weight_freshness', 0.20) * 100),
+                                "sea":   round(cfg.get('weight_season',    0.15) * 100),
+                                "best":  round(cfg.get('weight_best',      0.25) * 100),
+                                "item":  round(cfg.get('weight_item',      0.10) * 100),
+                            },
+                            "item_w":  {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('item',   {}).items() if v > 0},
+                            "dis_w":   {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('dis',    {}).items() if v > 0},
+                            "fresh_w": {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('fresh',  {}).items() if v > 0},
+                            "sea_w":   {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('season', {}).items() if v > 0},
+                            "best_pct": round(cfg.get('inv_weights', {}).get('best', {}).get('store10', 0.20) * 100),
+                            "is_outlet": _is_outlet_type(b_type),
+                        }
                     })
 
                 # 상세 섹션 조립
