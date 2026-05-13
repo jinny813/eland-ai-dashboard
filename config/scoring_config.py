@@ -12,15 +12,15 @@ config/scoring_config.py
   - Career(커리어), Casual(캐주얼), Character(캐릭터), Senior(시니어)
 """
 
-from config.brand_metadata import get_brand_zoning, get_eness_name
+from config.brand_metadata import get_brand_zoning
 
 # ──────────────────────────────────────────────────────
 # 조닝별 아이템별 목표 비중 (inv_weights.item 용)
 # ──────────────────────────────────────────────────────
-_ITEM_CAREER = {"Outer": 0.45, "Top": 0.25, "Dress": 0.15, "Bottom": 0.10}
-_ITEM_CASUAL = {"Outer": 0.35, "Top": 0.25, "Dress": 0.15, "Skirt": 0.15}
-_ITEM_CHARACTER = {"Dress": 0.35, "Outer": 0.25, "Top": 0.15, "Bottom": 0.15}
-_ITEM_SENIOR = {"Dress": 0.35, "Outer": 0.30, "Top": 0.15, "Bottom": 0.15}
+_ITEM_CAREER    = {"Outer": 0.45, "Top": 0.25, "Dress": 0.15, "Bottom": 0.10, "Skirt": 0.05}
+_ITEM_CASUAL    = {"Outer": 0.35, "Top": 0.25, "Dress": 0.15, "Bottom": 0.10, "Skirt": 0.15}
+_ITEM_CHARACTER = {"Dress": 0.35, "Outer": 0.25, "Top": 0.15, "Bottom": 0.15, "Skirt": 0.10}
+_ITEM_SENIOR    = {"Dress": 0.35, "Outer": 0.30, "Top": 0.15, "Bottom": 0.15, "Skirt": 0.05}
 _ITEM_MENS = {"Suits": 0.40, "Shirts": 0.20, "Casual": 0.20, "Knit": 0.10, "Bottom": 0.10}
 _ITEM_KIDS = {"Outer": 0.30, "Top": 0.30, "Bottom": 0.25, "Dress": 0.05, "Set": 0.10}
 

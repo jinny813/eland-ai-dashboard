@@ -151,6 +151,8 @@ def main():
 
                 if "error" in db_data:
                     st.error(f"❌ 데이터 빌드 실패: {db_data['error']}")
+                elif not db_data.get("CATS"):
+                    st.info("현재 데이터가 없습니다. 데이터를 업로드해 주세요.")
                 else:
                     template_path = "ui/dashboard_template.html"
                     with open(template_path, "r", encoding="utf-8") as f:

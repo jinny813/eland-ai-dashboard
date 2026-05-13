@@ -23,6 +23,17 @@ class AssortmentScorer:
     ITEM_EXCLUDE = {'SO','SF','MF','HT','BT','BG','GL','CP','ET','WL','XP','ZY',
                     'AY','AS','AU','AW','AP','AG','AJ','AK','AM','ARJ'}
 
+    # [v13.5] 카테고리별/조닝별 아이템 가중치 정의
+    ZONING_ITEM_WEIGHTS = {
+        '여성': {
+            '커리어': {'Outer': 0.45, 'Top': 0.25, 'Bottom': 0.10, 'Skirt': 0.05, 'Dress': 0.15},
+            '캐주얼': {'Outer': 0.35, 'Top': 0.25, 'Bottom': 0.10, 'Skirt': 0.15, 'Dress': 0.15},
+            '캐릭터': {'Outer': 0.25, 'Top': 0.15, 'Bottom': 0.15, 'Skirt': 0.10, 'Dress': 0.35},
+            '시니어': {'Outer': 0.30, 'Top': 0.15, 'Bottom': 0.15, 'Skirt': 0.05, 'Dress': 0.35},
+        }
+    }
+    DEFAULT_ITEM_WEIGHTS = {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.20, 'Skirt': 0.10, 'Dress': 0.10}
+
     DIAG_MONTH = 4  # 진단 기준월 고정 (4월 = SS봄 현시즌)
 
     def __init__(self, config: dict = None):
@@ -68,6 +79,25 @@ class AssortmentScorer:
             return ''
         return self._ALL_ITEM_CODES.get(candidate, '')
 
+    def _get_dynamic_item_weights(self, df: pd.DataFrame) -> dict:
+        """[v13.5] 카테고리 및 조닝(zoning) 기반 동적 아이템 가중치 산출"""
+        inv_weights = self.config.get('inv_weights', {})
+        
+        # 1. config에 직접 명시된 가중치가 있으면 최우선 (커스터마이징 대응)
+        if 'item' in inv_weights:
+            return inv_weights['item']
+            
+        # 2. 데이터프레임에서 카테고리 추출
+        cat_group = str(df['category_group'].iloc[0]) if 'category_group' in df.columns and not df.empty else '일반'
+        zoning = self.config.get('zoning', '')
+        
+        # 3. 여성 카테고리 특화 조닝 가중치 적용
+        if cat_group == '여성' and zoning in self.ZONING_ITEM_WEIGHTS['여성']:
+            return self.ZONING_ITEM_WEIGHTS['여성'][zoning]
+            
+        # 4. Fallback: 기본 가중치
+        return self.DEFAULT_ITEM_WEIGHTS
+
     def _get_item_group(self, raw_code: str) -> str:
         """
         item_code 또는 style_code → 아이템 그룹 매핑.
@@ -85,8 +115,8 @@ class AssortmentScorer:
         if "RunningShoes" in self.config.get("inv_weights", {}).get("item", {}):
             return 'Top'
 
-        # 아동복 전용 (접두어 NK/PK/SP 등 대응)
-        if "Outer" in self.config.get("inv_weights", {}).get("item", {}) or "아우터" in self.config.get("inv_weights", {}).get("item", {}):
+        # 아동복 전용 (접두어 NK/PK/SP 등 대응) — zoning='아동'인 경우에만 적용
+        if self.config.get('zoning', '') == '아동':
             # 브랜드 접두어 2자리 제외 후 품종코드(3~4자리) 분석 (예: PKJK... -> JK)
             c2 = raw[2:4] if len(raw) >= 4 else raw[:2]
             if c2 in ['JK','JA','JH','JP']: return 'Outer'
@@ -355,7 +385,7 @@ class AssortmentScorer:
             best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
 
         # E. 아이템
-        item_w = inv_weights.get('item', {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.20, 'Skirt': 0.10, 'Dress': 0.10})
+        item_w = self._get_dynamic_item_weights(df)
         item_atts = []
         for g_name, r_val in item_w.items():
             act = _get_record_ref(df['item_group'] == g_name)['_amt'].sum()
@@ -466,7 +496,7 @@ class AssortmentScorer:
             if best_r > 0 and _get_ref_count(df['style_code'].isin(b_list)) < (target_total * best_r): res["best"] = ["TOP 10"]
 
         # 아이템 부족
-        item_w = inv_weights.get('item', {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.20, 'Skirt': 0.10, 'Dress': 0.10})
+        item_w = self._get_dynamic_item_weights(df)
         for g_name, r_val in item_w.items():
             if r_val > 0 and _get_ref_count(df['item_group'] == g_name) < (target_total * r_val): res["item"].append(g_name)
 

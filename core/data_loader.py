@@ -90,8 +90,17 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         sheet = mgr.spreadsheet.worksheet("Records")
         all_recs = sheet.get_all_records()
         if not all_recs:
-            msg = mgr.error_msg if mgr and mgr.error_msg else "데이터가 없습니다."
-            return {"error": msg}
+            # 데이터가 없을 경우에도 UI가 깨지지 않도록 기본 구조를 반환합니다.
+            return {
+                "CATS": [],
+                "STORES": [],
+                "scoreData": {},
+                "BRANDS": [],
+                "DETAIL": {},
+                "BP_DETAIL": {},
+                "BEST_ITEMS": {},
+                "ACTION_PLAN": {}
+            }
 
         df = pd.DataFrame(all_recs)
 
@@ -139,7 +148,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         bp_stores = [s for s in all_stores if s.startswith("__BP__")]
         bp_df = df[df['store_name'].isin(bp_stores)] if bp_stores else pd.DataFrame()
 
-        cats = ['전체', '여성', '스포츠', '신사', '아동', '캐주얼', '잡화']
+        cats = ['전체', '여성', '아동', '신사', '캐주얼', '스포츠', '잡화']
         # [v4.0] 데이터가 있는 최신 월 자동 선택 (현재 월 데이터 부재 시 대응)
         available_months = df['data_month'].unique()
         current_month = f"{datetime.now().month}월"
@@ -202,7 +211,6 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
             # 1. 카테고리별 요약 점수 계산 (P1)
             for cat in cats:
-                master_list = MASTER_CATEGORY_BRANDS.get(store, {}).get(cat, [])
                 target_df = st_df if cat == '전체' else st_df[st_df['category_group'] == cat]
                 
                 actual_brands = target_df['brand_name'].unique().tolist() if not target_df.empty else []

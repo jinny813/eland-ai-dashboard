@@ -97,10 +97,10 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         '신발':     {'RunningShoes':'운동화', 'CasualShoes':'캐주얼화', 'OtherShoes':'샌들/슬리퍼'},
         '남성':     {'Suits':'정장', 'Shirts':'셔츠', 'Casual':'캐주얼', 'Knit':'니트', 'Bottom':'하의'},
         '아동':     {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Dress':'원피스', 'Set':'상하세트'},
-        '캐릭터':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
-        '커리어':   {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Bottom':'하의'},
-        '시니어':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의'},
-        '캐주얼':   {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Skirt':'스커트'},
+        '캐릭터':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트'},
+        '커리어':   {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Bottom':'하의', 'Skirt':'스커트'},
+        '시니어':   {'Dress':'원피스', 'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트'},
+        '캐주얼':   {'Outer':'아우터', 'Top':'상의', 'Dress':'원피스', 'Bottom':'하의', 'Skirt':'스커트'},
         '일반':     {'Outer':'아우터', 'Top':'상의', 'Bottom':'하의', 'Skirt':'스커트', 'Dress':'원피스'}
     }
     item_map = zoning_map.get(zoning, zoning_map['일반'])
