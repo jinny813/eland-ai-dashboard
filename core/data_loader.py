@@ -17,6 +17,7 @@ from config.scoring_config import SCORING_CONFIG, get_weights_by_category, get_c
 from config.brand_targets import get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
+from config.store_type_config import get_store_type as _cfg_store_type, get_display_label as _cfg_display_label
 import logging
 
 logger = logging.getLogger(__name__)
@@ -33,10 +34,9 @@ def _try_float(v) -> float:
 
 
 def _is_outlet_type(store_type: str) -> bool:
-    """상설 매장 판단 — scoring_logic._is_outlet 과 동일 기준"""
+    """상설 매장 판단 — '복합'은 상설 로직 동일 적용"""
     v = str(store_type).strip().lower()
-    # [v3.9] 인코딩 문제 및 다양한 키워드 대응
-    return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory"]) or v.startswith("상")
+    return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory", "복합"]) or v.startswith("상")
 
 
 def _get_config(category: str, store_type: str, brand: str) -> dict:
@@ -227,7 +227,8 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         # [v114.0] 데이터가 없는 브랜드는 P1 점수 합산에서 제외
                         continue
                     
-                    b_type = str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설'
+                    _ct = _cfg_store_type(store, brand)
+                    b_type = _ct if _ct else (str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설')
                     cfg = _get_config(cat if cat != '전체' else "여성", b_type, brand)
                     b_df['tM'] = get_tm(brand_name=brand, store_name=store, month=diag_month)
                     score = _score_df_product(b_df, cfg)
@@ -294,7 +295,11 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 normals = ["로엠", "미쏘", "더아이잗", "에잇컨셉", "폴햄키즈", "스파오키즈", "뉴발란스키즈"]
                 outlets = ["지오지아", "지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스", "스케쳐스"]
                 
-                if b_name in normals:
+                _cfg_type = _cfg_store_type(store, b_name)
+                if _cfg_type:
+                    b_type = _cfg_type
+                    b_df['store_type'] = _cfg_type
+                elif b_name in normals:
                     b_type = "정상"
                     b_df['store_type'] = "정상"
                 elif b_name in outlets:
@@ -352,7 +357,8 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
                     brands_list.append({
                         "name": b_name, "store": store, "category": b_cat,
-                        "type": "outlet" if _is_outlet_type(b_type) else "normal", "type_label": b_type,
+                        "type": "outlet" if _is_outlet_type(b_type) else "normal",
+                        "type_label": _cfg_display_label(store, b_name, b_type),
                         "total": int(round(float(row.get('total_score', 0)))),
                         "product_score": int(row.get('product_score', 0)),
                         "eff_score": int(row.get('eff_score', 0)),

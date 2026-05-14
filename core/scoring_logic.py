@@ -3,10 +3,9 @@ from datetime import datetime, timedelta
 
 
 def _is_outlet(store_type_val: str) -> bool:
-    """상설 매장 여부 판단. DB 실제 값: '상설', 'outlet' 모두 처리"""
+    """상설 매장 여부 판단. '복합'은 상설 로직 동일 적용"""
     v = str(store_type_val).strip().lower()
-    # [v3.6] 인코딩 문제 대응 및 판별 로직 보강
-    return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory"]) or v.startswith("상")
+    return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory", "복합"]) or v.startswith("상")
 
 
 class AssortmentScorer:

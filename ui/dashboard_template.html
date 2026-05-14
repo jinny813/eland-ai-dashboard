@@ -2364,7 +2364,7 @@
 
       document.getElementById('h-brand').textContent = b.name;
       document.getElementById('h-store').textContent = st;
-      document.getElementById('h-type').textContent = b.type === 'normal' ? '정상' : '상설';
+      document.getElementById('h-type').textContent = b.type_label || (b.type === 'normal' ? '정상' : '상설');
       document.getElementById('h-type').className = 'type-badge ' + (b.type === 'normal' ? 'normal' : 'outlet');
       // 인라인 스타일 제거 (클래스 우선)
       document.getElementById('h-type').style.background = '';
