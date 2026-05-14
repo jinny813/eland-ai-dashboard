@@ -95,8 +95,8 @@ class ActionAnalyzer:
                     "tag": "BEST (TOP 10)",
                     "style_code": sc,
                     "style_name": name,
-                    "action_msg": f"{final_secure_qty}장 확보",
-                    "message": f"<b>{name}</b> / {sc} / <b>{final_secure_qty}장 확보</b>",
+                    "action_msg": f"{final_secure_qty}장 필요",
+                    "message": f"<b>{name}</b> / {sc} / <b>{final_secure_qty}장 필요</b>",
                     "keywords": ["재고부족", "인기상품", "추가입고"],
                     "sub_info": f"현재고 {int(row['stock_qty'])}EA / 2주 판매 {int(row['sales_qty'])}EA"
                 })
