@@ -354,7 +354,8 @@ def get_weights_by_category(category: str, store_type: str, brand_name: str = ""
     category_group 및 store_type에 따른 기본 가중치/설정 딕셔너리를 반환.
     브랜드 개별 설정(SCORING_CONFIG)이 없을 때 사용되는 베이스라인 설정입니다.
     """
-    is_outlet = str(store_type).strip().lower() in ("상설", "outlet")
+    _st = str(store_type).strip().lower()
+    is_outlet = any(k in _st for k in ("상설", "outlet", "아울렛", "팩토리", "factory", "복합")) or _st.startswith("상")
     
     if category == '스포츠':
         # [v3.6] 아웃도어 브랜드는 전용 가중치(Outer 포함) 적용

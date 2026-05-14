@@ -393,20 +393,21 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         }
                     })
 
-                # 상세 섹션 조립
+                # 상세 섹션 조립 — JS lookup key와 일치시키기 위해 display_label 사용
+                display_key = _cfg_display_label(store, b_name, b_type)
                 if b_name not in detail_data[store]:
                     detail_data[store][b_name] = {}
                     bp_detail[store][b_name] = {}
                     best_items[store][b_name] = {}
                     action_plan[store][b_name] = {}  # [액션가이드] 브랜드별 초기화
-                
-                detail_data[store][b_name][b_type] = _build_detail(b_df, cfg, tM=tM_won)
-                bp_detail[store][b_name][b_type] = _build_bp_detail(cfg, bp_df if not bp_df.empty else None)
-                best_items[store][b_name][b_type] = _build_best_items(b_df)
+
+                detail_data[store][b_name][display_key] = _build_detail(b_df, cfg, tM=tM_won)
+                bp_detail[store][b_name][display_key] = _build_bp_detail(cfg, bp_df if not bp_df.empty else None)
+                best_items[store][b_name][display_key] = _build_best_items(b_df)
 
                 # [액션가이드] BP 매장에서 동일 브랜드 데이터만 필터링하여 액션 계획 생성
                 bp_brand_df = bp_df[bp_df['brand_name'] == b_name].copy() if not bp_df.empty else pd.DataFrame()
-                action_plan[store][b_name][b_type] = _build_action_plan(b_df, bp_brand_df)
+                action_plan[store][b_name][display_key] = _build_action_plan(b_df, bp_brand_df)
 
         return {
             "CATS": cats, "STORES": stores, "scoreData": score_data, "BRANDS": brands_list,
