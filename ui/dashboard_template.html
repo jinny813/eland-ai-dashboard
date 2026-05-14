@@ -2386,9 +2386,6 @@
         updateP2BrandOptions(st, b.name);
       }
 
-      // [v2.7] 로직 설명 팝업 동적 업데이트
-      updateScoreBubble(b);
-
       // 원 단위 포맷 함수 (M → 실제 원 단위)
       function formatWon(million) {
         const won = Math.round((million || 0) * 1_000_000);
@@ -2583,6 +2580,9 @@
           .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
           .join(', ') || '—';
       }
+
+      // [v2.7] 로직 설명 팝업 동적 업데이트 (const 선언 후 호출)
+      updateScoreBubble(b);
 
       // [v3.4] 로직 설명 팝업 — SCORING_GUIDE 기반 카테고리별 동적 렌더링
       function updateScoreBubble(brand) {
