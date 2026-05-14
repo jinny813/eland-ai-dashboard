@@ -118,15 +118,23 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             if c in df.columns:
                 df[c] = pd.to_numeric(df[c].astype(str).str.replace(',', '', regex=False).str.strip(), errors='coerce').fillna(0)
 
-        # [v126.0] year 필터: 정상 매장 중 스포츠 카테고리 제외
-        # 스포츠 브랜드(스케쳐스 등)는 year 컬럼이 없고 freshness_type으로 신선도 관리
+        # [v126.0] year 필터: 정상 매장 중 스포츠/잡화 카테고리 제외
+        # 스포츠·잡화 브랜드는 year 컬럼 미사용 (freshness_type으로 신선도 관리)
         # → year가 비어있어도 필터링하지 않도록 예외 처리
+        # 아울렛 계열(압소바 등) 브랜드는 시트 store_type이 정상으로 등록돼 있더라도
+        #   year 없이 운영하므로 상설로 사전 보정 후 필터에서 제외
+        _no_year_outlet_brands = ['압소바']
+        for _b in _no_year_outlet_brands:
+            _m = df['brand_name'].str.contains(_b, na=False)
+            df.loc[_m, 'store_type'] = '상설'
+
         if 'year' in df.columns and 'store_type' in df.columns and 'category_group' in df.columns:
             is_normal = ~df['store_type'].apply(_is_outlet_type)
-            is_sports = df['category_group'].astype(str).str.strip() == '스포츠'
+            # 잡화: 전 건 year 없음 → 패션 시즌 year 불필요 카테고리
+            is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화'])
             bad_year  = df['year'].astype(str).str.strip().eq("")
-            # 정상 매장이면서 스포츠가 아니면서 year가 없는 경우만 필터링
-            df = df[~(is_normal & ~is_sports & bad_year)]
+            # 정상 매장이면서 year 불필요 카테고리가 아니면서 year가 없는 경우만 필터링
+            df = df[~(is_normal & ~is_no_year_cat & bad_year)]
         
         # [v125.0] 카테고리 통합 및 자동 매핑
         if 'category_group' in df.columns:
