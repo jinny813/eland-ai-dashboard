@@ -13,7 +13,7 @@ import pandas as pd
 from datetime import datetime
 from database.gsheet_manager import GSheetManager
 from core.scoring_logic import AssortmentScorer
-from config.scoring_config import SCORING_CONFIG, get_weights_by_category
+from config.scoring_config import SCORING_CONFIG, get_weights_by_category, get_category_guide
 from config.brand_targets import get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
@@ -405,7 +405,8 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         return {
             "CATS": cats, "STORES": stores, "scoreData": score_data, "BRANDS": brands_list,
             "DETAIL": detail_data, "BP_DETAIL": bp_detail, "BEST_ITEMS": best_items,
-            "ACTION_PLAN": action_plan  # [액션가이드] 층장 액션 제안 데이터
+            "ACTION_PLAN": action_plan,
+            "SCORING_GUIDE": get_category_guide(),
         }
 
     except Exception as e:

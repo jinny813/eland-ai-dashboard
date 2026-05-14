@@ -1980,7 +1980,7 @@
         document.getElementById('sidebar').classList.add('collapsed');
       }
     });
-    let CATS = [], STORES = [], scoreData = {}, BRANDS = [], DETAIL = {}, BP_DETAIL = {}, BEST_ITEMS = {}, ACTION_PLAN = {}, currentBrand = null;
+    let CATS = [], STORES = [], scoreData = {}, BRANDS = [], DETAIL = {}, BP_DETAIL = {}, BEST_ITEMS = {}, ACTION_PLAN = {}, SCORING_GUIDE = {}, currentBrand = null;
 
     // [v100.32] 숫자 천단위 콤마 포맷팅 함수
     function formatNumberWithCommas(el) {
@@ -2563,8 +2563,28 @@
         'RunningShoes':'러닝화','CasualShoes':'워킹화','OtherShoes':'기타신발',
         'Suits':'정장','Shirts':'셔츠','Casual':'캐주얼','Knit':'니트','Set':'상하세트'
       };
+      const DIS_LBL_OUTLET  = {s70:'70%↑', s50:'50~70%', s30:'30~50%', s10:'~30%'};
+      const DIS_LBL_NORMAL  = {s0:'신상(0년차)', s10:'1년차', s30:'2년차', s50:'3년차', s70:'4년차↑'};
+      const FRESH_LBL = {new:'신상', plan:'기획'};
+      const SEA_LBL   = {spring:'봄', summer:'여름', autumn:'가을', winter:'겨울'};
 
-      // [v3.3] 로직 설명 팝업 — scoring_guide 기반 완전 동적 렌더링
+      function _fmtW(labelsMap, wObj) {
+        return Object.entries(labelsMap)
+          .filter(([k]) => (wObj[k] || 0) > 0)
+          .map(([k, lbl]) => `${lbl}(${wObj[k]}%)`)
+          .join(', ') || '—';
+      }
+      function _fmtSW(sw) {
+        return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%`;
+      }
+      function _fmtItem(itemW) {
+        return Object.entries(itemW)
+          .filter(([,v]) => v > 0)
+          .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
+          .join(', ') || '—';
+      }
+
+      // [v3.4] 로직 설명 팝업 — SCORING_GUIDE 기반 카테고리별 동적 렌더링
       function updateScoreBubble(brand) {
         if (!brand) return;
         const title   = document.getElementById('bubble-title');
@@ -2572,61 +2592,52 @@
         const details = document.getElementById('bubble-details');
         if (!title || !weights || !details) return;
 
-        const g  = brand.scoring_guide || {};
-        const sw = g.score_weights || {};
-        const isOutlet = g.is_outlet;
-        const zoning   = brand.zoning || '';
+        const cat  = brand.category || '여성';
+        const g    = SCORING_GUIDE[cat] || SCORING_GUIDE['여성'] || {};
+        const norm = g.normal || {};
+        const outl = g.outlet || {};
+        const zonings = g.zonings || {};
 
-        title.textContent = `${brand.name} 채점 로직 (${zoning} · ${isOutlet ? '상설' : '정상'})`;
+        title.textContent = `${cat} 카테고리 채점 로직`;
 
-        // ── 지표별 최종 가중치
-        const storeColor = isOutlet ? '#EF4444' : '#3B82F6';
-        const storeLabel = isOutlet ? '상설' : '정상';
+        // ── 섹션 2: 정상·상설 지표 가중치 (두 줄)
         weights.innerHTML = `
-          <div class="weight-row" style="color:${storeColor}; font-size:11px; margin-bottom:8px;">
-            <span>■ ${storeLabel} 매장</span>
-            <span>할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%</span>
+          <div class="weight-row" style="color:#3B82F6; font-size:11px; margin-bottom:4px;">
+            <span>■ 정상 매장</span><span>${_fmtSW(norm.score_weights||{})}</span>
+          </div>
+          <div class="weight-row" style="color:#EF4444; font-size:11px; margin-bottom:8px;">
+            <span>■ 상설 매장</span><span>${_fmtSW(outl.score_weights||{})}</span>
           </div>`;
 
-        // ── 할인율 구간 레이블 매핑
-        const disLabels = isOutlet
-          ? {s70:'70%↑', s50:'50~70%', s30:'30~50%', s10:'~30%'}
-          : {s0:'신상(0년차)', s10:'1년차', s30:'2년차', s50:'3년차', s70:'4년차↑'};
-        const disW  = g.dis_w  || {};
-        const disTxt = Object.entries(disLabels)
-          .filter(([k]) => disW[k] > 0)
-          .map(([k, lbl]) => `${lbl}(${disW[k]}%)`)
-          .join(', ');
+        // ── 섹션 3-1: 할인율 (정상·상설 각각)
+        const disNorm = _fmtW(DIS_LBL_NORMAL, norm.dis_w||{});
+        const disOutl = _fmtW(DIS_LBL_OUTLET, outl.dis_w||{});
 
-        // ── 신선도 레이블
-        const freshLabels = {new:'신상', plan:'기획'};
-        const freshW = g.fresh_w || {};
-        const freshTxt = Object.entries(freshLabels)
-          .filter(([k]) => freshW[k] > 0)
-          .map(([k, lbl]) => `${lbl}(${freshW[k]}%)`)
-          .join(', ');
+        // ── 섹션 3-2: 신선도 (정상·상설 각각)
+        const freshNorm = _fmtW(FRESH_LBL, norm.fresh_w||{});
+        const freshOutl = _fmtW(FRESH_LBL, outl.fresh_w||{});
 
-        // ── 시즌 레이블
-        const seaLabels = {spring:'봄', summer:'여름', autumn:'가을', winter:'겨울'};
-        const seaW = g.sea_w || {};
-        const seaTxt = Object.entries(seaLabels)
-          .filter(([k]) => seaW[k] > 0)
-          .map(([k, lbl]) => `${lbl}(${seaW[k]}%)`)
-          .join(', ');
+        // ── 섹션 3-3: 시즌·BEST (정상 기준 표시, 보통 공통)
+        const seaTxt  = _fmtW(SEA_LBL, norm.sea_w||{});
+        const bestPct = norm.best_pct || 0;
 
-        // ── 아이템 비중 (이 브랜드의 실제 조닝 가중치)
-        const itemW = g.item_w || {};
-        const itemTxt = Object.entries(itemW)
-          .filter(([, v]) => v > 0)
-          .map(([k, v]) => `${ITEM_KOR[k] || k}(${v}%)`)
-          .join(', ');
+        // ── 섹션 3-4: 아이템 — 모든 조닝 나열
+        const zoningRows = Object.entries(zonings)
+          .map(([zName, iw]) =>
+            `<p style="margin:1px 0 1px 8px;">· <b>${zName}</b>: ${_fmtItem(iw)}</p>`)
+          .join('');
 
         details.innerHTML = `
-          <p style="font-size:11px; margin-bottom:3px;">- <b>할인율</b>: ${disTxt || '—'}</p>
-          <p style="font-size:11px; margin-bottom:3px;">- <b>신선도</b>: ${freshTxt || '—'}</p>
-          <p style="font-size:11px; margin-bottom:3px;">- <b>시즌</b>: ${seaTxt || '—'}</p>
-          <p style="font-size:11px; margin-bottom:3px;">- <b>BEST</b>: 판매 상위 10개 품번 재고 목표 ${g.best_pct||0}%</p>
-          <p style="font-size:11px; margin-bottom:3px;">- <b>아이템 (${zoning})</b>: ${itemTxt || '—'}</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>할인율</b></p>
+          <p style="font-size:11px; margin:0 0 1px 8px;">[정상] ${disNorm}</p>
+          <p style="font-size:11px; margin:0 0 4px 8px;">[상설] ${disOutl}</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>신선도</b></p>
+          <p style="font-size:11px; margin:0 0 1px 8px;">[정상] ${freshNorm}</p>
+          <p style="font-size:11px; margin:0 0 4px 8px;">[상설] ${freshOutl}</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>시즌</b>: ${seaTxt}</p>
+          <p style="font-size:11px; margin-bottom:4px;">- <b>BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>아이템 (조닝별 최적 비중)</b></p>
+          ${zoningRows}
           <p style="font-size:10px; color:#94A3B8; margin-top:6px;">※ 위 수치는 코드 config에서 직접 로딩됩니다.</p>
         `;
       }
@@ -3088,7 +3099,8 @@
       CATS = d.CATS || CATS; STORES = d.STORES || []; scoreData = d.scoreData || {};
       BRANDS = d.BRANDS || []; DETAIL = d.DETAIL || {};
       BP_DETAIL = d.BP_DETAIL || {}; BEST_ITEMS = d.BEST_ITEMS || {};
-      ACTION_PLAN = d.ACTION_PLAN || {};  // [액션가이드] 층장 액션 제안 데이터 로드
+      ACTION_PLAN = d.ACTION_PLAN || {};
+      SCORING_GUIDE = d.SCORING_GUIDE || {};
       if (BRANDS.length) currentBrand = BRANDS[0];
     }
 

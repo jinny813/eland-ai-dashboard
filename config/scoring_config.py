@@ -288,6 +288,67 @@ SCORING_CONFIG = {
     "아동_정상_폴햄키즈": {**_KIDS_NORMAL_BASE, "brand_name": "폴햄키즈", "zoning": "아동", "eness_name": "폴햄키즈"},
 }
 
+def get_category_guide() -> dict:
+    """대시보드 i버튼 로직 패널용 — 카테고리별 정상·상설 채점 가이드 반환."""
+    def _sw(cfg):
+        return {
+            "dis":   round(cfg.get('weight_discount',  0) * 100),
+            "fresh": round(cfg.get('weight_freshness', 0) * 100),
+            "sea":   round(cfg.get('weight_season',    0) * 100),
+            "best":  round(cfg.get('weight_best',      0) * 100),
+            "item":  round(cfg.get('weight_item',      0) * 100),
+        }
+    def _iw(d):
+        return {k: round(v * 100) for k, v in d.items() if v > 0}
+    def _dw(cfg, key):
+        return {k: round(v * 100) for k, v in cfg['inv_weights'].get(key, {}).items() if v > 0}
+    def _bp(cfg):
+        return round(cfg['inv_weights'].get('best', {}).get('store10', 0) * 100)
+
+    def _store(cfg):
+        return {
+            "score_weights": _sw(cfg),
+            "dis_w":   _dw(cfg, 'dis'),
+            "fresh_w": _dw(cfg, 'fresh'),
+            "sea_w":   _dw(cfg, 'season'),
+            "best_pct": _bp(cfg),
+        }
+
+    guide = {
+        "여성": {
+            "normal": _store(_WOMEN_NORMAL_BASE),
+            "outlet": _store(_WOMEN_OUTLET_BASE),
+            "zonings": {
+                "커리어": _iw(_ITEM_CAREER),
+                "캐주얼": _iw(_ITEM_CASUAL),
+                "캐릭터": _iw(_ITEM_CHARACTER),
+                "시니어": _iw(_ITEM_SENIOR),
+            },
+        },
+        "아동": {
+            "normal": _store(_KIDS_NORMAL_BASE),
+            "outlet": _store(_KIDS_OUTLET_BASE),
+            "zonings": {"아동": _iw(_ITEM_KIDS)},
+        },
+        "신사": {
+            "normal": _store(_MENS_NORMAL_BASE),
+            "outlet": _store(_MENS_OUTLET_BASE),
+            "zonings": {"남성": _iw(_ITEM_MENS)},
+        },
+        "스포츠": {
+            "normal": _store(_SPORTS_NORMAL_BASE),
+            "outlet": _store(_SPORTS_OUTLET_BASE),
+            "zonings": {
+                "스포츠(정상)": _iw(_SPORTS_NORMAL_BASE['inv_weights']['item']),
+                "스포츠(상설)": _iw(_SPORTS_OUTLET_BASE['inv_weights']['item']),
+            },
+        },
+    }
+    for cat in ("캐주얼", "잡화", "전체"):
+        guide[cat] = guide["여성"]
+    return guide
+
+
 def get_weights_by_category(category: str, store_type: str, brand_name: str = "") -> dict:
     """
     category_group 및 store_type에 따른 기본 가중치/설정 딕셔너리를 반환.
