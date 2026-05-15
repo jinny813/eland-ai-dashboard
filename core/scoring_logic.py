@@ -302,17 +302,33 @@ class AssortmentScorer:
         # B. 신선도
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
         fresh_inv = inv_weights.get('fresh', {})
-        if is_outlet:
-            # [v4.5] 사용자 요청: 상설매장의 경우 '이월' 항목은 채점 및 노출에서 제외 (신상/기획 중심 관리)
-            fresh_cfg = [
-                {'m': (ft.str.contains('신상', na=False)), 'r': fresh_inv.get('new', 0.10)},
-                {'m': (ft.str.contains('기획', na=False)), 'r': fresh_inv.get('plan', 0.20)}
-            ]
+        _eland = {'스파오키즈', '뉴발란스키즈'}
+        _brand_nm = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
+        if _brand_nm in _eland:
+            # 이랜드월드: 기존 _age 기반 로직 유지
+            if is_outlet:
+                fresh_cfg = [
+                    {'m': ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.10)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
+                ]
+            else:
+                fresh_cfg = [
+                    {'m': (df['_age'] == 0) | ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.70)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)}
+                ]
         else:
-            fresh_cfg = [
-                {'m': (df['_age'] == 0) | (ft.str.contains('신상', na=False)), 'r': fresh_inv.get('new', 0.70)},
-                {'m': (ft.str.contains('기획', na=False)), 'r': fresh_inv.get('plan', 0.10)}
-            ]
+            # 일반 브랜드: freshness_type + discount_rate 기반 (year 불필요)
+            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0) if has_dis_data else ft.str.contains('신상', na=False)
+            if is_outlet:
+                fresh_cfg = [
+                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
+                ]
+            else:
+                fresh_cfg = [
+                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)}
+                ]
         
         fresh_atts = []
         for item in fresh_cfg:
@@ -455,8 +471,20 @@ class AssortmentScorer:
             if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["dis"].append(label)
 
         # 신선도 부족
-        if is_outlet: fresh_cfg = [('신상', (df['freshness_type']=='신상'), inv_weights.get('fresh', {}).get('new', 0.1)), ('기획', (df['freshness_type']=='기획'), inv_weights.get('fresh', {}).get('plan', 0.2))]
-        else: fresh_cfg = [('신상', (df['_age']==0) | (df['freshness_type']=='신상'), inv_weights.get('fresh', {}).get('new', 0.70)), ('기획', (df['freshness_type']=='기획'), inv_weights.get('fresh', {}).get('plan', 0.10))]
+        ft_s = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
+        _fresh_w = inv_weights.get('fresh', {})
+        _has_dis_f = (df['_dis_rate'] > 0).any()
+        _brand_nm_f = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
+        if _brand_nm_f in {'스파오키즈', '뉴발란스키즈'}:
+            if is_outlet:
+                fresh_cfg = [('신상', ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.1)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.2))]
+            else:
+                fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
+        else:
+            _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0) if _has_dis_f else ft_s.str.contains('신상', na=False)
+            r_n = _fresh_w.get('new', 0.10 if is_outlet else 0.70)
+            r_p = _fresh_w.get('plan', 0.20 if is_outlet else 0.10)
+            fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
         for label, mask, r_val in fresh_cfg:
             if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
 

@@ -11,8 +11,8 @@ def analyze_bucheon_zeros():
     mgr = GSheetManager()
     df = pd.DataFrame(mgr.spreadsheet.worksheet('Records').get_all_records())
     
-    # NC부천점 데이터 필터링
-    bucheon_df = df[df['store_name'] == 'NC부천점']
+    # 뉴코아부천점 데이터 필터링
+    bucheon_df = df[df['store_name'] == '뉴코아부천점']
     
     brands = ['폴햄키즈', '뉴발란스키즈', '스파오키즈', '프로젝트키즈']
     

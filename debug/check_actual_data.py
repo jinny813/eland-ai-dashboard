@@ -10,7 +10,7 @@ df = pd.DataFrame(data)
 print("Unique Store Names in Records:")
 print(df['store_name'].unique())
 
-print("\nBrands at NC부천점 (or similar):")
+print("\nBrands at 뉴코아부천점 (or similar):")
 possible_stores = [s for s in df['store_name'].unique() if '부천' in str(s) or 'NC' in str(p) or ps in str(s)] # Fixed ps usage
 for ps in df['store_name'].unique():
     if '부천' in str(ps):

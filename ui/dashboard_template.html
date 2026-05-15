@@ -2217,7 +2217,7 @@
       tb.innerHTML = '';
       STORES.forEach(st => {
         let badgeHtml = '';
-        if (st === 'NC신구로점' || st === 'NC부천점') {
+        if (st === 'NC신구로점' || st === '뉴코아부천점') {
           badgeHtml = `<span style="background-color:#EF4444; color:white; font-size:10px; padding:2px 8px; border-radius:10px; margin-right:6px; font-weight:600; display:inline-block; vertical-align:middle;">진척중</span>`;
         }
         // 지점명 셀: 클릭 시 모달 오픈
@@ -2259,7 +2259,12 @@
 
       // [v20.0] 필터링 강화: 해당 지점 및 선택한 카테고리에 부합하는 브랜드만 추출 후 총점 기준 내림차순 정렬
       const storeBrands = BRANDS.filter(b => b.store === store && b.category === cat)
-                                .sort((a, b) => (b.total || 0) - (a.total || 0));
+                                .sort((a, b) => {
+                                  const aDis = (a.dis === 0) ? 1 : 0;
+                                  const bDis = (b.dis === 0) ? 1 : 0;
+                                  if (aDis !== bDis) return aDis - bDis;
+                                  return (b.total || 0) - (a.total || 0);
+                                });
 
       const tb = document.getElementById('modalTbody');
       const thRow = document.querySelector('#storeModal thead tr');
@@ -2282,7 +2287,14 @@
       if (!storeBrands.length) {
         tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
       } else {
+        let _disGapInserted = false;
         storeBrands.forEach(b => {
+          if (!_disGapInserted && b.dis === 0) {
+            _disGapInserted = true;
+            const divRow = document.createElement('tr');
+            divRow.innerHTML = `<td colspan="9" style="padding:5px 16px; background:#1F2937; color:#6B7280; font-size:11px; font-weight:600; text-align:center; letter-spacing:0.06em;">— 할인율 데이터 미집계 (점수 산정 제외) —</td>`;
+            tb.appendChild(divRow);
+          }
           const tM2 = +(b.tM * 2).toFixed(1);
           const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
 

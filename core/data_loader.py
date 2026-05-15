@@ -14,7 +14,7 @@ from datetime import datetime
 from database.gsheet_manager import GSheetManager
 from core.scoring_logic import AssortmentScorer
 from config.scoring_config import SCORING_CONFIG, get_weights_by_category, get_category_guide
-from config.brand_targets import get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES
+from config.brand_targets import get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES, MONTHLY_TM
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
 from config.store_type_config import get_store_type as _cfg_store_type, get_display_label as _cfg_display_label
@@ -133,8 +133,10 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             # 잡화: 전 건 year 없음 → 패션 시즌 year 불필요 카테고리
             is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화'])
             bad_year  = df['year'].astype(str).str.strip().eq("")
-            # 정상 매장이면서 year 불필요 카테고리가 아니면서 year가 없는 경우만 필터링
-            df = df[~(is_normal & ~is_no_year_cat & bad_year)]
+            # freshness_type='신상' 행은 year가 없어도 유효 (신상품은 이전 연도 없음)
+            is_fresh_new = df['freshness_type'].astype(str).str.contains('신상', na=False) if 'freshness_type' in df.columns else pd.Series([False] * len(df))
+            # 정상 매장 + year 필요 카테고리 + year 없음 + 신상 아님 → 필터링
+            df = df[~(is_normal & ~is_no_year_cat & bad_year & ~is_fresh_new)]
         
         # [v125.0] 카테고리 통합 및 자동 매핑
         if 'category_group' in df.columns:
@@ -151,7 +153,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             
         all_stores = [s for s in df['store_name'].unique()
                       if s and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
-        stores = sorted(all_stores, key=lambda s: (0 if s == 'NC신구로점' else (1 if s == 'NC부천점' else 2), s))
+        stores = sorted(all_stores, key=lambda s: (0 if s == 'NC신구로점' else (1 if s == '뉴코아부천점' else 2), s))
         
         bp_stores = [s for s in all_stores if s.startswith("__BP__")]
         bp_df = df[df['store_name'].isin(bp_stores)] if bp_stores else pd.DataFrame()
@@ -193,7 +195,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             "NC야탑점": { "여성": ["베네통", "시슬리"] },
             "NC강서점": { "여성": ["JJ지고트"] },
             "NC평촌점": { "여성": ["바바팩토리"] },
-            "NC부천점": {
+            "뉴코아부천점": {
                 "아동": [
                     "컬리수", "페리미츠", "베네통키즈", "아가방", "모이몰른", "뉴발란스키즈",
                     "탑텐키즈", "스파오키즈", "행텐틴즈", "NBA키즈", "폴햄키즈", "MLB키즈",
@@ -359,9 +361,18 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                     row = scored.iloc[0]
                     cur_sales_sum = b_df['brand_month_sales'].iloc[0] if 'brand_month_sales' in b_df.columns else 0.0
 
-                    # [v3.3] 성장세 계산 로직 강화: YoY 우선, 없으면 MoM(PREV_MONTH_SALES) 참조
-                    base_sales = PREV_YEAR_SALES.get(store, {}).get(b_name) or PREV_MONTH_SALES.get(store, {}).get(b_name)
-                    g_pct = ((cur_sales_sum - base_sales) / base_sales * 100) if (base_sales and base_sales > 0) else 0.0
+                    # [v3.3] 성장세 계산 로직 강화: YoY 우선, 없으면 MoM(MONTHLY_TM 당월 vs PREV_MONTH_SALES 전월)
+                    prev_year = PREV_YEAR_SALES.get(store, {}).get(b_name)
+                    if prev_year and prev_year > 0:
+                        g_pct = ((cur_sales_sum - prev_year) / prev_year * 100)
+                    else:
+                        try:
+                            _mk = f"{datetime.now().year}_{int(str(diag_month).replace('월','').strip()):02d}"
+                        except Exception:
+                            _mk = None
+                        mom_cur = MONTHLY_TM.get(store, {}).get(_mk, {}).get(b_name, 0) if _mk else 0
+                        mom_base = PREV_MONTH_SALES.get(store, {}).get(b_name, 0.0)
+                        g_pct = ((mom_cur - mom_base) / mom_base * 100) if (mom_cur > 0 and mom_base > 0) else 0.0
 
                     brands_list.append({
                         "name": b_name, "store": store, "category": b_cat,
@@ -416,6 +427,24 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 # [액션가이드] BP 매장에서 동일 브랜드 데이터만 필터링하여 액션 계획 생성
                 bp_brand_df = bp_df[bp_df['brand_name'] == b_name].copy() if not bp_df.empty else pd.DataFrame()
                 action_plan[store][b_name][display_key] = _build_action_plan(b_df, bp_brand_df)
+
+        # [v4.1] 할인율점수 0 브랜드: 카테고리 요약 점수 재계산에서 제외
+        for store in stores:
+            store_brands = [b for b in brands_list if b['store'] == store]
+            new_scores = []
+            for cat in cats:
+                cat_brands = store_brands if cat == '전체' else [b for b in store_brands if b['category'] == cat]
+                valid = [b for b in cat_brands if b['dis'] != 0]
+                if not valid:
+                    new_scores.append(0)
+                    continue
+                total_sales = sum(b['sales_amt'] for b in valid)
+                if total_sales > 0:
+                    weighted_avg = sum(b['product_score'] * (b['sales_amt'] / total_sales) for b in valid)
+                    new_scores.append(int(round(weighted_avg)))
+                else:
+                    new_scores.append(int(round(sum(b['product_score'] for b in valid) / len(valid))))
+            score_data[store] = new_scores
 
         return {
             "CATS": cats, "STORES": stores, "scoreData": score_data, "BRANDS": brands_list,
