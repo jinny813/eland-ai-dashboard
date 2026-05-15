@@ -165,11 +165,11 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
                    ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10))]
     else:
         # 정상 또는 할인율 데이터 없는 상설: 연차(year) 기준 매핑
-        dis_cfg = [('d70', '70% 이상 (4년↑)', (df['_age']>=4), dis_inv.get('s70', 0.00)), 
-                   ('d50', '50~70% (3년차)', (df['_age']==3), dis_inv.get('s50', 0.05)),
-                   ('d30', '30~50% (2년차)', (df['_age']==2), dis_inv.get('s30', 0.10)), 
-                   ('d10', '1~30% (1년차)', (df['_age']==1), dis_inv.get('s10', 0.15)),
-                   ('d0',  '정상가 (신상)', (df['_age']==0), dis_inv.get('s0', 0.70))]
+        dis_cfg = [('d70', '70% 이상', (df['_age']>=4), dis_inv.get('s70', 0.00)),
+                   ('d50', '50~70%', (df['_age']==3), dis_inv.get('s50', 0.05)),
+                   ('d30', '30~50%', (df['_age']==2), dis_inv.get('s30', 0.10)),
+                   ('d10', '1~30%', (df['_age']==1), dis_inv.get('s10', 0.15)),
+                   ('d0',  '정상가', (df['_age']==0), dis_inv.get('s0', 0.70))]
     
     dis_segs = []
     for key, lbl, mask, ratio in dis_cfg:
