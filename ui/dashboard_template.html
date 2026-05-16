@@ -2287,14 +2287,8 @@
       if (!storeBrands.length) {
         tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
       } else {
-        let _disGapInserted = false;
         storeBrands.forEach(b => {
-          if (!_disGapInserted && b.dis === 0) {
-            _disGapInserted = true;
-            const divRow = document.createElement('tr');
-            divRow.innerHTML = `<td colspan="9" style="padding:5px 16px; background:#1F2937; color:#6B7280; font-size:11px; font-weight:600; text-align:center; letter-spacing:0.06em;">— 할인율 데이터 미집계 (점수 산정 제외) —</td>`;
-            tb.appendChild(divRow);
-          }
+          {
           const tM2 = +(b.tM * 2).toFixed(1);
           const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
 
