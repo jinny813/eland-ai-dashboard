@@ -321,6 +321,31 @@
       line-height: 1;
     }
 
+    /* P1 반응형: 카테고리 열 여백 단계 축소 */
+    @media (max-width: 1100px) {
+      .table-wrap th,
+      .table-wrap td { padding: 12px 8px; }
+      .table-wrap td:first-child,
+      .table-wrap th:first-child { padding-left: 20px; }
+    }
+    @media (max-width: 900px) {
+      .table-wrap th,
+      .table-wrap td { padding: 10px 5px; }
+      .table-wrap td:first-child,
+      .table-wrap th:first-child { padding-left: 14px; }
+      .badge-score { width: 50px; height: 52px; }
+      .badge-score .num { font-size: 19px; }
+    }
+    @media (max-width: 720px) {
+      .table-wrap th,
+      .table-wrap td { padding: 8px 4px; }
+      .table-wrap td:first-child,
+      .table-wrap th:first-child { padding-left: 10px; }
+      .badge-score { width: 42px; height: 44px; border-radius: 9px; }
+      .badge-score .num { font-size: 16px; }
+      .badge-score .grade { font-size: 10px; }
+    }
+
     /* ──────────────────────────────────────────────
    P2: 브랜드 상세 현황 (IMAGE 4 MATCH)
    ────────────────────────────────────────────── */
@@ -1623,11 +1648,11 @@
             <div class="section-title">상품 구색 점수판</div>
             <div class="section-sub">점수 클릭 → 지점 분석 | 브랜드 행 클릭 → 브랜드 상세</div>
           </div>
-          <div class="card">
+          <div class="card" style="overflow-x:auto;">
             <table class="table-wrap">
               <thead>
                 <tr>
-                  <th style="text-align:left;padding-left:24px;white-space:nowrap;">지점</th>
+                  <th style="text-align:left;padding-left:24px;white-space:nowrap;width:190px;">지점</th>
                   <th>전체</th>
                   <th>여성</th>
                   <th>아동</th>
