@@ -2313,7 +2313,6 @@
         tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
       } else {
         storeBrands.forEach(b => {
-          {
           const tM2 = +(b.tM * 2).toFixed(1);
           const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
 
