@@ -1489,7 +1489,7 @@ DEFAULT_TM = 50
 # 유틸 함수
 # ══════════════════════════════════════════════════════
 
-def _normalize_month_key(month: str) -> str | None:
+def _normalize_month_key(month: str):
     """
     다양한 월 표현을 "YYYY_MM" 키로 정규화합니다.
     예)  "4월"       → "2026_04"  (현재 연도 기준)
