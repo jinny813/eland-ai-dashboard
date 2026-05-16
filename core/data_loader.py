@@ -14,7 +14,10 @@ from datetime import datetime
 from database.gsheet_manager import GSheetManager
 from core.scoring_logic import AssortmentScorer
 from config.scoring_config import SCORING_CONFIG, get_weights_by_category, get_category_guide
-from config.brand_targets import get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES, MONTHLY_TM
+from config.brand_targets import (
+    get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES, MONTHLY_TM,
+    PREV_YEAR_MONTHLY_SALES, CURR_MONTH_ACTUALS,
+)
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
 from config.store_type_config import get_store_type as _cfg_store_type, get_display_label as _cfg_display_label
@@ -338,40 +341,71 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 stock_amt = stock_ref['stock_amt'].apply(lambda x: max(0.0, _try_float(x))).sum()
                 stock_qty = stock_ref['stock_qty'].apply(lambda x: max(0.0, _try_float(x))).sum()
                 
-                # [v104.5] 매출 데이터 소급 적용 로직 (벤치마크 실적 우선 적용)
+                # [v4.2] 당월 실적 키 계산
+                try:
+                    _diag_mo = int(str(diag_month).replace('월', '').strip())
+                    _cur_mk = f"{datetime.now().year}_{_diag_mo:02d}"
+                except Exception:
+                    _cur_mk = None
+
                 b_data_month = str(b_df.iloc[0].get('data_month', '')).strip()
-                prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(b_name, 0.0)
-                
-                # 채점용 메타데이터 주입 (면적 및 매출)
                 b_df['area'] = get_area(store, b_name)
-                
-                if prev_benchmark_sales > 0:
-                    # 벤치마크(3월) 실적이 있다면 브랜드 월 매출액으로 설정
+                prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(b_name, 0.0)
+
+                # 브랜드 월 매출: CURR_MONTH_ACTUALS 최근 가용 월 → PREV_MONTH_SALES(3월) → 합산
+                # _active_mk: 실제로 사용 중인 실적 월 키 (성장률 비교 기준 결정에 사용)
+                _active_mk = None
+                _active_sales = 0
+                if _cur_mk:
+                    for _try_mk in sorted(CURR_MONTH_ACTUALS.get(store, {}).keys(), reverse=True):
+                        if _try_mk <= _cur_mk:
+                            v = CURR_MONTH_ACTUALS[store][_try_mk].get(b_name, 0)
+                            if v > 0:
+                                _active_mk = _try_mk
+                                _active_sales = v
+                                break
+
+                if _active_sales > 0:
+                    b_df['brand_month_sales'] = _active_sales
+                elif prev_benchmark_sales > 0:
                     b_df['brand_month_sales'] = prev_benchmark_sales
                     b_df['data_month'] = "3월"
                     b_data_month = "3월"
+                    try:
+                        _active_mk = f"{datetime.now().year}_03"
+                    except Exception:
+                        pass
                 else:
-                    # 없다면 개별 아이템들의 매출을 합산하여 브랜드 월 매출액으로 설정
                     b_df['brand_month_sales'] = b_df['sales_amt'].sum() if 'sales_amt' in b_df.columns else 0.0
-                
+
                 scorer = AssortmentScorer(config=cfg)
                 scored = scorer.score(b_df)
-                
+
                 if scored is not None and not scored.empty:
                     row = scored.iloc[0]
                     cur_sales_sum = b_df['brand_month_sales'].iloc[0] if 'brand_month_sales' in b_df.columns else 0.0
 
-                    # [v3.3] 성장세 계산 로직 강화: YoY 우선, 없으면 MoM(MONTHLY_TM 당월 vs PREV_MONTH_SALES 전월)
-                    prev_year = PREV_YEAR_SALES.get(store, {}).get(b_name)
-                    if prev_year and prev_year > 0:
-                        g_pct = ((cur_sales_sum - prev_year) / prev_year * 100)
+                    # [v4.2] 성장률: 활성 월의 전년동월과 비교 (PREV_YEAR_MONTHLY_SALES → PREV_YEAR_SALES)
+                    _prev_yr_sales = None
+                    if _active_mk and '_' in _active_mk:
+                        _act_yr, _act_mo = _active_mk.split('_')
+                        _prev_yr_mk = f"{int(_act_yr)-1}_{_act_mo}"
+                        _prev_yr_sales = PREV_YEAR_MONTHLY_SALES.get(store, {}).get(_prev_yr_mk, {}).get(b_name)
+                    if not _prev_yr_sales:
+                        _prev_yr_sales = PREV_YEAR_SALES.get(store, {}).get(b_name)
+
+                    if _prev_yr_sales and _prev_yr_sales > 0:
+                        g_pct = (cur_sales_sum - _prev_yr_sales) / _prev_yr_sales * 100
                     else:
-                        try:
-                            _mk = f"{datetime.now().year}_{int(str(diag_month).replace('월','').strip()):02d}"
-                        except Exception:
-                            _mk = None
-                        mom_cur = MONTHLY_TM.get(store, {}).get(_mk, {}).get(b_name, 0) if _mk else 0
-                        mom_base = PREV_MONTH_SALES.get(store, {}).get(b_name, 0.0)
+                        # MoM fallback: MONTHLY_TM 최근월 target vs PREV_MONTH_SALES
+                        mom_cur = 0
+                        if _cur_mk and store in MONTHLY_TM:
+                            for _fk in sorted(MONTHLY_TM[store].keys(), reverse=True):
+                                _fv = MONTHLY_TM[store][_fk].get(b_name, 0)
+                                if _fv and _fv > 0:
+                                    mom_cur = _fv
+                                    break
+                        mom_base = prev_benchmark_sales
                         g_pct = ((mom_cur - mom_base) / mom_base * 100) if (mom_cur > 0 and mom_base > 0) else 0.0
 
                     brands_list.append({
@@ -429,21 +463,43 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 action_plan[store][b_name][display_key] = _build_action_plan(b_df, bp_brand_df)
 
         # [v4.1] 할인율점수 0 브랜드: 카테고리 요약 점수 재계산에서 제외
+        # [v4.2] '전체' 점수: 카테고리별 점수를 카테고리 매출 비중으로 가중평균 (2단계 집계)
         for store in stores:
             store_brands = [b for b in brands_list if b['store'] == store]
+
+            # Step 1: 개별 카테고리 점수 산출 (dis==0 제외)
+            cat_score_map = {}  # cat → (score, valid_sales_sum)
+            for cat in cats:
+                if cat == '전체':
+                    continue
+                valid = [b for b in store_brands if b['category'] == cat and b['dis'] != 0]
+                if not valid:
+                    cat_score_map[cat] = (0, 0.0)
+                    continue
+                cat_sales = sum(b['sales_amt'] for b in valid)
+                if cat_sales > 0:
+                    w_avg = sum(b['product_score'] * (b['sales_amt'] / cat_sales) for b in valid)
+                    cat_score_map[cat] = (int(round(w_avg)), cat_sales)
+                else:
+                    simple = sum(b['product_score'] for b in valid) / len(valid)
+                    cat_score_map[cat] = (int(round(simple)), 0.0)
+
+            # Step 2: '전체' = 카테고리 점수를 카테고리 매출 비중으로 가중평균
+            weighted_cats = [(s, t) for s, t in cat_score_map.values() if t > 0]
+            if weighted_cats:
+                total_cat_sales = sum(t for _, t in weighted_cats)
+                전체_score = int(round(sum(s * t / total_cat_sales for s, t in weighted_cats)))
+            else:
+                scored = [s for s, _ in cat_score_map.values() if s > 0]
+                전체_score = int(round(sum(scored) / len(scored))) if scored else 0
+
+            # Step 3: cats 순서대로 new_scores 구성
             new_scores = []
             for cat in cats:
-                cat_brands = store_brands if cat == '전체' else [b for b in store_brands if b['category'] == cat]
-                valid = [b for b in cat_brands if b['dis'] != 0]
-                if not valid:
-                    new_scores.append(0)
-                    continue
-                total_sales = sum(b['sales_amt'] for b in valid)
-                if total_sales > 0:
-                    weighted_avg = sum(b['product_score'] * (b['sales_amt'] / total_sales) for b in valid)
-                    new_scores.append(int(round(weighted_avg)))
+                if cat == '전체':
+                    new_scores.append(전체_score)
                 else:
-                    new_scores.append(int(round(sum(b['product_score'] for b in valid) / len(valid))))
+                    new_scores.append(cat_score_map.get(cat, (0, 0.0))[0])
             score_data[store] = new_scores
 
         return {
