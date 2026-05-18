@@ -126,7 +126,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         # → year가 비어있어도 필터링하지 않도록 예외 처리
         # 아울렛 계열(압소바 등) 브랜드는 시트 store_type이 정상으로 등록돼 있더라도
         #   year 없이 운영하므로 상설로 사전 보정 후 필터에서 제외
-        _no_year_outlet_brands = ['압소바']
+        _no_year_outlet_brands = ['압소바', '더레노마']
         for _b in _no_year_outlet_brands:
             _m = df['brand_name'].str.contains(_b, na=False)
             df.loc[_m, 'store_type'] = '상설'
