@@ -464,15 +464,19 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
         # [v4.1] 할인율점수 0 브랜드: 카테고리 요약 점수 재계산에서 제외
         # [v4.2] '전체' 점수: 카테고리별 점수를 카테고리 매출 비중으로 가중평균 (2단계 집계)
+        # [v4.4] 할인율 데이터가 하나도 없는 경우 전체 브랜드 폴백으로 점수 유지
         for store in stores:
             store_brands = [b for b in brands_list if b['store'] == store]
 
-            # Step 1: 개별 카테고리 점수 산출 (dis==0 제외)
+            # Step 1: 개별 카테고리 점수 산출 (dis==0 제외, 없으면 전체 포함)
             cat_score_map = {}  # cat → (score, valid_sales_sum)
             for cat in cats:
                 if cat == '전체':
                     continue
                 valid = [b for b in store_brands if b['category'] == cat and b['dis'] != 0]
+                if not valid:
+                    # 할인율 데이터가 없는 경우 전체 브랜드로 폴백
+                    valid = [b for b in store_brands if b['category'] == cat]
                 if not valid:
                     cat_score_map[cat] = (0, 0.0)
                     continue
