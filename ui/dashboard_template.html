@@ -2456,6 +2456,12 @@
       const salesAmt = b.sales_amt || 0;
       const dataMonthStr = b.data_month || "3월";
       const days = dataMonthStr.includes('3월') ? 31 : (dataMonthStr.includes('2월') ? 28 : (dataMonthStr.includes('4월') || dataMonthStr.includes('6월') || dataMonthStr.includes('9월') || dataMonthStr.includes('11월') ? 30 : 31));
+      const _dataMonthNum = parseInt(dataMonthStr.replace('월', '')) || 3;
+      const _curYY = new Date().getFullYear() % 100;
+      const _nextMonthNum = _dataMonthNum === 12 ? 1 : _dataMonthNum + 1;
+      const _nextYY = _dataMonthNum === 12 ? _curYY + 1 : _curYY;
+      const _salesLabel = `${_curYY}년 ${_dataMonthNum}월 매출액(성장세)`;
+      const _targetLabel = `${_nextYY}년 ${_nextMonthNum}월 목표 매출`;
       const val = area > 0 ? (salesAmt * 1000000 / days / area) : 0;
       
       const efficiencyColor = val < 40000 ? '#B91C1C' : (val >= 100000 ? '#065F46' : '#111827');
@@ -2484,7 +2490,7 @@
         <div style="flex: 1; display: flex; align-items: center; background: #fff; padding: 12px 20px; border-radius: 14px; border: 1px solid #EEF2FF; gap: 30px; min-height: 90px;">
           <!-- 매출액 & 성장세 -->
           <div style="flex: 1.2;">
-            <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:8px;">26년 3월 매출액(성장세)</div>
+            <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:8px;">${_salesLabel}</div>
             <div style="font-size:22px; font-weight:950; color:#1E293B; letter-spacing:-0.5px;">
               ${(b.sales_amt || 0).toFixed(1)}<span style="font-size:14px; font-weight:800; color:#94A3B8; margin-right:6px;">백만원</span>
               <span style="font-size:16px; font-weight:900; color:${(b.growth_pct || 0) >= 0 ? '#DC2626' : '#2563EB'};">
@@ -2514,7 +2520,7 @@
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px;">
           <!-- 카드 1: 4월 목표 매출 -->
           <div style="background: #fff; border: 1px solid #EEF2FF; border-radius: 16px; padding: 14px;">
-            <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:12px;">26년 4월 목표 매출</div>
+            <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:12px;">${_targetLabel}</div>
             <div style="font-size:22px; font-weight:950; color:#111; margin-bottom:8px;">${formatM(b.tM)} <span style="font-size:14px; font-weight:800; color:#475569;">백만원</span></div>
             <div style="font-size:11px; font-weight:700; color:#94A3B8;">
               전년 동월 대비 ${b.name.includes('JJ지고트') ? '30' : Math.abs(b.growth_pct || 0).toFixed(0)}% 성장
