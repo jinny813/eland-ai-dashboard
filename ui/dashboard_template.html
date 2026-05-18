@@ -409,6 +409,19 @@
       background: #FEF3C7; /* Amber 100 */
       color: #92400E;      /* Amber 800 */
     }
+    .type-badge.month-type {
+      background: #F1F5F9;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid #E2E8F0;
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+      line-height: 1.2;
+    }
 
     /* P2 헤더용 확장 배지 스타일 */
     #h-type {
@@ -1645,7 +1658,10 @@
         <!-- P1: MAIN TABLE -->
         <div class="page active" id="p1">
           <div class="section-head">
-            <div class="section-title">상품 구색 점수판</div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+              <div class="section-title" style="margin-bottom:0;">상품 구색 점수판</div>
+              <span id="p1-month-badge" style="background:#F1F5F9; color:#475569; font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px; border:1px solid #E2E8F0; display:none; vertical-align:middle;"></span>
+            </div>
             <div class="section-sub">점수 클릭 → 지점 분석 | 브랜드 행 클릭 → 브랜드 상세</div>
           </div>
           <div class="card" style="overflow-x:auto;">
@@ -2396,6 +2412,9 @@
       document.getElementById('h-store').textContent = st;
       document.getElementById('h-type').textContent = b.type_label || (b.type === 'normal' ? '정상' : '상설');
       document.getElementById('h-type').className = 'type-badge ' + (b.type === 'normal' ? 'normal' : 'outlet');
+
+      const monthVal = b.data_month || b.month;
+
       // 인라인 스타일 제거 (클래스 우선)
       document.getElementById('h-type').style.background = '';
       document.getElementById('h-type').style.color = '';
@@ -2515,6 +2534,7 @@
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:0px;">
           <div style="width:6px; height:18px; background:linear-gradient(to bottom, #10B981, #059669); border-radius:3px;"></div>
           <span style="font-size:18px; font-weight:950; color:#0F172A; letter-spacing:-0.5px;">재고현황</span>
+          <span id="h-month" class="type-badge month-type" style="margin-left:8px; display:${monthVal ? 'inline-flex' : 'none'};">📅 ${monthVal} 기준</span>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px;">
@@ -3131,6 +3151,24 @@
       if (BRANDS.length) currentBrand = BRANDS[0];
     }
 
+    function updateP1MonthIndicator() {
+      const badge = document.getElementById('p1-month-badge');
+      if (!badge || !BRANDS || !BRANDS.length) return;
+      const months = [...new Set(BRANDS.map(b => b.data_month || b.month).filter(Boolean))];
+      if (months.length > 0) {
+        months.sort((a, b) => {
+          const aNum = parseInt(a.replace(/[^0-9]/g, '')) || 0;
+          const bNum = parseInt(b.replace(/[^0-9]/g, '')) || 0;
+          return aNum - bNum;
+        });
+        const latestMonth = months[months.length - 1];
+        badge.textContent = `📅 ${latestMonth} 기준`;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
     function _showError(msg) {
       document.getElementById('mainTbody').innerHTML =
         `<tr><td colspan="9" style="text-align:center;padding:40px;color:#9CA3AF;font-size:14px">${msg}</td></tr>`;
@@ -3143,6 +3181,7 @@
         const d = window.__INITIAL_DATA__;
         if (d.error) { _showError(`데이터 로드 실패 — ${d.error}`); return; }
         _loadData(d);
+        updateP1MonthIndicator();
         buildMainTable(); renderBrandDetail();
         return;
       }
@@ -3152,6 +3191,7 @@
           const d = await r.json();
           if (d.error) { _showError(`API 오류 — ${d.error}`); return; }
           _loadData(d);
+          updateP1MonthIndicator();
         } else { _showError('API 서버 응답 없음.'); return; }
       } catch (e) { _showError('연결 실패.'); return; }
       buildMainTable(); renderBrandDetail();

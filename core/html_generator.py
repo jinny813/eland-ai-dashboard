@@ -202,8 +202,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         if _br in {'스파오키즈', '뉴발란스키즈'}:
             fresh_cfg = [('new', '신상', (df['_age'] == 0), 0.70)]
         else:
-            _has_dis_h = (df['_dis_rate'] > 0).any()
-            _new_m_h = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0) if _has_dis_h else ft.str.contains('신상', na=False)
+            _new_m_h = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
             fresh_cfg = [('new', '신상', _new_m_h, 0.70)]
     
     fresh_segs = []

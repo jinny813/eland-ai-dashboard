@@ -311,9 +311,11 @@ class AssortmentScorer:
         if _brand_nm in _eland:
             # 이랜드월드: 기존 _age 기반 로직 유지
             if is_outlet:
+                _off_mask = ~ft.str.contains('신상', na=False) & ~ft.str.contains('기획', na=False)
                 fresh_cfg = [
                     {'m': ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.10)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)},
+                    {'m': _off_mask, 'r': 0.70}
                 ]
             else:
                 fresh_cfg = [
@@ -321,12 +323,13 @@ class AssortmentScorer:
                     {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)}
                 ]
         else:
-            # 일반 브랜드: freshness_type + discount_rate 기반 (year 불필요)
-            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0) if has_dis_data else ft.str.contains('신상', na=False)
+            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
             if is_outlet:
+                _off_mask = ~_new_mask & ~ft.str.contains('기획', na=False)
                 fresh_cfg = [
                     {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)},
+                    {'m': _off_mask, 'r': 0.70}
                 ]
             else:
                 fresh_cfg = [
@@ -485,7 +488,7 @@ class AssortmentScorer:
             else:
                 fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
         else:
-            _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0) if _has_dis_f else ft_s.str.contains('신상', na=False)
+            _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
             r_n = _fresh_w.get('new', 0.10 if is_outlet else 0.70)
             r_p = _fresh_w.get('plan', 0.20 if is_outlet else 0.10)
             fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
