@@ -276,7 +276,11 @@ class AssortmentScorer:
         has_dis_data = (df['_dis_rate'] > 0).any()
         use_age_for_dis = is_outlet and not has_dis_data
 
-        if (is_outlet and not use_age_for_dis) or is_rate_based:
+        # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
+        _brand_nm_s = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
+        _age_only_brands = {'로엠', '로엠(ROEM)'}
+
+        if (is_outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_s not in _age_only_brands):
             dis_cfg = [
                 {'m': (df['_dis_rate'] >= 70), 'r': dis_inv.get('s70', 0.10)},
                 {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},

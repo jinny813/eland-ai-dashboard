@@ -155,9 +155,13 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     if not is_rate_based and any(k in category_group for k in ["스포츠", "아웃도어"]):
         is_rate_based = True
 
+    # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
+    _brand_nm_h = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
+    _age_only_brands_h = {'로엠', '로엠(ROEM)'}
+
     dis_inv = inv_w.get('dis', {})
 
-    if (outlet and not use_age_for_dis) or is_rate_based:
+    if (outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h):
         # 상설 또는 스포츠: 실시간 할인율 필드 활용
         dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)), 
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
