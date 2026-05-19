@@ -88,9 +88,11 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
                     return hit
             elif zoning == '남성':
                 hit = AssortmentScorer.ITEM_CODE_MENS.get(raw) or \
-                      AssortmentScorer.ITEM_CODE_MENS.get(raw[:2])
-                if hit:
-                    return hit
+                      (AssortmentScorer.ITEM_CODE_MENS.get(raw[:2]) if len(raw) >= 2 else None)
+                if hit: return hit
+                for _s in range(2, min(len(raw) - 1, 10)):
+                    hit = AssortmentScorer.ITEM_CODE_MENS.get(raw[_s:_s + 2])
+                    if hit: return hit
 
         group = scorer._get_item_group(code)
 

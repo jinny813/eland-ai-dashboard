@@ -187,10 +187,14 @@ class AssortmentScorer:
         raw = str(raw_code).strip().upper()
         item_cfg = self.config.get('inv_weights', {}).get('item', {})
 
-        # 남성복 전용 — ITEM_CODE_MENS 사용
+        # 남성복 전용 — ITEM_CODE_MENS 슬라이딩 스캔
         if 'Suits' in item_cfg or self.config.get('_eff_cat', '') == '신사':
-            hit = self.ITEM_CODE_MENS.get(raw) or self.ITEM_CODE_MENS.get(raw[:2])
-            return hit if hit else 'Casual'
+            hit = self.ITEM_CODE_MENS.get(raw) or (self.ITEM_CODE_MENS.get(raw[:2]) if len(raw) >= 2 else None)
+            if hit: return hit
+            for _s in range(2, min(len(raw) - 1, 10)):
+                hit = self.ITEM_CODE_MENS.get(raw[_s:_s + 2])
+                if hit: return hit
+            return 'Casual'
 
         # 아동 여부: Set 가중치가 있으면 아동 모드 (ITEM_CODE_KIDS 우선)
         is_kids = 'Set' in item_cfg
