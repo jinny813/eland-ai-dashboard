@@ -490,10 +490,10 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 bp_detail[store][b_name][display_key] = _build_bp_detail(cfg, bp_df if not bp_df.empty else None)
                 best_items[store][b_name][display_key] = _build_best_items(b_df)
 
-                # [액션가이드] 관리 대상 매장에서만 벤치마크 비교 실행
-                # 벤치마크 매장(중계/동아/강서 등) 자체에서는 섹션 비움
+                # [액션가이드] 벤치마크 매장: 재고 확보 필요(ai_unified)는 동일 로직, 집중판매(push)는 비움
+                # 관리 매장(신구로/부천): 재고 확보 + 벤치마크 1등 매장 기반 집중판매 모두 적용
                 if store not in _MANAGED_STORES:
-                    action_plan[store][b_name][display_key] = {"ai_unified": [], "push": [], "has_bp_data": False}
+                    action_plan[store][b_name][display_key] = _build_action_plan(b_df, None)
                 else:
                     bp_brand_df = bp_df[bp_df['brand_name'] == b_name].copy() if not bp_df.empty else pd.DataFrame()
                     if bp_brand_df.empty:
