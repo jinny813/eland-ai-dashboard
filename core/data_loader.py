@@ -258,7 +258,11 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                     b_type = _ct if _ct else (str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설')
                     cfg = _get_config(cat if cat != '전체' else "여성", b_type, brand)
                     b_df['tM'] = get_tm(brand_name=brand, store_name=store, month=diag_month)
-                    score = _score_df_product(b_df, cfg)
+                    try:
+                        score = _score_df_product(b_df, cfg)
+                    except Exception as _e:
+                        logger.warning(f"[P1] 채점 실패 — {store}/{brand}: {_e}")
+                        score = 0
                     
                     prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(brand, 0.0)
                     if prev_benchmark_sales > 0:
@@ -392,8 +396,12 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 else:
                     b_df['brand_month_sales'] = b_df['sales_amt'].sum() if 'sales_amt' in b_df.columns else 0.0
 
-                scorer = AssortmentScorer(config=cfg)
-                scored = scorer.score(b_df)
+                try:
+                    scorer = AssortmentScorer(config=cfg)
+                    scored = scorer.score(b_df)
+                except Exception as _e:
+                    logger.warning(f"[P2] 채점 실패 — {store}/{b_name}: {_e}")
+                    scored = None
 
                 if scored is not None and not scored.empty:
                     row = scored.iloc[0]
