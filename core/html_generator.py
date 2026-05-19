@@ -248,7 +248,9 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         })
 
     # 4. 시즌 세부 (4개 계절 고정 노출)
-    month = datetime.now().month
+    # 데이터 기준월 사용 (오늘 날짜가 아닌 실제 데이터 월 기준으로 시즌 목표 결정)
+    _raw_m = df['data_month'].iloc[0] if 'data_month' in df.columns and not df.empty else ''
+    month = int(str(_raw_m).replace('월', '').strip()) if str(_raw_m).replace('월', '').strip().isdigit() else datetime.now().month
     # [v8.8] 새로운 계절 구분: 봄(1,2,3), 여름(4,5,6), 가을(7,8,9), 겨울(10,11,12)
     # 1-6월: SS 시즌, 7-12월: FW 시즌
     # 계절 정의 및 코드 매핑
