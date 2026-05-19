@@ -370,13 +370,16 @@ class AssortmentScorer:
                 {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
                 {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.10 if use_age_for_dis else 0.15)},
             ]
-        dis_atts = []
+        # 달성액 합산 / 목표액 합산 방식: sum(min(실제, 목표)) / sum(목표) × 100
+        # tgt=0 구간은 제외 (0% 할인 미목표 구간 등)
+        dis_earned, dis_tgt_sum = 0.0, 0.0
         for item in dis_cfg:
             act = _get_record_ref(item['m'])['_amt'].sum()
             tgt = target_total * item['r']
-            # [v12.5] tgt가 0인 경우(가중치가 0인 구간): 실제 재고가 있다면 0점, 없다면 100점 처리 (방어적 채점)
-            dis_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else (100.0 if act <= 0 else 0.0))
-        discount_score = (sum(dis_atts) / len(dis_atts)) if dis_atts else 0.0
+            if tgt > 0:
+                dis_earned += min(act, tgt)
+                dis_tgt_sum += tgt
+        discount_score = (dis_earned / dis_tgt_sum * 100) if dis_tgt_sum > 0 else 0.0
 
         # B. 신선도 — freshness_type 기준으로 통일
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
@@ -396,16 +399,14 @@ class AssortmentScorer:
                 {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.00)}
             ]
 
-        fresh_atts = []
+        fresh_earned, fresh_tgt_sum = 0.0, 0.0
         for item in fresh_cfg:
             act = _get_record_ref(item['m'])['_amt'].sum()
             tgt = target_total * item['r']
             if tgt > 0:
-                fresh_atts.append(min(100.0, (act / tgt * 100)))
-            elif act > 0:
-                fresh_atts.append(0.0)  # 목표 없는 구간에 재고 있음 = 패널티
-            # tgt==0 and act==0 → 무시 (점수에 영향 없음)
-        freshness_score = (sum(fresh_atts) / len(fresh_atts)) if fresh_atts else 0.0
+                fresh_earned += min(act, tgt)
+                fresh_tgt_sum += tgt
+        freshness_score = (fresh_earned / fresh_tgt_sum * 100) if fresh_tgt_sum > 0 else 0.0
 
         # C. 시즌 — DIAG_MONTH(4월) 고정 기준, SS/FW 2시즌 동적 매핑
         month = self.current_month  # 항상 DIAG_MONTH(4)
@@ -437,14 +438,16 @@ class AssortmentScorer:
                 {'m': sc.isin(CO_WINTER), 'r': sea_inv.get('winter', 0.0)},
             ]
 
-        season_atts = []
+        season_earned, season_tgt_sum = 0.0, 0.0
         for item in season_cfg:
             if item['r'] <= 0:
                 continue
             act = _get_record_ref(item['m'])['_amt'].sum()
             tgt = target_total * item['r']
-            season_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
-        season_score = (sum(season_atts) / len(season_atts)) if season_atts else 0.0
+            if tgt > 0:
+                season_earned += min(act, tgt)
+                season_tgt_sum += tgt
+        season_score = (season_earned / season_tgt_sum * 100) if season_tgt_sum > 0 else 0.0
 
         # D. 베스트10
         best_styles = []
