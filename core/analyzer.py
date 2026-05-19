@@ -129,8 +129,7 @@ class ActionAnalyzer:
             bp_df = bp_brand_df.copy()
             for c in ['sales_qty', 'stock_qty']:
                 if c in bp_df.columns: bp_df[c] = pd.to_numeric(bp_df[c], errors='coerce').fillna(0)
-            top_store_name = getattr(bp_brand_df, 'attrs', {}).get('top_store_name', '1등매장')
-            # [v4.8] ComparisonEngine을 통한 정밀 차집합 분석 (강제 렌더링 포함)
+# [v4.8] ComparisonEngine을 통한 정밀 차집합 분석 (강제 렌더링 포함)
             gap_codes = ComparisonEngine.get_gap_analysis(bp_brand_df, my_best_codes)
             # 1등 매장 BEST 순위 매핑
             bp_rank_map = {sc: i+1 for i, sc in enumerate(
@@ -145,12 +144,13 @@ class ActionAnalyzer:
                 bp_rank = bp_rank_map.get(sc, '?')
                 tag = "재고 확보 필요" if my_stock == 0 else "집중 노출 필요"
                 push_list.append({
+                    "rank": len(push_list) + 1,
                     "style_code": sc,
                     "style_name": name,
                     "sales_qty": int(my_sales),
                     "stock_qty": int(my_stock),
                     "tag": tag,
-                    "reason": f"<b>{top_store_name} BEST {bp_rank}위 / 현 지점 판매 저조 - 집중 노출 필요</b>"
+                    "reason": f"<b>1등 매장 BEST {bp_rank}위 / 현 지점 판매 저조 - 집중 노출 필요</b>"
                 })
                 if len(push_list) >= 10: break
 
