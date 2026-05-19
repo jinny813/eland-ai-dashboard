@@ -187,44 +187,33 @@ class AssortmentScorer:
         if "RunningShoes" in self.config.get("inv_weights", {}).get("item", {}):
             return 'Top'
 
-        # 아동복 전용 (접두어 NK/PK/SP 등 대응) — zoning='아동' 또는 category_group 폴백
-        if self.config.get('zoning', '') == '아동' or self.config.get('_eff_cat', '') == '아동':
-            # 브랜드 접두어 2자리 제외 후 품종코드(3~4자리) 분석 (예: PKJK... -> JK)
-            c2 = raw[2:4] if len(raw) >= 4 else raw[:2]
-            if c2 in ['JK','JA','JH','JP']: return 'Outer'
-            if c2 in ['TS','SH','BL','KN']: return 'Top'
-            if c2 in ['PT','SL']:            return 'Bottom'
-            if c2 == 'OP':                   return 'Dress'
-            if c2 == 'ST':                   return 'Set'
-            # fallback for 2-char codes
-            c2 = raw[:2]
-            if c2 in ['JK','JA','JH','JP']: return 'Outer'
-            if c2 in ['TS','SH','BL','KN']: return 'Top'
-            if c2 in ['PT','SL']:            return 'Bottom'
-            if c2 == 'OP':                   return 'Dress'
-            if c2 == 'ST':                   return 'Set'
-            return 'Top'
-
-        # 남성복 전용
+        # 남성복 전용 — ITEM_CODE_MENS 사용 (Suits/Shirts/Casual/Knit는 남성 전용 그룹)
         if "Suits" in self.config.get("inv_weights", {}).get("item", {}) or self.config.get('_eff_cat', '') == '신사':
-            c2 = raw[:2]
-            if c2 in ['JK','SJ','ST']: return 'Suits'
-            if c2 in ['SH','WS']:      return 'Shirts'
-            if c2 in ['JP','JA','JH']: return 'Casual'
-            if c2 in ['KN','KA','KR']: return 'Knit'
-            if c2 in ['PT','SL'] or raw[:1] in ['P','B']: return 'Bottom'
+            hit = self.ITEM_CODE_MENS.get(raw)
+            if hit: return hit
+            hit = self.ITEM_CODE_MENS.get(raw[:2])
+            if hit: return hit
             return 'Casual'
 
-        # 여성복: 1-3자 복종코드 직접 매핑
+        # 공통: 짧은 코드(≤4자) 직접 조회 — ITEM_CODE_DIRECT → ITEM_CODE_KIDS 순
+        if len(raw) <= 4:
+            hit = self.ITEM_CODE_DIRECT.get(raw)
+            if hit: return hit
+            hit = self.ITEM_CODE_KIDS.get(raw)
+            if hit: return hit
+
+        # 1-3자 복종코드: ITEM_GROUPS 기반 조회
         if len(raw) <= 3:
             hit = self._lookup(raw) or self._lookup(raw[:2]) or self._lookup(raw[:1])
             return hit if hit else 'Others'
 
-        # 풀 스타일코드: 위치 2~8에서 2자리 슬라이딩 윈도우 스캔
+        # 풀 스타일코드: 위치 2~8에서 2자리 슬라이딩 스캔 (ITEM_GROUPS → ITEM_CODE_KIDS 순)
         for start in range(2, min(len(raw) - 1, 9)):
-            hit = self._lookup(raw[start:start + 2])
-            if hit:
-                return hit
+            sub = raw[start:start + 2]
+            hit = self._lookup(sub)
+            if hit: return hit
+            hit = self.ITEM_CODE_KIDS.get(sub)  # 슬라이딩에서 못 찾은 코드 보완
+            if hit: return hit
         return 'Others'
 
     def score(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -385,10 +374,30 @@ class AssortmentScorer:
         discount_score = (sum(dis_atts) / len(dis_atts)) if dis_atts else 0.0
 
         # B. 신선도
-        ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
+        # [v4.4.6] 사용자 요청: year=2026이면 최우선 신상(New), year가 없으면 freshness_type에서 '신상' 확인
+        if 'year' in df.columns:
+            def _parse_y(val):
+                try:
+                    if pd.isna(val): return None
+                    s = str(val).replace('년', '').strip()
+                    if s in ('', 'nan', 'None', '#N/A', '#REF!', '#VALUE!'): return None
+                    y_num = int(float(s))
+                    if y_num < 100: y_num += 2000
+                    return y_num
+                except:
+                    return None
+            parsed_year = df['year'].apply(_parse_y)
+        else:
+            parsed_year = pd.Series([None] * len(df), index=df.index)
+
+        ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
         fresh_inv = inv_weights.get('fresh', {})
-        # [v4.4.5] 사용자 요청: 할인율(_dis_rate) 추정 배제하고 DB의 freshness_type 텍스트만 100% 신뢰
-        _new_mask = ft.str.contains('신상', na=False)
+
+        is_year_2026 = (parsed_year == 2026)
+        is_year_missing = parsed_year.isna()
+        has_fresh_text = ft.str.contains('신상', na=False)
+
+        _new_mask = is_year_2026 | (is_year_missing & has_fresh_text)
         _plan_mask = ft.str.contains('기획', na=False)
         
         if is_outlet:
