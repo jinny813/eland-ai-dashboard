@@ -188,7 +188,7 @@ _MENS_NORMAL_BASE = {
         "fresh":  {"new": 0.70, "plan": 0.10},
         "best":   {"store10": 0.10},
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
-        "item":   {"RunningShoes": 0.45, "CasualShoes": 0.30, "OtherShoes": 0.10, "Top": 0.10, "Bottom": 0.05}
+        "item":   _ITEM_MENS
     },
     "weight_discount":  0.25,
     "weight_freshness": 0.25,
@@ -198,7 +198,7 @@ _MENS_NORMAL_BASE = {
 }
 
 # ──────────────────────────────────────────────────────
-# 신규: 남성복/상설 매장 파라미터 (스포츠와 가중치 동일 설정)
+# 신규: 남성복/상설 매장 파라미터
 # ──────────────────────────────────────────────────────
 _MENS_OUTLET_BASE = {
     "zoning": "남성",
@@ -208,7 +208,7 @@ _MENS_OUTLET_BASE = {
         "fresh":  {"new": 0.60, "plan": 0.05},
         "best":   {"store10": 0.08},
         "season": {"spring": 0.55, "summer": 0.20, "autumn": 0.05, "winter": 0.05},
-        "item":   {"Top": 0.55, "Bottom": 0.25, "RunningShoes": 0.12, "CasualShoes": 0.05, "OtherShoes": 0.03}
+        "item":   _ITEM_MENS
     },
     "weight_discount":  0.30,
     "weight_freshness": 0.20,
