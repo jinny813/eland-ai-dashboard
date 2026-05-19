@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 class GSheetManager:
     """
-    [v100.3] Google Apps Script (GAS) 기반 데이터 매니저 (Functions Sync Version)
-    - database/gsheet_manager.py와 동기화됨
-    - 시트 이름 오류(AI_Assortment_DB) 해결을 위해 'Records'를 기본값으로 설정
+    [v80.2] Google Apps Script (GAS) 기반 데이터 매니저
+    - 기존 gspread(Direct API) 방식에서 GAS Web App 호출 방식으로 전환
+    - 속도 향상 및 인증 절차 간소화 (credentials.json 불필요)
     """
     def __init__(self, credentials_filename: str = None, sheet_name: str = "Records"):
         # 서비스 계정 대신 GAS Deployment ID 사용
@@ -94,7 +94,8 @@ class GSheetManager:
             return None
 
     def _post(self, form_data: dict, timeout: int = 180):
-        """대용량 데이터용 POST 요청 (v7.0 Fresh Connection)"""
+        """대용량 데이터용 POST 요청 (v7.0 Fresh Connection)
+        GAS 동작: POST -> doPost 실행 -> 302 리다이렉트 -> GET 추적"""
         try:
             logger.info(f"[GAS] POST request start (action={form_data.get('action')})")
             form_data["sheetName"] = self.sheet_master_name
@@ -155,12 +156,13 @@ class GSheetManager:
 
     def _append_chunks(self, brand_name: str, payload_list: list) -> bool:
         """데이터를 청크 단위로 나누어 GAS에 전송 (최종 고속 최적화 v8.5)"""
-        chunk_size = 100  # [속도 최적화] 5 -> 100행으로 상향
+        chunk_size = 100  # [속도 최적화] 5 -> 100행으로 상향 (500행 기준 5회 통신)
         total_rows = len(payload_list)
         total_chunks = (total_rows + chunk_size - 1) // chunk_size
         
         logger.info(f"[GSheet] 고속 전송 모드: 총 {total_rows}행 업로드 ({total_chunks}회 분할, 크기={chunk_size})")
         
+        # [v6.0] 일회용 연결을 위한 표준 헤더
         headers = {
             'Connection': 'close',
             'User-Agent': 'Mozilla/5.0 (AI Assortment Agent) Python/requests',
@@ -184,8 +186,10 @@ class GSheetManager:
             }
             
             success = False
+            # [v6.0] 매 요청마다 새로운 연결 수립
             for attempt in range(1, 6):
                 try:
+                    # 세션 재사용 없이 직접 post 호출 (Connect: 10s, Read: 180s)
                     resp = requests.post(
                         self.gas_url, 
                         data=data, 
@@ -194,11 +198,14 @@ class GSheetManager:
                         allow_redirects=True
                     )
                     
+                    # [v100.1] 대소문자 무시 및 정식 응답 파싱 적용
                     parsed = self._parse_response(resp)
                     if parsed is not None:
                         success = True
                         logger.info(f"[GSheet] 전송 성공: {end_row}/{total_rows} 행 완료")
                         break
+                    else:
+                        logger.warning(f"[GSheet] 응답 지연 또는 파싱 실패(시도 {attempt}/5): {resp.status_code}")
                 except Exception as e:
                     logger.error(f"[GSheet] 통신 오류: {e}. (시도 {attempt}/5)")
                 
@@ -207,9 +214,11 @@ class GSheetManager:
                     time.sleep(1.0)
             
             if not success:
+                # [v100.2] 구체적인 에러 메시지가 있다면 보존, 없다면 요약 메시지 생성
                 detailed_err = self.error_msg if self.error_msg else "응답 없음 또는 알 수 없는 오류"
                 err = f"{start_row}-{end_row}번 행 업로드 최종 실패 (사유: {detailed_err})"
                 self.error_msg = err
+                logger.error(f"[GSheet] {err}")
                 return False
                 
             # [v8.5] 요청 간 최소 지연 (0.5~1초)
@@ -219,6 +228,7 @@ class GSheetManager:
         return True
 
     def overwrite_record(self, upload_df: pd.DataFrame, store_name: str, brand_name: str, data_month: str) -> bool:
+        """기존 데이터 삭제 후 GET 청크로 신규 삽입"""
         if upload_df.empty: return False
 
         target_cols = self._get_target_cols()
@@ -229,27 +239,49 @@ class GSheetManager:
         if res is None:
             return False
 
+        # delete 후 남은 DB 기준 max_no 조회 → no 연번 재할당
+        # delete 후 남은 DB 기준 max_no 조회 → no 연번 재할당
         max_no = self._get_max_no()
         df['no'] = range(max_no + 1, max_no + 1 + len(df))
 
         return self._append_chunks(brand_name, df.values.tolist())
 
     def append_record(self, upload_df: pd.DataFrame) -> bool:
+        """GET 청크로 데이터 추가"""
         if upload_df.empty: return False
+
         target_cols = self._get_target_cols()
         df = upload_df.copy().reindex(columns=target_cols, fill_value="").fillna("")
+        
+        # 브랜드명 추출 (마스터 컬럼에 포함되어 있음을 가정)
         brand_name = upload_df['brand_name'].iloc[0] if 'brand_name' in upload_df.columns else "Unknown"
         return self._append_chunks(brand_name, df.values.tolist())
 
-# ── Mock Classes ──
+# ── Mock Classes for backward compatibility ──
+
 class GASSpreadsheetMock:
-    def __init__(self, manager): self.manager = manager
-    def worksheet(self, name): return GASWorksheetMock(self.manager, name)
+    def __init__(self, manager):
+        self.manager = manager
+    def worksheet(self, name):
+        return GASWorksheetMock(self.manager, name)
 
 class GASWorksheetMock:
-    def __init__(self, manager, name): self.manager = manager; self.name = name
-    def get_all_records(self): return self.manager.call_gas("read_all") or []
-    def get_all_values(self): return self.manager.call_gas("read_raw") or []
-    def clear(self): pass
-    def update(self, values, range_val=None): pass
-    def append_rows(self, rows): pass
+    def __init__(self, manager, name):
+        self.manager = manager
+        self.name = name
+    def get_all_records(self):
+        """gspread.get_all_records() 호환성 유지"""
+        return self.manager.call_gas("read_all") or []
+    
+    def get_all_values(self):
+        """gspread.get_all_values() 호환성 유지 (헤더 포함)"""
+        return self.manager.call_gas("read_raw") or []
+
+    def clear(self):
+        pass
+
+    def update(self, values, range_val=None):
+        pass
+
+    def append_rows(self, rows):
+        pass

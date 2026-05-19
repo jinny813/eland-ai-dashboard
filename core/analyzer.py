@@ -129,21 +129,28 @@ class ActionAnalyzer:
             bp_df = bp_brand_df.copy()
             for c in ['sales_qty', 'stock_qty']:
                 if c in bp_df.columns: bp_df[c] = pd.to_numeric(bp_df[c], errors='coerce').fillna(0)
-            # [v148.0] ComparisonEngine을 통한 정밀 차집합 분석 (강제 렌더링 포함)
+            top_store_name = getattr(bp_brand_df, 'attrs', {}).get('top_store_name', '1등매장')
+            # [v4.8] ComparisonEngine을 통한 정밀 차집합 분석 (강제 렌더링 포함)
             gap_codes = ComparisonEngine.get_gap_analysis(bp_brand_df, my_best_codes)
+            # 1등 매장 BEST 순위 매핑
+            bp_rank_map = {sc: i+1 for i, sc in enumerate(
+                bp_df.groupby('style_code')['sales_qty'].sum().sort_values(ascending=False).head(10).index
+            )}
             for sc in gap_codes:
                 my_item = b_df[b_df['style_code'] == sc]
                 my_sales = my_item['sales_qty'].sum() if not my_item.empty else 0
                 my_stock = my_item['stock_qty'].sum() if not my_item.empty else 0
                 row = my_item.iloc[0] if not my_item.empty else bp_df[bp_df['style_code'] == sc].iloc[0]
                 name = get_name(sc, row)
+                bp_rank = bp_rank_map.get(sc, '?')
+                tag = "재고 확보 필요" if my_stock == 0 else "집중 노출 필요"
                 push_list.append({
                     "style_code": sc,
                     "style_name": name,
                     "sales_qty": int(my_sales),
                     "stock_qty": int(my_stock),
-                    "tag": "전사 인기 상품" if my_stock > 0 else "추가 확보 검토",
-                    "reason": f"<b>전사 인기 상품이지만 현 지점 판매 순위권 밖 - 집중 노출 필요</b>"
+                    "tag": tag,
+                    "reason": f"<b>{top_store_name} BEST {bp_rank}위 / 현 지점 판매 저조 - 집중 노출 필요</b>"
                 })
                 if len(push_list) >= 10: break
 

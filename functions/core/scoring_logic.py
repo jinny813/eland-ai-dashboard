@@ -1,38 +1,43 @@
-"""
-core/scoring_logic.py
-=====================
-[버전] v7.0 — 상설/정상 완전 분리 전처리
-
-■ 매장 유형 분기:
-  - 정상 (store_type == '정상') : year 기반 age 계산 → 기존 로직 유지
-  - 상설 (store_type == '상설') : DB 컬럼 직접 사용
-      · 할인율 → discount_rate (U열) 버킷 분류
-      · 신선도 → freshness_type (T열) 값 직접 사용
-      · 시즌   → season_code (C열) 한글값 ('봄','여름','가을','겨울')
-      · BEST   → sales_qty (K열) 상위 10 style_code 재고액 집계
-
-■ 핵심 산식 (공통):
-  1. 목표 재고액 (Target) = 목표 매출(tM) * 2.0
-  2. 지표 달성률 = min(실제재고액 / 목표재고액, 100%)
-  3. 최종 총점 = 4개 지표별 달성률의 가중 평균
-"""
-
 import pandas as pd
 from datetime import datetime, timedelta
 
 
 def _is_outlet(store_type_val: str) -> bool:
-    """상설 매장 여부 판단. DB 실제 값: '상설', 'outlet' 모두 처리"""
+    """상설 매장 여부 판단. '복합'은 상설 로직 동일 적용"""
     v = str(store_type_val).strip().lower()
-    return v in ("상설") or "outlet" in v
+    return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory", "복합"]) or v.startswith("상")
 
 
 class AssortmentScorer:
-    """상품구색 4개 지표 채점 엔진 — 매장유형별 분리 전처리 (v7)"""
+    """상품구색 5개 지표 채점 엔진 — v11.0 평매출 반영 이중 채점 체계 도입"""
 
-    def __init__(self, config: dict):
-        self.today = datetime.now().date()
-        self.current_month = self.today.month
+    ITEM_GROUPS = {
+        'Outer':  ['JK', 'JA', 'JD', 'JE', 'JH', 'JJ', 'JL', 'JP', 'JT', 'JV', 'JW', 'SJ', 'VK', 'VW', 'CK', 'CM', 'VT', 'CT', 'CD', 'BY', 'KC', 'PD', 'FU', 'U', 'E', 'J', 'C', 'D', 'Y', 'L'],
+        'Top':    ['BL', 'BA', 'BB', 'BN', 'BW', 'DR', 'GM', 'HA', 'HS', 'HW', 'KA', 'KN', 'KR', 'KV', 'KW', 'LA', 'LS', 'LW', 'MA', 'MB', 'MH', 'MW', 'MZ', 'RA', 'RB', 'RN', 'RP', 'RS', 'RW', 'SM', 'YA', 'YC', 'YH', 'YS', 'YW', 'XH', 'MN', 'MR', 'PP', 'GN', 'BR', 'FZ', 'FW', 'TS', 'ST', 'PO', 'SH', 'WS', 'KO', 'KP', 'B', 'K', 'T'],
+        'Bottom': ['SL', 'PT', 'TA', 'TC', 'TH', 'TJ', 'TM', 'TN', 'TR', 'ST', 'IL', 'YI', 'YF', 'XF', 'XD', 'WP', 'WQ', 'XV', 'YV', 'SP', 'LE', 'DK', 'N', 'P'],
+        'Skirt':  ['SK', 'TS', 'WH', 'WJ', 'WK', 'WM', 'KS', 'S'],
+        'Dress':  ['OP', 'OJ', 'OK', 'OM', 'ON', 'OW', 'YO', 'LO', 'SP', 'YJ', 'DP', 'O'],
+    }
+    # 잡화·소품 등 계산 제외 코드
+    ITEM_EXCLUDE = {'SO','SF','MF','HT','BT','BG','GL','CP','ET','WL','XP','ZY',
+                    'AY','AS','AU','AW','AP','AG','AJ','AK','AM','ARJ'}
+
+    # [v13.5] 카테고리별/조닝별 아이템 가중치 정의
+    ZONING_ITEM_WEIGHTS = {
+        '여성': {
+            '커리어': {'Outer': 0.45, 'Top': 0.25, 'Bottom': 0.10, 'Skirt': 0.05, 'Dress': 0.15},
+            '캐주얼': {'Outer': 0.35, 'Top': 0.25, 'Bottom': 0.10, 'Skirt': 0.15, 'Dress': 0.15},
+            '캐릭터': {'Outer': 0.25, 'Top': 0.15, 'Bottom': 0.15, 'Skirt': 0.10, 'Dress': 0.35},
+            '시니어': {'Outer': 0.30, 'Top': 0.15, 'Bottom': 0.15, 'Skirt': 0.05, 'Dress': 0.35},
+        }
+    }
+    DEFAULT_ITEM_WEIGHTS = {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.20, 'Skirt': 0.10, 'Dress': 0.10}
+
+    DIAG_MONTH = 4  # 진단 기준월 고정 (4월 = SS봄 현시즌)
+
+    def __init__(self, config: dict = None):
+        self.today = datetime.now()
+        self.current_month = self.DIAG_MONTH
         self.config = config if config else {}
         self.best_cutoff = self.today - timedelta(days=14)
 
@@ -47,232 +52,486 @@ class AssortmentScorer:
 
     @staticmethod
     def _parse_discount_rate(val) -> float:
-        """'30%', '30', 0.3 등 다양한 할인율 표현 → 0~100 스케일 float 변환"""
         try:
-            s = str(val).replace('%', '').strip()
-            if not s or s in ('nan', 'None', ''):
+            s = str(val).replace('%', '').replace(' ', '').strip()
+            if not s or s in ('nan', 'None', '', '#N/A', '#REF!', '#VALUE!'):
                 return 0.0
             f = float(s)
-            # 0.0~1.0 범위면 소수 표현(0.3 = 30%)으로 간주
             if 0.0 < f <= 1.0:
                 f = f * 100.0
             return f
         except (TypeError, ValueError):
             return 0.0
 
+    # 알려진 모든 아이템 코드 집합 (fast-lookup용 캐시)
+    _ALL_ITEM_CODES: dict = {}  # {'코드': '그룹명'} — 첫 호출 시 빌드
+
+    def _build_code_index(self):
+        if not self._ALL_ITEM_CODES:
+            for grp, codes in self.ITEM_GROUPS.items():
+                for c in codes:
+                    AssortmentScorer._ALL_ITEM_CODES[c] = grp
+
+    def _lookup(self, candidate: str) -> str:
+        """candidate(1-2자리 대문자) → 그룹명 or ''"""
+        if not candidate or candidate in self.ITEM_EXCLUDE:
+            return ''
+        return self._ALL_ITEM_CODES.get(candidate, '')
+
+    def _get_dynamic_item_weights(self, df: pd.DataFrame) -> dict:
+        """[v13.5] 카테고리 및 조닝(zoning) 기반 동적 아이템 가중치 산출"""
+        inv_weights = self.config.get('inv_weights', {})
+        
+        # 1. config에 직접 명시된 가중치가 있으면 최우선 (커스터마이징 대응)
+        if 'item' in inv_weights:
+            return inv_weights['item']
+            
+        # 2. 데이터프레임에서 카테고리 추출
+        cat_group = str(df['category_group'].iloc[0]) if 'category_group' in df.columns and not df.empty else '일반'
+        zoning = self.config.get('zoning', '')
+        
+        # 3. 여성 카테고리 특화 조닝 가중치 적용
+        if cat_group == '여성' and zoning in self.ZONING_ITEM_WEIGHTS['여성']:
+            return self.ZONING_ITEM_WEIGHTS['여성'][zoning]
+            
+        # 4. Fallback: 기본 가중치
+        return self.DEFAULT_ITEM_WEIGHTS
+
+    def _get_item_group(self, raw_code: str) -> str:
+        """
+        item_code 또는 style_code → 아이템 그룹 매핑.
+        단순 복종코드("JK") 뿐 아니라 풀 스타일코드("GR3M0JK921")도 처리:
+        - 1-3자 → 직접 매핑
+        - 4자 이상 → 위치 2-8에서 2자리 슬라이딩 윈도우로 스캔
+        """
+        self._build_code_index()
+        if not raw_code or (isinstance(raw_code, float) and pd.isna(raw_code)):
+            return 'Others'
+
+        raw = str(raw_code).strip().upper()
+
+        # 스포츠 전용
+        if "RunningShoes" in self.config.get("inv_weights", {}).get("item", {}):
+            return 'Top'
+
+        # 아동복 전용 (접두어 NK/PK/SP 등 대응) — zoning='아동'인 경우에만 적용
+        if self.config.get('zoning', '') == '아동':
+            # 브랜드 접두어 2자리 제외 후 품종코드(3~4자리) 분석 (예: PKJK... -> JK)
+            c2 = raw[2:4] if len(raw) >= 4 else raw[:2]
+            if c2 in ['JK','JA','JH','JP']: return 'Outer'
+            if c2 in ['TS','SH','BL','KN']: return 'Top'
+            if c2 in ['PT','SL']:            return 'Bottom'
+            if c2 == 'OP':                   return 'Dress'
+            if c2 == 'ST':                   return 'Set'
+            # fallback for 2-char codes
+            c2 = raw[:2]
+            if c2 in ['JK','JA','JH','JP']: return 'Outer'
+            if c2 in ['TS','SH','BL','KN']: return 'Top'
+            if c2 in ['PT','SL']:            return 'Bottom'
+            if c2 == 'OP':                   return 'Dress'
+            if c2 == 'ST':                   return 'Set'
+            return 'Top'
+
+        # 남성복 전용
+        if "Suits" in self.config.get("inv_weights", {}).get("item", {}):
+            c2 = raw[:2]
+            if c2 in ['JK','SJ','ST']: return 'Suits'
+            if c2 in ['SH','WS']:      return 'Shirts'
+            if c2 in ['JP','JA','JH']: return 'Casual'
+            if c2 in ['KN','KA','KR']: return 'Knit'
+            if c2 in ['PT','SL'] or raw[:1] in ['P','B']: return 'Bottom'
+            return 'Casual'
+
+        # 여성복: 1-3자 복종코드 직접 매핑
+        if len(raw) <= 3:
+            hit = self._lookup(raw) or self._lookup(raw[:2]) or self._lookup(raw[:1])
+            return hit if hit else 'Others'
+
+        # 풀 스타일코드: 위치 2~8에서 2자리 슬라이딩 윈도우 스캔
+        for start in range(2, min(len(raw) - 1, 9)):
+            hit = self._lookup(raw[start:start + 2])
+            if hit:
+                return hit
+        return 'Others'
+
     def score(self, df: pd.DataFrame) -> pd.DataFrame:
         if df is None or df.empty:
             return df
 
         df = df.copy()
+        
+        # [v12.5] 아이템 그룹 매핑 (스포츠/아동 등 브랜드 특성 반영 고도화)
+        df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, self._safe_float(x)))
+        def _get_group_smart(row):
+            # item_code 우선, 비어있으면 style_code fallback
+            ic = str(row.get('item_code', '')).strip()
+            # [v3.7] 네파 전용 아이템코드 매핑 (사용자 요청)
+            b_name = str(row.get('brand_name', '')).strip()
+            # 인코딩 문제 대응: '네파'라는 글자가 포함되거나 특정 깨진 패턴 대응 (v3.9)
+            if "네파" in b_name or b_name.startswith("네") or b_name.startswith("네파"):
+                nepa_map = {
+                    '05': 'Outer', '06': 'Outer', '09': 'Outer', '10': 'Outer', '13': 'Outer', '14': 'Outer', '20': 'Outer',
+                    '15': 'Top', '51': 'Top', '52': 'Top', '53': 'Top', '54': 'Top', '56': 'Top', '57': 'Top', '60': 'Top',
+                    '16': 'Bottom', '17': 'Bottom', '18': 'Bottom'
+                }
+                ic_key = ic.zfill(2) if ic.isdigit() else ic
+                if ic_key in nepa_map:
+                    return nepa_map[ic_key]
 
-        # 목표 매출액(tM) 추출
-        tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
-        if tM <= 0:
-            tM = 1.0
-        target_total = tM * 2.0  # 목표 재고액 (원 단위)
-
-        # [v7.2] 매장 유형별 중복 제거 분기 (정상 매장 로직 복구)
-        def _get_record_ref(mask):
-            sub = df[mask]
-            if sub.empty: return sub
+            code = ic if ic and ic not in ('nan', '0') else str(row.get('style_code', '')).strip()
+            group = self._get_item_group(code)
             
-            # [수정 3] 상설/정상 공통: inv_uid가 있으면 최우선으로 중복 제거 (데이터 뻥튀기 방지)
-            if 'inv_uid' in sub.columns and sub['inv_uid'].notna().any():
-                return sub.drop_duplicates('inv_uid')
+            # 2. 스포츠/아웃도어 브랜드 특화: 품번 매핑 실패 시 상품명/카테고리 키워드 분석
+            zoning = self.config.get('zoning', '')
+            is_sports_logic = zoning in ["스포츠", "아웃도어", "애슬레저"]
+            if is_sports_logic and group in ['Top', 'Bottom', 'Others']:
+                name = str(row.get('style_name', row.get('item_name', ''))).strip()
+                cat = str(row.get('category_group', '')).strip()
+                full_text = (name + cat).upper()
+                
+                # 러닝/기능성 슈즈 판별
+                if any(k in full_text for k in ['러닝', 'RUNNING', '맥스', 'MAX', '쿠셔닝', '퍼포먼스', '신발', '슈즈', '운동화', 'SHOES']):
+                    return 'RunningShoes'
+                # 캐주얼/라이프스타일 슈즈 판별
+                if any(k in full_text for k in ['워킹', 'WALKING', '고워크', 'GOWALK', '슬립온', '캐주얼', '라이프']):
+                    return 'CasualShoes'
+                # 기타 신발류
+                if any(k in full_text for k in ['스니커즈', 'SNEAKERS', '샌들', 'SANDAL', '슬리퍼']):
+                    return 'OtherShoes'
+                
+                # [v3.6] 의류 키워드 보강 (아웃도어/스포츠 의류 대응)
+                if any(k in full_text for k in ['티셔츠', 'T-SHIRT', '상의', 'TOP', '폴로', 'POLO', '반팔', '긴팔']):
+                    return 'Top'
+                if any(k in full_text for k in ['팬츠', 'PANTS', '바지', '하의', 'BOTTOM', '레깅스', '트레이닝']):
+                    return 'Bottom'
+                if any(k in full_text for k in ['자켓', 'JACKET', '점퍼', 'JUMPER', '아우터', 'OUTER', '코트', '베스트', 'VEST', '고어텍스', 'GORE-TEX', '다운', 'DOWN', '파카']):
+                    return 'Outer'
+            
+            return group
 
-            if is_outlet:
-                # 상설: 인동팩토리 등은 모든 행 합산 (단, inv_uid 없을 경우 fallback)
-                return sub
-            else:
-                # 정상: 로엠/미쏘 등은 기준 컬럼 조합으로 중복 제거
-                d_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
-                valid_cols = [c for c in d_cols if c in sub.columns]
-                return sub.drop_duplicates(subset=valid_cols) if valid_cols else sub
+        df['item_group'] = df.apply(_get_group_smart, axis=1)
 
-        df['_amt'] = df['stock_amt'].apply(self._safe_float)
+        # 목표 매출액(tM) 추출 및 목표 총액 설정
+        tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
+        if tM <= 0: tM = 1.0
+        target_total = tM * 2.0  # 목표 재고액 (200%)
 
         # 매장 유형 판단
         store_type_val = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
         is_outlet = _is_outlet(store_type_val)
 
-        # ──────────────────────────────────────────
-        # 분기 A: 상설 매장 — DB 컬럼 직접 사용
-        # ──────────────────────────────────────────
-        if is_outlet:
-            # [최신 표준 가중치] 할인율(45%), 신선도(15%), 시즌(15%), 베스트(25%)
-            w_dis_g, w_fresh_g, w_sea_g, w_best_g = 0.45, 0.15, 0.15, 0.25
-
-            # ── 1. 할인율 점수: 4단계 (70%+, 50%+, 30%+, 1%~30%) - 0% 정상가 선제외
-            df['_dis_rate'] = df['discount_rate'].apply(self._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
-
-            dis_cfg = [
-                {'mask': (df['_dis_rate'] >= 70),                                 'ratio': 0.10, 'label': '70%이상'},
-                {'mask': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70),        'ratio': 0.20, 'label': '50%이상'},
-                {'mask': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50),        'ratio': 0.30, 'label': '30%이상'},
-                {'mask': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30),        'ratio': 0.10, 'label': '1~30%미만'},
-            ]
-            dis_sum_att = 0.0
-            for item in dis_cfg:
-                act = _get_record_ref(item['mask'])['_amt'].sum()
-                tgt = target_total * item['ratio']
-                att = min(100.0, (act / tgt * 100)) if tgt > 0 else (100.0 if act <= 0 else 0.0)
-                dis_sum_att += att
-            discount_score = (dis_sum_att / len(dis_cfg)) if dis_cfg else 0.0
-
-            # ── 2. 신선도 점수: 신상(10%), 기획(20%), 시즌OFF(70%) - 명시적 매핑
-            ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
-            
-            fresh_cfg = [
-                {'m': (ft == '신상'),   'r': 0.10, 'label': '신상'},
-                {'m': (ft == '시즌OFF'), 'r': 0.70, 'label': '시즌OFF'},
-                {'m': (ft == '기획'),   'r': 0.20, 'label': '기획'},
-            ]
-            fresh_sum_att = 0.0
-            for item in fresh_cfg:
-                act = _get_record_ref(item['m'])['_amt'].sum()
-                tgt = target_total * item['r']
-                att = min(100.0, (act / tgt * 100)) if tgt > 0 else 100.0
-                fresh_sum_att += att
-            freshness_score = (fresh_sum_att / len(fresh_cfg))
-
-            # ── 3. 시즌 점수: 목표 비중 70%
-            ss_months = [2, 3, 4, 5, 6, 7]
-            is_ss_now = datetime.now().month in ss_months
-            sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
-            if is_ss_now:
-                curr_season_mask = sc.isin(['봄', '여름', '2', '1', '9'])
+        # 중복 제거 참조용 함수 (v7 기준 유지)
+        def _get_record_ref(mask):
+            sub = df[mask]
+            if sub.empty: return sub
+            if 'inv_uid' in sub.columns and sub['inv_uid'].notna().any():
+                return sub.drop_duplicates('inv_uid')
+            if is_outlet:
+                return sub
             else:
-                curr_season_mask = sc.isin(['가을', '겨울', '3', '4', '9'])
+                d_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
+                valid_cols = [c for c in d_cols if c in sub.columns]
+                return sub.drop_duplicates(subset=valid_cols) if valid_cols else sub
 
-            act_sea = _get_record_ref(curr_season_mask)['_amt'].sum()
-            tgt_sea = target_total * 0.70
-            season_score = min(100.0, (act_sea / tgt_sea * 100)) if tgt_sea > 0 else 0.0
+        # [v107.8] 가중치 설정 (동적 적용)
+        final_weights = {
+            'dis':   self.config.get('weight_discount', 0.30),
+            'fresh': self.config.get('weight_freshness', 0.20),
+            'sea':   self.config.get('weight_season', 0.15),
+            'best':  self.config.get('weight_best', 0.25),
+            'item':  self.config.get('weight_item', 0.10)
+        }
 
-            # ── 4. BEST 점수: 베스트 10 목표 비중 25% (날짜 필터 없이 전체 sales_qty 기준)
-            best_score = 0.0
-            if 'sales_qty' in df.columns:
-                sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
-                # [수정] DB에 있는 전체 판매량을 합산하여 상위 10개 품번 추출
-                sales_sum = df.assign(_sq=sq).groupby('style_code')['_sq'].sum().sort_values(ascending=False)
+        inv_weights = self.config.get('inv_weights', {})
 
-                if not sales_sum.empty:
-                    cutoff_rank = min(len(sales_sum), 10)
-                    min_val = sales_sum.iloc[cutoff_rank - 1]
-                    best_styles = sales_sum[sales_sum >= min_val][sales_sum > 0].index
-                    act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
-                    tgt_best = target_total * 0.25
-                    best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
+        # [v8.7] 연차(Age) 계산
+        year_base = self.config.get('year_base', 2026)
+        if year_base < 100: year_base += 2000
+        ref_y = year_base
 
-        # ──────────────────────────────────────────
-        # 분기 B: 정상 매장 — 기존 year/age 기반 로직 (로엠 등, 변경 금지)
-        # ──────────────────────────────────────────
-        else:
-            # [최신 표준 가중치] 할인율(30%), 신선도(20%), 시즌(20%), 베스트(30%)
-            w_dis_g, w_fresh_g, w_sea_g, w_best_g = 0.30, 0.20, 0.20, 0.30
+        def _get_age_sync(y):
+            try:
+                if not y or pd.isna(y) or str(y).strip() in ('#N/A', '#REF!', '#VALUE!'): return 0
+                val = str(y).replace('년','').replace('20','', 1).strip() # '2024' -> '24' 대응
+                y_num = int(val)
+                if y_num < 100: y_num += 2000
+                return max(0, ref_y - y_num)
+            except: return 0
 
-            # 연차(Age) 계산
-            def _get_year_base():
-                try:
-                    if 'year' in df.columns:
-                        years = pd.to_numeric(df['year'].astype(str).str.replace('년', '').strip(), errors='coerce')
-                        return int(years.max())
-                    return 2026
-                except:
-                    return 2026
+        df['_age'] = df['year'].apply(_get_age_sync) if 'year' in df.columns else 0
 
-            year_base = _get_year_base()
+        # A. 할인율
+        df['_dis_rate'] = df['discount_rate'].apply(self._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
+        dis_inv = inv_weights.get('dis', {})
+        
+        # [v11.1] 스포츠 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용 (아동은 정상매장 시 연차기반 허용)
+        zoning = self.config.get('zoning', '')
+        is_rate_based = zoning in ["스포츠", "아웃도어", "애슬레저"]
+        if not is_rate_based and 'category_group' in df.columns and not df['category_group'].empty:
+            cg = str(df['category_group'].iloc[0])
+            if any(k in cg for k in ["스포츠", "아웃도어"]):
+                is_rate_based = True
 
-            def _get_age_logic(y):
-                try:
-                    val = str(y).replace('년', '').strip()
-                    y_num = int(val)
-                    if y_num < 100:
-                        y_num += 2000
-                    return max(0, year_base - y_num)
-                except:
-                    return 0
+        # [v4.1] 할인율 데이터가 모두 0인 상설 매장의 경우 연차(Age) 기준으로 자동 Fallback 처리
+        has_dis_data = (df['_dis_rate'] > 0).any()
+        use_age_for_dis = is_outlet and not has_dis_data
 
-            df['_age'] = df['year'].apply(_get_age_logic) if 'year' in df.columns else 0
+        # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
+        _brand_nm_s = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
+        _age_only_brands = {'로엠', '로엠(ROEM)'}
 
-            # 1. 할인율 지표 (정상: age 기반 매핑 — 70%+(0), 50%+(5), 30%+(10), 1-30%(15))
+        if (is_outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_s not in _age_only_brands):
             dis_cfg = [
-                {'mask': (df['_age'] >= 4), 'ratio': 0.00},
-                {'mask': (df['_age'] == 3), 'ratio': 0.05},
-                {'mask': (df['_age'] == 2), 'ratio': 0.10},
-                {'mask': (df['_age'] == 1), 'ratio': 0.15},
+                {'m': (df['_dis_rate'] >= 70), 'r': dis_inv.get('s70', 0.10)},
+                {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},
+                {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': dis_inv.get('s30', 0.30)},
+                {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': dis_inv.get('s10', 0.10)},
             ]
-            dis_sum_att = 0.0
-            for item in dis_cfg:
-                act = _get_record_ref(item['mask'])['_amt'].sum()
-                tgt = target_total * item['ratio']
-                att = min(100.0, (act / tgt * 100)) if tgt > 0 else (100.0 if act <= 0 else 0.0)
-                dis_sum_att += att
-            discount_score = (dis_sum_att / len(dis_cfg)) if dis_cfg else 0.0
+        else:
+            dis_cfg = [
+                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.70)},
+                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.10 if use_age_for_dis else 0.00)},
+                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.20 if use_age_for_dis else 0.05)},
+                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
+                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.10 if use_age_for_dis else 0.15)},
+            ]
+        dis_atts = []
+        for item in dis_cfg:
+            act = _get_record_ref(item['m'])['_amt'].sum()
+            tgt = target_total * item['r']
+            # [v12.5] tgt가 0인 경우(가중치가 0인 구간): 실제 재고가 있다면 0점, 없다면 100점 처리 (방어적 채점)
+            dis_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else (100.0 if act <= 0 else 0.0))
+        discount_score = (sum(dis_atts) / len(dis_atts)) if dis_atts else 0.0
 
-            # 2. 신선도 지표 (정상: 신상(70%), 시즌오프(30%))
-            is_plan = df['price_type'].astype(str).str.contains('균일|기획', na=False)
-            is_new  = (df['_age'] == 0) & (~is_plan)
-            is_off  = (df['_age'] >= 1) & (~is_plan)
+        # B. 신선도
+        ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
+        fresh_inv = inv_weights.get('fresh', {})
+        _eland = {'스파오키즈', '뉴발란스키즈'}
+        _brand_nm = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
+        if _brand_nm in _eland:
+            # 이랜드월드: 기존 _age 기반 로직 유지
+            if is_outlet:
+                _off_mask = ~ft.str.contains('신상', na=False) & ~ft.str.contains('기획', na=False)
+                fresh_cfg = [
+                    {'m': ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.10)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)},
+                    {'m': _off_mask, 'r': 0.70}
+                ]
+            else:
+                fresh_cfg = [
+                    {'m': (df['_age'] == 0) | ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.70)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)}
+                ]
+        else:
+            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
+            if is_outlet:
+                _off_mask = ~_new_mask & ~ft.str.contains('기획', na=False)
+                fresh_cfg = [
+                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)},
+                    {'m': _off_mask, 'r': 0.70}
+                ]
+            else:
+                fresh_cfg = [
+                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)}
+                ]
+        
+        fresh_atts = []
+        for item in fresh_cfg:
+            act = _get_record_ref(item['m'])['_amt'].sum()
+            tgt = target_total * item['r']
+            fresh_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
+        freshness_score = (sum(fresh_atts) / len(fresh_atts)) if fresh_atts else 0.0
 
-            fresh_cfg = [{'m': is_new, 'r': 0.70}, {'m': is_off, 'r': 0.30}]
-            fresh_sum_att = 0.0
-            for item in fresh_cfg:
-                act = _get_record_ref(item['m'])['_amt'].sum()
-                tgt = target_total * item['r']
-                att = min(100.0, (act / tgt * 100)) if tgt > 0 else 100.0
-                fresh_sum_att += att
-            freshness_score = (fresh_sum_att / len(fresh_cfg))
+        # C. 시즌 — DIAG_MONTH(4월) 고정 기준, SS/FW 2시즌 동적 매핑
+        month = self.current_month  # 항상 DIAG_MONTH(4)
+        sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
+        CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
+        CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
 
-            # 3. 시즌 지표 (정상: 시즌 상품 목표 비중 70%)
-            ss_months = [2, 3, 4, 5, 6, 7]
-            is_ss_now = datetime.now().month in ss_months
-            curr_season_mask = df['season_code'].astype(str).str.contains(
-                '1|2|9' if is_ss_now else '3|4|9', na=False
-            )
-            act_sea = _get_record_ref(curr_season_mask)['_amt'].sum()
-            tgt_sea = target_total * 0.70
-            season_score = min(100.0, (act_sea / tgt_sea * 100)) if tgt_sea > 0 else 0.0
+        sea_inv = inv_weights.get('season', {})
+        non_zero_seasons = sum(1 for v in sea_inv.values() if v > 0)
 
-            # 4. BEST 지표 (정상: 베스트 10 목표 비중 25%)
-            best_score = 0.0
-            if 'sales_qty' in df.columns and 'sales_date' in df.columns:
-                df['_sale_dt'] = pd.to_datetime(df['sales_date'], errors='coerce')
-                max_dt = df['_sale_dt'].max()
-                if pd.notna(max_dt):
-                    cutoff = max_dt - timedelta(days=14)
-                    recent_df = df[df['_sale_dt'] >= cutoff].copy()
-                else:
-                    recent_df = df.copy()
+        if non_zero_seasons <= 2:
+            # SS/FW 2시즌 브랜드: 현시즌=primary(0.50), 보조시즌=secondary(0.30) 동적 매핑
+            primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
+            secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
+            if month in [1, 2, 3, 4]:   curr_codes, sub_codes = CO_SPRING, CO_SUMMER
+            elif month in [5, 6]:        curr_codes, sub_codes = CO_SUMMER, CO_SPRING
+            elif month in [7, 8, 9]:     curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
+            else:                         curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
+            season_cfg = [
+                {'m': sc.isin(curr_codes), 'r': primary_r},
+                {'m': sc.isin(sub_codes),  'r': secondary_r},
+            ]
+        else:
+            # 스포츠 등 계절별 고정 비중 (3개 이상 non-zero)
+            season_cfg = [
+                {'m': sc.isin(CO_SPRING), 'r': sea_inv.get('spring', 0.0)},
+                {'m': sc.isin(CO_SUMMER), 'r': sea_inv.get('summer', 0.0)},
+                {'m': sc.isin(CO_AUTUMN), 'r': sea_inv.get('autumn', 0.0)},
+                {'m': sc.isin(CO_WINTER), 'r': sea_inv.get('winter', 0.0)},
+            ]
 
-                recent_df['sales_qty'] = pd.to_numeric(recent_df['sales_qty'], errors='coerce').fillna(0)
-                sales_sum = recent_df.groupby('style_code')['sales_qty'].sum().sort_values(ascending=False)
+        season_atts = []
+        for item in season_cfg:
+            if item['r'] <= 0:
+                continue
+            act = _get_record_ref(item['m'])['_amt'].sum()
+            tgt = target_total * item['r']
+            season_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
+        season_score = (sum(season_atts) / len(season_atts)) if season_atts else 0.0
 
-                if not sales_sum.empty:
-                    cutoff_rank = min(len(sales_sum), 10)
-                    min_val = sales_sum.iloc[cutoff_rank - 1]
-                    best_styles = sales_sum[sales_sum >= min_val].index
-                    act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
-                    tgt_best = target_total * 0.25
-                    best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
+        # D. 베스트10
+        best_styles = []
+        if 'sales_qty' in df.columns:
+            sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
+            # [v3.8] 판매량이 0보다 큰 상품들만 베스트 후보군으로 선정
+            sq_df = df.assign(_sq=sq)
+            best_candidates = sq_df[sq_df['_sq'] > 0]
+            if not best_candidates.empty:
+                best_styles = best_candidates.groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
+        
+        if not best_styles:
+            # [v4.2] 스타일별 판매 데이터 부재 시 전체 매출 실적을 기반으로 보정 점수 부여 (0점 방지)
+            brand_sales = df['brand_month_sales'].iloc[0] if 'brand_month_sales' in df.columns else 0.0
+            if brand_sales > 0:
+                overall_perf = (brand_sales / target_total) if target_total > 0 else 0
+                best_score = min(40.0, overall_perf * 100)  # [v4.3] 데이터 부족 시 보정 점수 대폭 축소 (0점 방지용 최소치)
+            else:
+                best_score = 0.0
+        else:
+            act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
+            tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
+            best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
+
+        # E. 아이템
+        item_w = self._get_dynamic_item_weights(df)
+        item_atts = []
+        for g_name, r_val in item_w.items():
+            act = _get_record_ref(df['item_group'] == g_name)['_amt'].sum()
+            tgt = target_total * r_val
+            item_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
+        item_score = (sum(item_atts) / len(item_atts)) if item_atts else 0.0
 
         # ──────────────────────────────────────────
-        # 공통: 점수 컬럼 부여 및 총점 산출
+        # 최종 총점 산출 (v11.0 이중 채점 체계)
         # ──────────────────────────────────────────
-        df['discount_score']  = round(discount_score,  1)
-        df['freshness_score'] = round(freshness_score, 1)
-        df['season_score']    = round(season_score,    1)
-        df['best_score']      = round(best_score,      1)
+        product_score = (
+            discount_score  * final_weights['dis']   +
+            freshness_score * final_weights['fresh'] +
+            season_score    * final_weights['sea']   +
+            best_score      * final_weights['best']  +
+            item_score      * final_weights['item']
+        )
+        
+        # [v12.0] 평매출(eff_score) 및 종합점수(total_score) 로직 사용자 요청으로 완전 삭제
+        df['product_score'] = int(round(product_score))
+        df['total_score'] = df['product_score']
 
-        total_score = (
-            discount_score  * w_dis_g  +
-            freshness_score * w_fresh_g +
-            season_score    * w_sea_g  +
-            best_score      * w_best_g
-        ) if not df.empty else 0.0
+        # 지표별 개별 점수 보존
+        df['discount_score'] = int(round(discount_score))
+        df['freshness_score'] = int(round(freshness_score))
+        df['season_score'] = int(round(season_score))
+        df['best_score'] = int(round(best_score))
+        df['item_score'] = int(round(item_score))
 
-        df['total_score'] = round(total_score, 1)
-
-        # 임시 컬럼 정리
-        drop_cols = ['_amt', '_age', '_sale_dt', '_dis_rate']
+        drop_cols = ['_amt', '_dis_rate', '_sale_dt', 'item_group']
         return df.drop(drop_cols, axis=1, errors='ignore')
+
+    def get_shortage_segments(self, df: pd.DataFrame) -> dict:
+        """현재 브랜드의 구색 부족 세그먼트(Shortage) 분석"""
+        if df is None or df.empty: return {}
+        df = df.copy()
+        df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, self._safe_float(x)))
+        df['item_group'] = df['item_code'].apply(self._get_item_group) if 'item_code' in df.columns else 'Others'
+        
+        tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
+        target_total = tM * 2.0
+        is_outlet = _is_outlet(str(df['store_type'].iloc[0])) if 'store_type' in df.columns else False
+        inv_weights = self.config.get('inv_weights', {})
+
+        def _get_ref_count(mask):
+            sub = df[mask]
+            if sub.empty: return 0.0
+            if 'inv_uid' in sub.columns: return sub.drop_duplicates('inv_uid')['_amt'].sum()
+            d_cols = [c for c in ['style_code','year','season_code'] if c in sub.columns]
+            return sub.drop_duplicates(subset=d_cols)['_amt'].sum() if d_cols else sub['_amt'].sum()
+
+        res = {"dis": [], "fresh": [], "season": [], "item": [], "best": []}
+
+        # 할인율 부족
+        df['_dis_rate'] = df['discount_rate'].apply(self._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
+        dis_inv = inv_weights.get('dis', {})
+        
+        is_sports = "스포츠" in str(df['category_group'].iloc[0]) if 'category_group' in df.columns else False
+
+        if is_outlet or is_sports:
+            dis_cfg = [('70%이상', (df['_dis_rate'] >= 70), dis_inv.get('s70', 0.1)), ('50~70%', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.2)), ('30~50%', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.3)), ('30%미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.1))]
+        else:
+            year_base = self.config.get('year_base', 2026)
+            df['_age'] = df['year'].apply(lambda y: max(0, year_base-int(str(y).replace('년','')))) if 'year' in df.columns else 10
+            dis_cfg = [('4년차+(70%)', (df['_age']>=4), dis_inv.get('s70', 0.0)), ('3년차(50%)', (df['_age']==3), dis_inv.get('s50', 0.05)), ('2년차(30%)', (df['_age']==2), dis_inv.get('s30', 0.1)), ('1년차(10%)', (df['_age']==1), dis_inv.get('s10', 0.15))]
+            
+        for label, mask, r_val in dis_cfg:
+            if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["dis"].append(label)
+
+        # 신선도 부족
+        ft_s = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
+        _fresh_w = inv_weights.get('fresh', {})
+        _has_dis_f = (df['_dis_rate'] > 0).any()
+        _brand_nm_f = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
+        if _brand_nm_f in {'스파오키즈', '뉴발란스키즈'}:
+            if is_outlet:
+                fresh_cfg = [('신상', ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.1)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.2))]
+            else:
+                fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
+        else:
+            _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
+            r_n = _fresh_w.get('new', 0.10 if is_outlet else 0.70)
+            r_p = _fresh_w.get('plan', 0.20 if is_outlet else 0.10)
+            fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
+        for label, mask, r_val in fresh_cfg:
+            if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
+
+        # 시즌 부족 — score()와 동일한 DIAG_MONTH 기준 매핑
+        sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
+        CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
+        CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
+        month = self.current_month  # DIAG_MONTH(4) 고정
+        sea_inv = inv_weights.get('season', {})
+        non_zero_seasons = sum(1 for v in sea_inv.values() if v > 0)
+
+        if non_zero_seasons <= 2:
+            primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
+            secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
+            if month in [1, 2, 3, 4]:   curr_codes, sub_codes = CO_SPRING, CO_SUMMER
+            elif month in [5, 6]:        curr_codes, sub_codes = CO_SUMMER, CO_SPRING
+            elif month in [7, 8, 9]:     curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
+            else:                         curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
+            season_checks = [('봄(현시즌)', curr_codes, primary_r), ('여름(보조)', sub_codes, secondary_r)]
+        else:
+            season_checks = [
+                ('봄', CO_SPRING, sea_inv.get('spring', 0.0)),
+                ('여름', CO_SUMMER, sea_inv.get('summer', 0.0)),
+                ('가을', CO_AUTUMN, sea_inv.get('autumn', 0.0)),
+                ('겨울', CO_WINTER, sea_inv.get('winter', 0.0)),
+            ]
+
+        for label, codes, r_val in season_checks:
+            if r_val > 0 and _get_ref_count(sc.isin(codes)) < (target_total * r_val): res["season"].append(label)
+
+        # BEST 부족
+        if 'sales_qty' in df.columns:
+            sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
+            b_list = df.assign(_sq=sq).groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
+            best_r = inv_weights.get('best', {}).get('store10', 0.20)
+            if best_r > 0 and _get_ref_count(df['style_code'].isin(b_list)) < (target_total * best_r): res["best"] = ["TOP 10"]
+
+        # 아이템 부족
+        item_w = self._get_dynamic_item_weights(df)
+        for g_name, r_val in item_w.items():
+            if r_val > 0 and _get_ref_count(df['item_group'] == g_name) < (target_total * r_val): res["item"].append(g_name)
+
+        return res

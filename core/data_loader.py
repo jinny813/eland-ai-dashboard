@@ -207,6 +207,20 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             },
         }
 
+        # [v4.8] 브랜드별 1등 매장 자동 지정: 같은 브랜드 중 평매출(평당 매출액) 최상위 매장
+        _normal_stores = [s for s in stores if not s.startswith("__BP__")]
+        brand_top_store: dict = {}  # brand_name → top store name
+        for _b in df['brand_name'].unique():
+            if not _b: continue
+            _b_rows = df[(df['brand_name'] == _b) & (df['store_name'].isin(_normal_stores))]
+            _avgs = {}
+            for _s in _b_rows['store_name'].unique():
+                _s_sales = _b_rows[_b_rows['store_name'] == _s]['sales_amt'].apply(_try_float).sum()
+                _s_area = get_area(_s, _b)
+                _avgs[_s] = (_s_sales / _s_area) if _s_area > 0 else _s_sales
+            if len(_avgs) >= 2:  # 2개 이상 매장에 있어야 비교 의미
+                brand_top_store[_b] = max(_avgs, key=_avgs.get)
+
         score_data  = {}
         brands_list = []
         detail_data = {}
@@ -458,8 +472,13 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 bp_detail[store][b_name][display_key] = _build_bp_detail(cfg, bp_df if not bp_df.empty else None)
                 best_items[store][b_name][display_key] = _build_best_items(b_df)
 
-                # [액션가이드] BP 매장에서 동일 브랜드 데이터만 필터링하여 액션 계획 생성
+                # [액션가이드] BP 매장 데이터 우선, 없으면 1등 매장 데이터로 집중 판매 비교
                 bp_brand_df = bp_df[bp_df['brand_name'] == b_name].copy() if not bp_df.empty else pd.DataFrame()
+                if bp_brand_df.empty:
+                    _top_store = brand_top_store.get(b_name)
+                    if _top_store and _top_store != store:
+                        bp_brand_df = df[(df['store_name'] == _top_store) & (df['brand_name'] == b_name)].copy()
+                        bp_brand_df.attrs['top_store_name'] = _top_store
                 action_plan[store][b_name][display_key] = _build_action_plan(b_df, bp_brand_df)
 
         # [v4.1] 할인율점수 0 브랜드: 카테고리 요약 점수 재계산에서 제외

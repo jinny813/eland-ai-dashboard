@@ -9,19 +9,19 @@
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
 
     :root {
-      --bg-main: #F4F4F4;
+      --bg-main: #F8F9FA;
       --bg-card: #FFFFFF;
-      --bg-sidebar: #1D1E1E;
-      --bg-hover: #F9FAFB;
-      --border-main: #D4D5D5;
-      --border-light: #E5E7EB;
+      --bg-sidebar: #111111;
+      --bg-hover: #F3F4F6;
+      --border-main: #E5E7EB;
+      --border-light: #F1F5F9;
       --red: #E30019;
       --red-bg: #FEF2F2;
-      --blue: #1D4ED8;
-      --blue-bg: #EBF5FF;
-      --green: #15803D;
+      --blue: #2563EB;
+      --blue-bg: #EFF6FF;
+      --green: #10B981;
       --amber: #F59E0B;
-      --text-main: #111827;
+      --text-main: #1F2937;
       --text-dim: #6B7280;
       --text-white: #FFFFFF;
       --radius-lg: 20px;
@@ -40,13 +40,13 @@
       background: var(--bg-main);
       color: var(--text-main);
       letter-spacing: -0.03em;
-      overflow: hidden;
-      height: 100vh;
+      overflow-y: auto;
+      min-height: 100vh;
     }
 
     .app {
       display: flex;
-      height: 100vh;
+      min-height: 100vh;
     }
 
     /* ──────────────────────────────────────────────
@@ -60,6 +60,64 @@
       flex-shrink: 0;
       z-index: 100;
       box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .sidebar.collapsed {
+      width: 70px;
+    }
+
+    .sidebar.collapsed .logo-title,
+    .sidebar.collapsed .logo-sub,
+    .sidebar.collapsed .nav-item span:last-child {
+      display: none;
+    }
+
+    .sidebar.collapsed .logo-area {
+      padding: 32px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .logo-row {
+      gap: 0;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding: 14px 0;
+      border-left-width: 4px;
+    }
+
+    .sidebar.collapsed .nav-item span:first-child {
+      margin: 0;
+      font-size: 20px !important;
+    }
+
+    /* 토글 버튼 스타일 */
+    .sidebar-toggle {
+      position: absolute;
+      right: -12px;
+      top: 40px;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border: 1px solid var(--border-main);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 110;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+      color: #111;
+      font-size: 10px;
+    }
+
+    .sidebar.collapsed .sidebar-toggle {
+      transform: rotate(180deg);
     }
 
     .logo-area {
@@ -161,9 +219,9 @@
     }
 
     .content {
-      padding: 24px 32px;
+      padding: 24px 32px 120px 32px; /* 하단 여백 120px 추가 */
       flex: 1;
-      overflow-y: auto;
+      overflow-y: visible; /* 부모 스크롤을 따르도록 수정 */
     }
 
     .page {
@@ -204,27 +262,31 @@
     .table-wrap {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     .table-wrap th {
       background: #1D1E1E;
       color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 14px;
       text-align: center;
     }
 
     .table-wrap td {
-      padding: 12px;
+      padding: 14px;
       border-bottom: 1px solid var(--border-light);
       text-align: center;
+      vertical-align: middle;
     }
 
     .table-wrap td:first-child {
       text-align: left;
       padding-left: 24px;
-      font-weight: 700;
+      font-weight: 800;
+      font-size: 14px;
+      white-space: nowrap;
     }
 
     .badge-score {
@@ -232,25 +294,56 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      height: 50px;
-      border-radius: 10px;
+      width: 58px;
+      height: 60px;
+      border-radius: 12px;
       color: #fff;
-      background: linear-gradient(135deg, #F97316, #EA580C);
       text-decoration: none;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .badge-score:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
     }
 
     .badge-score .grade {
-      font-size: 9px;
-      opacity: 0.8;
-      margin-bottom: 1px;
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 2px;
     }
 
     .badge-score .num {
-      font-size: 19px;
-      font-weight: 900;
+      font-size: 22px;
+      font-weight: 950;
       line-height: 1;
+    }
+
+    /* P1 반응형: 카테고리 열 여백 단계 축소 */
+    @media (max-width: 1100px) {
+      .table-wrap th,
+      .table-wrap td { padding: 12px 8px; }
+      .table-wrap td:first-child,
+      .table-wrap th:first-child { padding-left: 20px; }
+    }
+    @media (max-width: 900px) {
+      .table-wrap th,
+      .table-wrap td { padding: 10px 5px; }
+      .table-wrap td:first-child,
+      .table-wrap th:first-child { padding-left: 14px; }
+      .badge-score { width: 50px; height: 52px; }
+      .badge-score .num { font-size: 19px; }
+    }
+    @media (max-width: 720px) {
+      .table-wrap th,
+      .table-wrap td { padding: 8px 4px; }
+      .table-wrap td:first-child,
+      .table-wrap th:first-child { padding-left: 10px; }
+      .badge-score { width: 42px; height: 44px; border-radius: 9px; }
+      .badge-score .num { font-size: 16px; }
+      .badge-score .grade { font-size: 10px; }
     }
 
     /* ──────────────────────────────────────────────
@@ -288,12 +381,55 @@
     }
 
     .brand-hero {
-      background: #fff;
-      border-radius: var(--radius-lg);
-      padding: 36px 40px;
-      border: 1px solid var(--border-main);
+      background: transparent;
+      border: none;
+      padding: 0 0 24px 0;
       margin-bottom: 24px;
       position: relative;
+    }
+
+    /* [v100.33] 매장 유형 배지 스타일 통합 및 색상 체계 변경 (Indigo / Slate) */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: -0.2px;
+      line-height: 1;
+    }
+    .type-badge.normal {
+      background: #DBEAFE; /* Blue 100 */
+      color: #1E40AF;      /* Blue 800 */
+    }
+    .type-badge.outlet {
+      background: #FEF3C7; /* Amber 100 */
+      color: #92400E;      /* Amber 800 */
+    }
+    .type-badge.month-type {
+      background: #F1F5F9;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid #E2E8F0;
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+      line-height: 1.2;
+    }
+
+    /* P2 헤더용 확장 배지 스타일 */
+    #h-type {
+      font-size: 13px;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: 8px;
+      margin-left: 4px;
     }
 
     .h-title-row {
@@ -301,10 +437,11 @@
       align-items: center;
       gap: 20px;
       margin-bottom: 8px;
+      flex-wrap: wrap;
     }
 
     #h-brand {
-      font-size: 32px;
+      font-size: 24px;
       font-weight: 950;
       color: #111;
       letter-spacing: -0.8px;
@@ -317,58 +454,72 @@
       margin-left: 2px;
     }
 
-    #h-type {
-      font-size: 11px;
-      font-weight: 900;
-      padding: 4px 12px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      background: #F3F4F6;
-      color: #6B7280;
-    }
 
     /* [v13.0] 브랜드명 옆 점수 박스 스타일 */
     .score-box {
       display: flex;
       align-items: center;
       gap: 12px;
-      background: #1D1E1E;
+      background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
       color: #fff;
-      padding: 8px 24px;
-      border-radius: 14px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      margin-left: 12px;
+      padding: 10px 24px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      margin-left: 20px;
       position: relative;
-      min-height: 80px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .score-box:hover {
+      transform: translateY(-2px);
     }
 
     .score-box-label {
-      font-size: 10px;
-      font-weight: 800;
+      font-size: 11px;
+      font-weight: 900;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.5);
       line-height: 1;
+      letter-spacing: 0.05em;
     }
 
     #h-score {
-      font-size: 52px;
+      font-size: 32px;
       font-weight: 950;
       color: #fff;
       line-height: 1;
-      letter-spacing: -2px;
+      letter-spacing: -1px;
     }
 
     .score-unit {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 800;
       color: rgba(255, 255, 255, 0.6);
-      margin-left: 4px;
+      margin-left: 3px;
       align-self: flex-end;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+    }
+
+    .brand-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 500;
     }
 
     .p2-header {
-      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .h-left-wrap {
+      flex: 1;
+      min-width: 300px;
     }
 
     /* [v26.0] 지점명과 카드 사이 여백 확보 */
@@ -401,14 +552,13 @@
       position: absolute;
       top: 0;
       left: 100%;
-      width: 320px;
+      width: 420px;
       background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(0, 0, 0, 0.1);
       padding: 18px;
       border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
-      z-index: 1000;
+      z-index: 999999;
       color: #1e293b;
       text-align: left;
       margin-left: 20px;
@@ -499,13 +649,90 @@
       border-radius: 14px;
     }
 
+      .action-reason {
+        font-size: 11px;
+        color: #64748b;
+        line-height: 1.4;
+      }
+      .action-keywords {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+      }
+      .action-tag {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 10px;
+        color: #475569;
+        font-weight: 700;
+      }
+
+      /* AI Advice Section */
+      .ai-advice-container {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px dashed rgba(226, 232, 240, 0.6);
+      }
+      .ai-advice-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        color: #312E81;
+        font-weight: 800;
+        font-size: 14px;
+      }
+      .ai-advice-item {
+        background: white;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        transition: transform 0.2s;
+      }
+      .ai-advice-item:hover {
+        transform: translateY(-2px);
+        border-color: #3B82F6;
+      }
+      .ai-advice-icon {
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+      }
+      .ai-advice-content {
+        flex: 1;
+      }
+      .ai-advice-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #6366F1;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+      .ai-advice-text {
+        font-size: 12px;
+        color: #1E293B;
+        line-height: 1.5;
+        font-weight: 500;
+      }
+      .ai-advice-text b {
+        color: #3B82F6;
+        font-weight: 800;
+      }
+
     .kpi-h {
-      font-size: 10px;
-      color: #9CA3AF;
+      font-size: 13px;
+      color: #4B5563;
       font-weight: 800;
       margin-bottom: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
 
     .kpi-v {
@@ -521,9 +748,18 @@
       margin-top: 8px;
     }
 
+    /* [v104.5] 과재고 안내 문구 (말풍선 제거 → 줄글로 변경) */
+    .overstock-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
     .metrics-4-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
       align-items: stretch;
     }
@@ -716,10 +952,12 @@
       inset: 0;
       background: rgba(0, 0, 0, 0.55);
       z-index: 1000;
-      align-items: center;
+      align-items: flex-start; /* 상단 정렬로 변경 */
       justify-content: center;
       backdrop-filter: blur(3px);
       animation: fadeOverlay 0.2s ease;
+      padding-top: 5vh; /* 상단 여백 5% 추가 */
+      overflow-y: auto; /* 내용이 길어질 경우 오버레이 자체 스크롤 활성화 */
     }
 
     .overlay.show {
@@ -737,12 +975,14 @@
     }
 
     .modal {
-      width: 80vw;
-      max-width: 1400px;
-      min-height: 60vh;
+      width: 95vw;
+      max-width: 1800px;
+      max-height: 92vh;
       background: #fff;
       border-radius: 20px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
       animation: slideUp 0.25s ease;
       transform-origin: top;
@@ -801,7 +1041,9 @@
 
     .modal-body {
       padding: 24px 28px;
+      overflow-y: auto;
       overflow-x: auto;
+      flex: 1;
     }
 
     .modal-tbl {
@@ -834,6 +1076,7 @@
 
     .modal-tbl td:first-child {
       text-align: left;
+      min-width: 180px;
     }
 
     .modal-tbl tr {
@@ -852,6 +1095,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      white-space: nowrap;
     }
 
     .type-badge {
@@ -948,6 +1192,96 @@
       transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    /* 필터 레이아웃 슬림화 */
+    .filter-section {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .filter-card {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 180px;
+      transition: all 0.2s;
+    }
+    .filter-card:hover {
+      border-color: #3B82F6;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .filter-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .filter-card select {
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1E293B;
+      width: 100%;
+      cursor: pointer;
+      outline: none;
+      padding: 2px 0;
+    }
+
+    /* [v100.8] P2 Navigator Pill Style (Compact) */
+    .p2-nav-toolbar {
+      display: flex;
+      gap: 0;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      z-index: 50;
+      margin-left: auto;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .p2-nav-toolbar:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-color: #3B82F6;
+    }
+
+    .p2-sel-box {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+    }
+
+    .p2-sel-label {
+      display: none; /* 슬림화를 위해 라벨 제거 */
+    }
+
+    .p2-selector {
+      padding: 6px 10px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+      cursor: pointer;
+      min-width: 120px;
+      outline: none;
+      transition: color 0.2s;
+    }
+    .p2-selector:hover {
+      color: #2563EB;
+    }
+
     .bar-values {
       font-size: 11px;
       font-weight: 950;
@@ -980,12 +1314,312 @@
       background: #D1D5DB;
       border-radius: 10px;
     }
+
+    /* ── [v100.7] P2 Navigator Toolbar (EXACT MATCH) ── */
+    .p2-nav-toolbar {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      padding: 10px 24px;
+      border-radius: 18px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      z-index: 50;
+      margin-left: auto;
+      gap: 0;
+    }
+
+    .p2-sel-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 0 20px;
+    }
+
+    .p2-sel-box:first-child { padding-left: 0; }
+    .p2-sel-box:last-child { 
+      padding-right: 0; 
+      border-left: 1px solid #F1F5F9; 
+    }
+
+    .p2-sel-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .p2-selector {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 900;
+      color: #1E293B;
+      cursor: pointer;
+      min-width: 180px;
+      outline: none;
+      transition: all 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px;
+      padding-right: 36px;
+    }
+
+    .p2-selector:hover {
+      border-color: #CBD5E1;
+      background-color: #fff;
+    }
+
+    /* ─── Responsive Styles ─── */
+    @media (max-width: 1400px) {
+      .metrics-4-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .metrics-4-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .sidebar {
+        width: 70px;
+      }
+      .sidebar .logo-title, .sidebar .logo-sub, .sidebar .nav-item span:last-child {
+        display: none;
+      }
+      .sidebar .logo-area { padding: 32px 0; justify-content: center; }
+      .sidebar .nav-item { justify-content: center; padding: 14px 0; }
+      .sidebar .nav-item span:first-child { margin: 0; font-size: 20px !important; }
+      .sidebar-toggle { display: none; } /* 모바일에서는 자동 축소 */
+    }
+
+    @media (max-width: 768px) {
+      .metrics-4-grid {
+        grid-template-columns: 1fr;
+      }
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .content {
+        padding: 16px;
+      }
+      .brand-hero {
+        padding: 24px;
+      }
+      #h-brand {
+        font-size: 24px;
+      }
+      .p2-nav-toolbar {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px;
+        margin-left: 0;
+      }
+      .p2-sel-box {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        border-left: none !important;
+      }
+      .p2-selector {
+        width: 100%;
+      }
+      .score-box {
+        padding: 8px 16px;
+        margin-left: 0;
+        margin-top: 10px;
+      }
+      #h-score {
+        font-size: 26px;
+      }
+      .score-unit {
+        font-size: 12px;
+      }
+    }
+    /* ─── [ACTION GUIDE] 층장 액션 패널 전용 스타일 ─── */
+    .action-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      background: transparent;
+    }
+
+    .action-col {
+      border-radius: 16px;
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-width: 0;
+    }
+
+    .action-col.secure {
+      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+      border: 1.5px solid #BFDBFE;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.08);
+    }
+
+    .action-col.push {
+      background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+      border: 1.5px solid #FED7AA;
+      box-shadow: 0 6px 20px rgba(234, 88, 12, 0.08);
+    }
+
+    .action-col-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .action-col-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .action-col.secure .action-col-icon { background: #DBEAFE; }
+    .action-col.push .action-col-icon { background: #FED7AA; }
+
+    .action-col-title {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.4px;
+    }
+
+    .action-col.secure .action-col-title { color: #1E40AF; }
+    .action-col.push .action-col-title { color: #9A3412; }
+
+    .action-col-sub {
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .action-col.secure .action-col-sub { color: #3B82F6; }
+    .action-col.push .action-col-sub { color: #EA580C; }
+
+    .action-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+    }
+
+    .action-item:last-child { border-bottom: none; }
+
+    .action-rank {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .action-col.secure .action-rank { background: #2563EB; color: #fff; }
+    .action-col.push .action-rank { background: #EA580C; color: #fff; }
+
+    .action-body { flex: 1; min-width: 0; }
+
+    .action-name {
+      font-size: 14px;
+      font-weight: 900;
+      color: #0F172A;
+      letter-spacing: -0.4px;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .action-code {
+      font-size: 10px;
+      font-weight: 800;
+      font-family: monospace;
+      color: #64748B;
+      background: rgba(0,0,0,0.05);
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+
+    .action-reason {
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .action-col.secure .action-reason { color: #1D4ED8; }
+    .action-col.push .action-reason { color: #C2410C; }
+
+    .action-empty {
+      text-align: center;
+      padding: 24px 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #94A3B8;
+    }
+
+    .action-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .action-panel-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #1D1E1E;
+      letter-spacing: -0.5px;
+    }
+
+    .action-panel-badge {
+      font-size: 10px;
+      font-weight: 900;
+      background: #1D1E1E;
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    @media (max-width: 1100px) {
+      .action-panel { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
 <body>
   <div class="app">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-toggle" onclick="toggleSidebar()">❯</div>
       <div class="logo-area">
         <div class="logo-row">
           <!-- E-LAND 회사 로고 SVG -->
@@ -1005,13 +1639,13 @@
       </div>
       <nav class="nav">
         <div class="nav-item active" onclick="showPage('p1',this)" data-page="p1">
-          <span style="font-size:16px; flex-shrink:0;">☰</span> 상품 구색 점수판
+          <span style="font-size:16px; flex-shrink:0;">☰</span> <span>상품 구색 점수판</span>
         </div>
         <div class="nav-item" onclick="showPage('p2',this)" data-page="p2">
-          <span style="font-size:16px; flex-shrink:0;">▶</span> 브랜드별 상품 현황판
+          <span style="font-size:16px; flex-shrink:0;">▶</span> <span>브랜드별 상품 현황판</span>
         </div>
         <div class="nav-item" onclick="showPage('p3',this)" data-page="p3">
-          <span style="font-size:16px; flex-shrink:0;">⇧</span> 상품 정보 입력
+          <span style="font-size:16px; flex-shrink:0;">⇧</span> <span>상품 정보 입력</span>
         </div>
       </nav>
     </aside>
@@ -1024,22 +1658,24 @@
         <!-- P1: MAIN TABLE -->
         <div class="page active" id="p1">
           <div class="section-head">
-            <div class="section-title">상품 구색 점수판</div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+              <div class="section-title" style="margin-bottom:0;">상품 구색 점수판</div>
+              <span id="p1-month-badge" style="background:#F1F5F9; color:#475569; font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px; border:1px solid #E2E8F0; display:none; vertical-align:middle;"></span>
+            </div>
             <div class="section-sub">점수 클릭 → 지점 분석 | 브랜드 행 클릭 → 브랜드 상세</div>
           </div>
-          <div class="card">
+          <div class="card" style="overflow-x:auto;">
             <table class="table-wrap">
               <thead>
                 <tr>
-                  <th style="text-align:left;padding-left:24px">지점</th>
+                  <th style="text-align:left;padding-left:24px;white-space:nowrap;width:190px;">지점</th>
                   <th>전체</th>
                   <th>여성</th>
-                  <th>스포츠</th>
-                  <th>캐주얼</th>
-                  <th>잡화</th>
                   <th>아동</th>
                   <th>신사</th>
-                  <th>골프웨어</th>
+                  <th>캐주얼</th>
+                  <th>스포츠</th>
+                  <th>잡화</th>
                 </tr>
               </thead>
               <tbody id="mainTbody"></tbody>
@@ -1052,46 +1688,70 @@
           <div id="alertArea"></div>
           <div class="brand-hero">
             <div class="p2-header">
-              <div class="h-title-row">
-                <h1 id="h-brand">로딩 중...</h1>
-                <span id="h-type">정상</span>
-                <div class="score-box">
-                  <div style="display:flex; align-items:center;">
-                    <span class="score-box-label">Score</span>
-                    <div class="info-btn" onclick="toggleScoreBubble(event)">i</div>
-                    <!-- [v28.0] 정보 말풍선 HTML 추가 -->
-                    <div id="scoreBubble" class="info-bubble">
-                      <h4>여성 카테고리 정밀 채점 로직</h4>
-                      <p><b>■ 매장 유형별 최종 점수 반영 가중치</b></p>
-                      <div class="weight-row" style="color:#EF4444"><span>1. 상설 매장</span> <span>45 / 25 / 15 / 15</span>
+              <div class="h-left-wrap">
+                <div class="h-title-row" style="display:flex; align-items:center; gap:16px; padding:32px 40px 16px 40px;">
+                  <h1 id="h-brand" style="font-size:44px; font-weight:950; margin:0; letter-spacing:-1.5px; color:#111;">로딩 중...</h1>
+                  <div id="h-store" style="font-size:20px; font-weight:800; color:#475569; margin-left:8px;">지점명</div>
+                  <span id="h-type" style="margin-left:8px;">정상</span>
+                  
+                  <div class="score-box" style="margin-left:12px;">
+                    <div style="display:flex; align-items:center; gap:20px;">
+                      <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="score-box-label">SCORE</span>
+                        <div class="info-btn" onclick="toggleScoreBubble(event)" style="margin:0; width:16px; height:16px; font-size:10px; background:rgba(255,255,255,0.15);">i</div>
                       </div>
-                      <div class="weight-row" style="color:#3B82F6"><span>2. 정상 매장</span> <span>30 / 30 / 20 / 20</span>
+                      <div style="display:flex; align-items:baseline;">
+                        <div id="h-score" style="font-size:48px; font-weight:950; color:#FFFFFF; line-height:1;">0</div>
+                        <span class="score-unit" style="color:rgba(255,255,255,0.7); font-size:18px; margin-left:4px; font-weight:800;">점</span>
                       </div>
-                      <p style="font-size:10px; color:#94A3B8; margin-top:4px;">(할인율 / BEST / 시즌 / 신선도 순)</p>
+                      <!-- [v28.0] 정보 말풍선 HTML 추가 -->
+                      <div id="scoreBubble" class="info-bubble">
+                        <h4 id="bubble-title">카테고리 정밀 채점 로직</h4>
+                        <p style="margin-bottom:8px;"><b>1. 재고액 설정 및 배분 원칙</b></p>
+                        <p style="font-size:11px; margin-bottom:4px;">- <b>목표 총 재고</b>: 브랜드별 [목표 매출 × 200%]</p>
+                        <p style="font-size:11px; margin-bottom:12px;">- <b>세부 목표액</b>: [목표 총 재고 × 아래 세부 비중(%)]</p>
 
-                      <p style="margin-top:12px;"><b>■ 지표별 산출 방식</b></p>
-                      <p style="margin-bottom:4px;">- 항목별 달성률: (실제/목표) * 100</p>
-                      <p>- 지표 점수: 세부 항목 달성률들의 평균</p>
+                        <p style="margin-bottom:6px;"><b>2. 지표별 최종 반영 가중치 (총점 100점)</b></p>
+                        <div id="bubble-weights">
+                          <!-- JS에서 동적 생성 -->
+                        </div>
+                        <p id="bubble-order" style="font-size:10px; color:#94A3B8; margin-top:4px; margin-bottom:12px;">(할인율 / BEST / 시즌 / 신선도 / 아이템 순)</p>
 
-                      <div class="footer">※ 목표 매출의 200%를 적정 재고 기준으로 삼습니다.</div>
+                        <p style="margin-bottom:6px;"><b>3. 지표 내 세부 항목 목표 비중 (%)</b></p>
+                        <p id="bubble-details">
+                          <!-- JS에서 동적 생성 -->
+                        </p>
+
+                        <div class="footer">※ 모든 지표는 목표 대비 실제 보유액의 달성률로 산출됩니다.</div>
+                      </div>
                     </div>
                   </div>
-                  <span id="h-score">0</span>
-                  <span class="score-unit">점</span>
+
+                  <!-- [v100.7] 브랜드 상세 전용 네비게이터 (디자인 복구) -->
+                  <div class="p2-nav-toolbar" style="margin-left:auto;">
+                    <div class="p2-sel-box">
+                      <div class="p2-sel-label">🏬 지점</div>
+                      <select id="p2_store_sel" class="p2-selector" onchange="onNavStoreChange(this.value)"></select>
+                    </div>
+                    <div class="p2-sel-box">
+                      <div class="p2-sel-label">🏷️ 브랜드</div>
+                      <select id="p2_brand_sel" class="p2-selector" onchange="onNavBrandChange(this.value)"></select>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div id="h-store">지점명</div>
             </div>
             <div class="kpi-grid" id="kpiGrid"></div>
           </div>
           <div class="metrics-4-grid" id="detailGrid"></div>
+          <div id="actionPanel" style="margin-top:24px; margin-bottom:24px;"></div>
 
           <!-- BEST 10 품번 기반 판매 순위 -->
           <div style="margin-top:24px;">
             <div class="card" style="padding:24px;">
               <div
                 style="font-size:16px; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
-                🏆 최근 판매 BEST 10 — 품번 기준
+                🏆 최근 2주 내 판매 BEST - 품번 기준
               </div>
               <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse:collapse;">
@@ -1136,7 +1796,20 @@
                     <option value="" disabled selected>선택...</option>
                     <option>NC신구로점</option>
                     <option>NC강서점</option>
+                    <option>NC송파점</option>
+                    <option>NC불광점</option>
+                    <option>NC고잔점</option>
+                    <option>NC평촌점</option>
+                    <option>NC야탑점</option>
+                    <option>NC청주점</option>
+                    <option>뉴코아강남점</option>
+                    <option>뉴코아부천점</option>
+                    <option>뉴코아인천점</option>
+                    <option>2001중계점</option>
+                    <option>2001분당점</option>
                     <option>동아쇼핑점</option>
+                    <option>동아수성점</option>
+                    <option>NC대전유성점</option>
                   </select>
                 </div>
                 <div>
@@ -1190,37 +1863,83 @@
                 </div>
               </div>
               <div id="fileSection" style="display:none;">
-                <div style="margin-bottom:16px;">
-                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 재고조회 엑셀</div>
-                  <label for="ux_inv"
-                    style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
-                    <span
-                      style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
-                      선택</span>
-                    <span id="invFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
-                      선택하세요 (.xls, .xlsx)</span>
-                  </label>
-                  <input type="file" id="ux_inv" accept=".xls,.xlsx"
-                    onchange="document.getElementById('invFileName').textContent=this.files[0]?.name||'파일을 선택하세요'"
-                    style="display:none;">
+                <!-- [v10.0] 업로드 방식 선택 탭 -->
+                <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #E5E7EB; padding-bottom:10px;">
+                  <button id="btn_mode_text" onclick="setUploadMode('text')"
+                    style="flex:1; padding:10px; border:none; border-radius:10px; background:#1D1E1E; color:#fff; font-size:12px; font-weight:800; cursor:pointer; transition:all 0.2s;">📋 텍스트 붙여넣기</button>
+                  <button id="btn_mode_file" onclick="setUploadMode('file')" 
+                    style="flex:1; padding:10px; border:none; border-radius:10px; background:#F3F4F6; color:#6B7280; font-size:12px; font-weight:800; cursor:pointer; transition:all 0.2s;">📂 엑셀 파일 업로드</button>
                 </div>
-                <div style="margin-bottom:28px;">
-                  <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 판매조회 엑셀</div>
-                  <label for="ux_sales"
-                    style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
-                    <span
-                      style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
-                      선택</span>
-                    <span id="salesFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
-                      선택하세요 (.xls, .xlsx) — 선택사항</span>
-                  </label>
-                  <input type="file" id="ux_sales" accept=".xls,.xlsx"
-                    onchange="document.getElementById('salesFileName').textContent=this.files[0]?.name||'파일을 선택하세요'"
-                    style="display:none;">
+
+                <!-- 1. 텍스트 붙여넣기 모드 (Default) -->
+                <div id="area_text">
+                  <!-- [v100.30] 데이터 누락 방지 검증 필드 추가 -->
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; padding:16px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px;">
+                    <div>
+                      <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:6px;">🔢 검증용 총 재고량 (EA)</div>
+                      <input type="text" id="ux_check_qty" oninput="formatNumberWithCommas(this)" placeholder="예: 1,250" style="width:100%; padding:10px; border:1px solid #CBD5E1; border-radius:8px; font-size:13px; font-weight:700;">
+                    </div>
+                    <div>
+                      <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:6px;">💰 검증용 총 재고액 (원)</div>
+                      <input type="text" id="ux_check_amt" oninput="formatNumberWithCommas(this)" placeholder="예: 45,000,000" style="width:100%; padding:10px; border:1px solid #CBD5E1; border-radius:8px; font-size:13px; font-weight:700;">
+                    </div>
+                    <div style="grid-column: span 2; font-size:11px; color:#94A3B8; font-weight:600;">※ 입력하신 총계와 붙여넣은 데이터의 합계가 다를 경우 업로드가 차단됩니다.</div>
+                  </div>
+
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:6px;">📋 재고 데이터 붙여넣기</div>
+                    <!-- [v100.30] 사용자 가이드 문구 추가 -->
+                    <div style="font-size:11px; background:#FFFBEB; color:#B45309; padding:8px 12px; border-radius:6px; margin-bottom:8px; font-weight:700; border:1px solid #FDE68A;">
+                      💡 방법: 표 상단 헤더 값을 선택 -> Ctrl+A(전체선택) -> Ctrl+C(복사) -> Ctrl+V(붙여넣기)
+                    </div>
+                    <textarea id="ux_inv_text" oninput="validateUploadForm()" placeholder="엑셀에서 헤더를 포함하여 범위를 복사해서 붙여넣으세요..."
+                      style="width:100%; height:120px; padding:12px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:12px; background:#FAFBFC; resize:vertical;"></textarea>
+                  </div>
+                  <div style="margin-bottom:28px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📋 판매 데이터 붙여넣기</div>
+                    <!-- [v100.31] 판매 데이터 영역에도 안내 문구 추가 -->
+                    <div style="font-size:11px; background:#FFFBEB; color:#B45309; padding:8px 12px; border-radius:6px; margin-bottom:8px; font-weight:700; border:1px solid #FDE68A;">
+                      💡 방법: 표 상단 헤더 값을 선택 -> Ctrl+A(전체선택) -> Ctrl+C(복사) -> Ctrl+V(붙여넣기)
+                    </div>
+                    <textarea id="ux_sales_text" oninput="validateUploadForm()" placeholder="판매 데이터가 있다면 복사해서 붙여넣으세요..."
+                      style="width:100%; height:120px; padding:12px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:12px; background:#FAFBFC; resize:vertical;"></textarea>
+                  </div>
                 </div>
-                <button id="uploadBtn" onclick="handleUpload()"
-                  style="width:100%; padding:18px; border:none; border-radius:14px; background:var(--red); color:#fff; font-size:16px; font-weight:900; cursor:pointer; box-shadow:0 6px 20px rgba(227,0,25,0.25); transition:all 0.2s; font-family:inherit;">업로드
-                  및 병합 실행</button>
+
+                <!-- 2. 파일 업로드 모드 -->
+                <div id="area_file" style="display:none;">
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 재고조회 엑셀</div>
+                    <label for="ux_inv"
+                      style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
+                      <span
+                        style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
+                        선택</span>
+                      <span id="invFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
+                        선택하세요 (.xls, .xlsx)</span>
+                    </label>
+                    <input type="file" id="ux_inv" accept=".xls,.xlsx"
+                      onchange="document.getElementById('invFileName').textContent=this.files[0]?.name||'파일을 선택하세요'; validateUploadForm();"
+                      style="display:none;">
+                  </div>
+                  <div style="margin-bottom:28px;">
+                    <div style="font-size:13px; font-weight:800; color:#374151; margin-bottom:8px;">📂 판매조회 엑셀</div>
+                    <label for="ux_sales"
+                      style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; background:#fff; cursor:pointer; font-size:13px; color:#6B7280; box-sizing:border-box;">
+                      <span
+                        style="background:#E5E7EB; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:700; color:#374151; white-space:nowrap; flex-shrink:0;">파일
+                        선택</span>
+                      <span id="salesFileName" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">파일을
+                        선택하세요 (.xls, .xlsx)</span>
+                    </label>
+                    <input type="file" id="ux_sales" accept=".xls,.xlsx"
+                      onchange="document.getElementById('salesFileName').textContent=this.files[0]?.name||'파일을 선택하세요'; validateUploadForm();"
+                      style="display:none;">
+                  </div>
+                </div>
+
+                <button id="uploadBtn" onclick="handleUpload()" disabled
+                  style="width:100%; padding:18px; border:none; border-radius:14px; background:#D1D5DB; color:#fff; font-size:16px; font-weight:900; cursor:not-allowed; transition:all 0.2s; font-family:inherit;">데이터를 모두 입력해주세요</button>
               </div>
               <div id="uploadStatus"
                 style="display:none; margin-top:16px; align-items:center; gap:10px; padding:14px 18px; border-radius:12px; font-size:13px; font-weight:800; background:#FEF2F2; border:1px solid #FECACA; color:#E30019;">
@@ -1285,9 +2004,52 @@
   </style>
   <script>
     const API_URL = "http://localhost:8000";
-    let CATS = [], STORES = [], scoreData = {}, BRANDS = [], DETAIL = {}, BP_DETAIL = {}, BEST_ITEMS = {}, currentBrand = null;
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+      
+      // 상태 저장 (선택 사항)
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      localStorage.setItem('sidebarCollapsed', isCollapsed);
+    }
+
+    // 페이지 로드 시 이전 상태 복원
+    document.addEventListener('DOMContentLoaded', () => {
+      const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (isCollapsed) {
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+    });
+    let CATS = [], STORES = [], scoreData = {}, BRANDS = [], DETAIL = {}, BP_DETAIL = {}, BEST_ITEMS = {}, ACTION_PLAN = {}, SCORING_GUIDE = {}, currentBrand = null;
+
+    // [v100.32] 숫자 천단위 콤마 포맷팅 함수
+    function formatNumberWithCommas(el) {
+      let val = el.value.replace(/[^0-9]/g, '');
+      if (val === '') { el.value = ''; return; }
+      el.value = Number(val).toLocaleString('ko-KR');
+    }
 
     // ─── P3 업로드 UX 핸들러 ───
+    let currentUploadMode = 'text';
+    function setUploadMode(mode) {
+      currentUploadMode = mode;
+      document.getElementById('area_file').style.display = (mode === 'file' ? 'block' : 'none');
+      document.getElementById('area_text').style.display = (mode === 'text' ? 'block' : 'none');
+      
+      const btnFile = document.getElementById('btn_mode_file');
+      const btnText = document.getElementById('btn_mode_text');
+      
+      if (mode === 'file') {
+        btnFile.style.background = '#1D1E1E'; btnFile.style.color = '#fff';
+        btnText.style.background = '#F3F4F6'; btnText.style.color = '#6B7280';
+      } else {
+        btnText.style.background = '#1D1E1E'; btnText.style.color = '#fff';
+        btnFile.style.background = '#F3F4F6'; btnFile.style.color = '#6B7280';
+      }
+      validateUploadForm(); // 모드 변경 시 버튼 상태 갱신
+    }
+
     function _setEnabled(id, enabled) {
       const el = document.getElementById(id);
       el.disabled = !enabled;
@@ -1305,6 +2067,37 @@
       if (step >= 4 && m) { document.getElementById('fileSection').style.display = 'block'; }
       document.getElementById('uploadStatus').style.display = 'none';
       document.getElementById('uploadSuccess').style.display = 'none';
+      validateUploadForm();
+    }
+
+    // [v100.31] 데이터 입력 여부에 따른 업로드 버튼 활성화 제어
+    function validateUploadForm() {
+      const btn = document.getElementById('uploadBtn');
+      let isValid = false;
+
+      if (currentUploadMode === 'text') {
+        const invTxt = document.getElementById('ux_inv_text').value.trim();
+        const salesTxt = document.getElementById('ux_sales_text').value.trim();
+        isValid = (invTxt !== '' && salesTxt !== '');
+      } else {
+        const invFile = document.getElementById('ux_inv').files.length > 0;
+        const salesFile = document.getElementById('ux_sales').files.length > 0;
+        isValid = (invFile && salesFile);
+      }
+
+      if (isValid) {
+        btn.disabled = false;
+        btn.style.background = 'var(--red)';
+        btn.style.cursor = 'pointer';
+        btn.style.boxShadow = '0 6px 20px rgba(227,0,25,0.25)';
+        btn.textContent = '업로드 및 병합 실행';
+      } else {
+        btn.disabled = true;
+        btn.style.background = '#D1D5DB';
+        btn.style.cursor = 'not-allowed';
+        btn.style.boxShadow = 'none';
+        btn.textContent = '재고 및 판매 데이터를 모두 입력해주세요';
+      }
     }
 
     async function handleUpload() {
@@ -1318,36 +2111,91 @@
       const cat = document.getElementById('ux_cat').value;
       const brandRaw = document.getElementById('ux_brand').value;
       const month = document.getElementById('ux_month').value;
-      const invFile = document.getElementById('ux_inv').files[0];
 
       if (!store || !cat || !brandRaw || !month) {
         statusTxt.textContent = '지점, 카테고리, 브랜드, 월을 모두 선택해주세요.'; statusEl.style.display = 'flex'; return;
       }
-      if (!invFile) {
-        statusTxt.textContent = '재고조회 엑셀 파일을 선택해주세요.'; statusEl.style.display = 'flex'; return;
-      }
 
-      btn.disabled = true; btn.textContent = '처리 중...';
       const fd = new FormData();
       fd.append('store_name', store);
       fd.append('category_group', cat);
-      fd.append('brand_name', brandRaw); // "로엠|정상"
+      fd.append('brand_name', brandRaw);
       fd.append('data_month', month);
-      fd.append('inv_file', invFile);
-      const salesFile = document.getElementById('ux_sales').files[0];
-      if (salesFile) fd.append('sales_file', salesFile);
 
+      if (currentUploadMode === 'file') {
+        const invFile = document.getElementById('ux_inv').files[0];
+        if (!invFile) {
+          statusTxt.textContent = '재고조회 엑셀 파일을 선택해주세요.'; statusEl.style.display = 'flex'; return;
+        }
+        fd.append('inv_file', invFile);
+        const salesFile = document.getElementById('ux_sales').files[0];
+        if (salesFile) fd.append('sales_file', salesFile);
+      } else {
+        const invText = document.getElementById('ux_inv_text').value;
+        if (!invText || !invText.trim()) {
+          statusTxt.textContent = '재고 데이터를 붙여넣어 주세요.'; statusEl.style.display = 'flex'; return;
+        }
+
+        // [v100.30] 데이터 누락 방지 검증 로직 추가
+        const checkQty = document.getElementById('ux_check_qty').value.replace(/,/g, '').trim();
+        const checkAmt = document.getElementById('ux_check_amt').value.replace(/,/g, '').trim();
+
+        if (checkQty || checkAmt) {
+          const lines = invText.trim().split('\n');
+          if (lines.length > 1) {
+            const headers = lines[0].split('\t').map(h => h.trim());
+            const rows = lines.slice(1);
+
+            const qtySynonyms = ['재고수량', '재고', '수량', '가용재고수량', '판매가능재고', '총재고_수량', '가용수량', '판매가능재고수량'];
+            const amtSynonyms = ['재고금액', '최초판매금액', '총재고_최초판매금액', '총재고_TAG금액', '가용재고금액', '판매가능재고금액', '재고금액(정상)', '가용재고합계', '최초판매가합계'];
+
+            let qtyIdx = -1, amtIdx = -1;
+            headers.forEach((h, idx) => {
+              if (qtySynonyms.some(s => h.includes(s))) qtyIdx = idx;
+              if (amtSynonyms.some(s => h.includes(s))) amtIdx = idx;
+            });
+
+            const parseNum = (v) => parseFloat(String(v).replace(/[^0-9.-]/g, '')) || 0;
+
+            if (checkQty && qtyIdx !== -1) {
+              const sumQty = rows.reduce((acc, row) => acc + parseNum(row.split('\t')[qtyIdx]), 0);
+              if (Math.abs(sumQty - parseFloat(checkQty)) > 0.1) {
+                statusTxt.textContent = '오류! 입력하신 데이터와 총 재고액에 차이가 있습니다. 누락된 데이터를 확인해주세요.';
+                statusEl.style.display = 'flex'; return;
+              }
+            }
+            if (checkAmt && amtIdx !== -1) {
+              const sumAmt = rows.reduce((acc, row) => acc + parseNum(row.split('\t')[amtIdx]), 0);
+              if (Math.abs(sumAmt - parseFloat(checkAmt)) > 1) {
+                statusTxt.textContent = '오류! 입력하신 데이터와 총 재고액에 차이가 있습니다. 누락된 데이터를 확인해주세요.';
+                statusEl.style.display = 'flex'; return;
+              }
+            }
+          }
+        }
+
+        fd.append('inv_text', invText);
+        const salesText = document.getElementById('ux_sales_text').value;
+        if (salesText) fd.append('sales_text', salesText);
+      }
+
+      btn.disabled = true; btn.textContent = '처리 중...';
       try {
         const r = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: fd, credentials: 'omit' });
         const d = await r.json();
         if (d.status === 'success') {
           document.getElementById('successTxt').textContent = d.message || `업로드 완료! (${d.rows}개 레코드)`;
           successEl.style.display = 'flex';
+          // 입력값 초기화
+          if (currentUploadMode === 'text') {
+            document.getElementById('ux_inv_text').value = '';
+            document.getElementById('ux_sales_text').value = '';
+          }
         } else {
           statusTxt.textContent = d.error || '처리 오류'; statusEl.style.display = 'flex';
         }
       } catch (e) {
-        statusTxt.textContent = `네트워크 오류: ${e.message} — Streamlit 상단 탭 "📤 데이터 통합 및 업로드"에서 파일을 업로드해 주세요.`;
+        statusTxt.textContent = `네트워크 오류: ${e.message}`;
         statusEl.style.display = 'flex';
       }
       btn.disabled = false; btn.textContent = '업로드 및 병합 실행';
@@ -1358,18 +2206,83 @@
       document.getElementById(id).classList.add('active');
       if (el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
       document.getElementById('top-title').textContent = { 'p1': '상품 구색 점수판', 'p2': '브랜드별 상품 현황판', 'p3': '상품 정보 입력' }[id] || '';
+      
+      // P2 진입 시 네비게이터 초기화
+      if (id === 'p2') initP2Selectors();
+    }
+
+    // ─── [v100.7] P2 전용 네비게이터 로직 ───
+    function initP2Selectors() {
+      const sSel = document.getElementById('p2_store_sel');
+      if (!sSel) return;
+      
+      // 지점 목록 채우기 (데이터 로드 후에만 유효)
+      if (STORES.length > 0 && sSel.options.length <= 1) {
+        sSel.innerHTML = STORES.map(s => `<option value="${s}">${s}</option>`).join('');
+      }
+      
+      if (currentBrand) {
+        sSel.value = currentBrand.store;
+        updateP2BrandOptions(currentBrand.store, currentBrand.name);
+      }
+    }
+
+    function updateP2BrandOptions(store, selectedName, showPlaceholder = false) {
+      const bSel = document.getElementById('p2_brand_sel');
+      const filtered = BRANDS.filter(b => b.store === store);
+      
+      let html = '';
+      if (showPlaceholder) {
+        html = '<option value="" selected disabled>브랜드를 선택하세요</option>';
+      }
+      
+      html += filtered.map(b => `<option value="${b.name}">${b.name} (${b.type_label || (b.type === 'normal' ? '정상' : '상설')})</option>`).join('');
+      bSel.innerHTML = html;
+      
+      if (selectedName) bSel.value = selectedName;
+    }
+
+    function onNavStoreChange(st) {
+      // 지점 변경 시 즉시 이동하지 않고 브랜드 목록만 "선택하세요" 상태로 갱신
+      updateP2BrandOptions(st, null, true);
+    }
+
+    function onNavBrandChange(bName) {
+      if (!bName) return; // 선택하세요 인 경우 무시
+      const st = document.getElementById('p2_store_sel').value;
+      selectBrand(st, bName);
     }
 
     function buildMainTable() {
       const tb = document.getElementById('mainTbody'); if (!tb) return;
       tb.innerHTML = '';
       STORES.forEach(st => {
+        let badgeHtml = '';
+        if (st === 'NC신구로점' || st === '뉴코아부천점') {
+          badgeHtml = `<span style="background-color:#EF4444; color:white; font-size:10px; padding:2px 8px; border-radius:10px; margin-right:6px; font-weight:600; display:inline-block; vertical-align:middle;">진척중</span>`;
+        }
         // 지점명 셀: 클릭 시 모달 오픈
         let r = `<td style="cursor:pointer;" onclick="openStoreModal('${st}','전체')">
-      <span style="font-weight:800; color:#111; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#D1D5DB;">${st}</span>
+      ${badgeHtml}<span style="font-weight:800; color:#111; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#D1D5DB; vertical-align:middle;">${st}</span>
     </td>`;
         (scoreData[st] || []).forEach((v, ci) => {
-          r += `<td>${v > 0 ? `<div class="badge-score" onclick="openStoreModal('${st}','${CATS[ci]}')"><span class="grade">${v >= 80 ? 'A' : v < 60 ? 'C' : 'B'}</span><span class="num">${v}</span></div>` : '—'}</td>`;
+          if (v > 0) {
+            let badgeBg = 'linear-gradient(135deg, #F59E0B, #D97706)'; // B
+            let gradeLabel = 'B';
+            if (v >= 80) {
+              badgeBg = 'linear-gradient(135deg, #3B82F6, #2563EB)'; // A
+              gradeLabel = 'A';
+            } else if (v < 60 && v >= 40) {
+              badgeBg = 'linear-gradient(135deg, #EF4444, #DC2626)'; // C
+              gradeLabel = 'C';
+            } else if (v < 40) {
+              badgeBg = 'linear-gradient(135deg, #991B1B, #7F1D1D)'; // D (Darker Red)
+              gradeLabel = 'D';
+            }
+            r += `<td><div class="badge-score" style="background:${badgeBg};" onclick="openStoreModal('${st}','${CATS[ci]}')"><span class="grade" style="font-size:11px; font-weight:800; letter-spacing:-0.5px;">${gradeLabel}</span><span class="num">${v}</span></div></td>`;
+          } else {
+            r += `<td>—</td>`;
+          }
         });
         const tr = document.createElement('tr'); tr.innerHTML = r; tb.appendChild(tr);
       });
@@ -1385,50 +2298,79 @@
       const catLabel = `${cat} 카테고리`;
       document.getElementById('mTitle').textContent = `${store} · ${catLabel} 분석`;
 
-      // [v20.0] 필터링 강화: 해당 지점 및 선택한 카테고리에 부합하는 브랜드만 추출
-      const storeBrands = BRANDS.filter(b => b.store === store && b.category === cat);
+      // [v20.0] 필터링 강화: 해당 지점 및 선택한 카테고리에 부합하는 브랜드만 추출 후 총점 기준 내림차순 정렬
+      const storeBrands = BRANDS.filter(b => b.store === store && b.category === cat)
+                                .sort((a, b) => {
+                                  const aDis = (a.dis === 0) ? 1 : 0;
+                                  const bDis = (b.dis === 0) ? 1 : 0;
+                                  if (aDis !== bDis) return aDis - bDis;
+                                  return (b.total || 0) - (a.total || 0);
+                                });
 
       const tb = document.getElementById('modalTbody');
       const thRow = document.querySelector('#storeModal thead tr');
 
-      // 헤더 개편 (브랜드명, 총 점수, 재고 비중 + 4대 지표 점수)
+      // 헤더 개편 (브랜드명, 월 매출(성장률), 종합 점수, 재고 비중 + 5대 지표 점수)
       thRow.innerHTML = `
-    <th style="text-align:left;padding-left:24px;background:#1D1E1E;">브랜드명</th>
-    <th style="background:#1D1E1E;">총 점수</th>
-    <th style="background:#1D1E1E;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
-    <th style="background:#E30019; width:140px;">할인율</th>
-    <th style="background:#F59E0B; width:140px;">신선도</th>
-    <th style="background:#0055D4; width:140px;">시즌</th>
-    <th style="background:#8B5CF6; width:140px;">BEST</th>
+    <th style="text-align:left;padding-left:24px;background:#1D1E1E;width:16%;">브랜드명</th>
+    <th style="background:#1D1E1E; width:14%; font-size:13px; color:#FFFFFF;">월 매출(성장률)</th>
+    <th style="background:#1D1E1E; color:#FFFFFF; width:9%; font-size:14px; font-weight:900;">종합 점수</th>
+    <th style="background:#1D1E1E; width:16%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
+    <th style="background:#E30019; width:9%;">할인율</th>
+    <th style="background:#2563EB; width:9%;">신선도</th>
+    <th style="background:#F59E0B; width:9%;">시즌</th>
+    <th style="background:#16A34A; width:9%;">BEST</th>
+    <th style="background:#8B5CF6; width:9%;">아이템</th>
   `;
 
       tb.innerHTML = '';
 
       if (!storeBrands.length) {
-        tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
       } else {
         storeBrands.forEach(b => {
           const tM2 = +(b.tM * 2).toFixed(1);
           const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
 
+          // [v104.8] 과재고 컬러 최종 보정: 눈이 더욱 편안한 허니 골드(#E9C040) 반영
+          const isOver = supply >= 100;
           const isShort = supply < 100;
-          const statusColor = isShort ? '#E30019' : '#008B3E'; // 부족(Red), 충족(Green) - P2 총 재고액 바와 동일한 초록색 적용
-          const statusText = isShort ? '부족' : '충족';
+          const statusColor = isOver ? '#065F46' : '#B91C1C'; 
+          const statusText = isOver ? '충족' : '부족';
 
-          const typeBg = b.type === 'normal' ? '#FEF2F2' : '#F3F4F6';
-          const typeColor = b.type === 'normal' ? '#E30019' : '#6B7280';
+          const typeClass = b.type === 'normal' ? 'normal' : 'outlet';
           const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
+
+          const getGrade = (s) => s >= 100 ? 'A' : (s >= 75 ? 'B' : (s >= 50 ? 'C' : 'D'));
+
+          // 상품 점수 컬러 로직 (사용자 요청: 무조건 검정색)
+          const getTotalColor = (s) => '#111827';
+          const totalColor = getTotalColor(b.product_score || b.total || 0);
+
+          // 월 매출(성장률)
+          const salesAmtM = b.sales_amt || 0; // 백만원 단위
+          const growthPct = b.growth_pct || 0;
+          const growthColor = growthPct >= 0 ? '#DC2626' : '#2563EB';
+          const growthArrow = growthPct >= 0 ? '▲' : '▼';
+          const growthDisplay = `(${growthArrow}${Math.abs(growthPct).toFixed(0)}%)`;
 
           const tr = document.createElement('tr');
           tr.onclick = () => { closeStoreModal(); selectBrand(store, b.name); };
+          // 성과 지표 구획을 위한 인라인 스타일 추가
           tr.innerHTML = `
         <td>
           <div class="brand-row-name">
             ${b.name}
-            <span class="type-badge" style="background:${typeBg}; color:${typeColor};">${typeLabel}</span>
+            <span class="type-badge ${typeClass}">${typeLabel}</span>
           </div>
         </td>
-        <td><span class="score-cell" style="color:${b.total < 60 ? '#EF4444' : '#111827'}">${b.total}</span></td>
+        <td>
+          <div style="display:flex; flex-direction:column; align-items:center;">
+            <span style="font-size:14px; font-weight:900; color:#111;">${salesAmtM.toFixed(1)}<span style="font-size:11px; color:#6B7280;">백만원</span></span>
+            <span style="font-size:11px; font-weight:800; color:${growthColor}; margin-top:2px;">(${growthArrow}${Math.abs(growthPct).toFixed(1)}%)</span>
+          </div>
+        </td>
+        <td><span class="score-cell" style="color:${totalColor}; font-weight:950; font-size:18px;">${b.product_score || b.total}</span></td>
         <td>
           <div class="stack-graph">
             <div class="stack-percent" style="color:${statusColor}; font-size:13px;">${supply}%</div>
@@ -1437,9 +2379,10 @@
           </div>
         </td>
         <td><span class="score-cell" style="color:#E30019">${b.dis || 0}</span></td>
-        <td><span class="score-cell" style="color:#F59E0B">${b.fresh || 0}</span></td>
-        <td><span class="score-cell" style="color:#0055D4">${b.season || 0}</span></td>
-        <td><span class="score-cell" style="color:#8B5CF6">${b.best || 0}</span></td>
+        <td><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
+        <td><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
+        <td><span class="score-cell" style="color:#16A34A">${b.best || 0}</span></td>
+        <td><span class="score-cell" style="color:#8B5CF6">${b.item || 0}</span></td>
       `;
           tb.appendChild(tr);
         });
@@ -1467,12 +2410,30 @@
 
       document.getElementById('h-brand').textContent = b.name;
       document.getElementById('h-store').textContent = st;
-      document.getElementById('h-type').textContent = b.type === 'normal' ? '정상' : '상설';
-      document.getElementById('h-type').style.background = b.type === 'normal' ? '#FEF2F2' : '#F3F4F6';
-      document.getElementById('h-type').style.color = b.type === 'normal' ? '#E30019' : '#6B7280';
+      document.getElementById('h-type').textContent = b.type_label || (b.type === 'normal' ? '정상' : '상설');
+      document.getElementById('h-type').className = 'type-badge ' + (b.type === 'normal' ? 'normal' : 'outlet');
 
-      // 총점수 업데이트
-      document.getElementById('h-score').textContent = b.total || 0;
+      const monthVal = b.data_month || b.month;
+
+      // 인라인 스타일 제거 (클래스 우선)
+      document.getElementById('h-type').style.background = '';
+      document.getElementById('h-type').style.color = '';
+
+      // 총점수 및 등급 업데이트 (v105.5: 사용자 요청에 따라 무조건 흰색)
+      const scoreVal = b.product_score || b.total || 0;
+      
+      const scoreElem = document.getElementById('h-score');
+      scoreElem.textContent = scoreVal;
+      scoreElem.style.color = '#FFFFFF';
+      scoreElem.nextElementSibling.style.color = '#FFFFFF'; 
+
+      // [v100.7] 네비게이터 드롭다운 동기화
+      const sSel = document.getElementById('p2_store_sel');
+      const bSel = document.getElementById('p2_brand_sel');
+      if (sSel && bSel) {
+        sSel.value = st;
+        updateP2BrandOptions(st, b.name);
+      }
 
       // 원 단위 포맷 함수 (M → 실제 원 단위)
       function formatWon(million) {
@@ -1489,7 +2450,9 @@
       const tM2 = +(b.tM * 2).toFixed(1);
       const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
       const gap = Math.max(0, 100 - supply);
-      const supplyColor = supply >= 100 ? '#008B3E' : supply >= 70 ? '#F58220' : '#E30019';
+      // [v105.0] 과재고 표시 제거: 100% 이상은 모두 '재고 충족'으로 긍정 표시
+      const supplyColor = supply >= 100 ? '#065F46' : supply >= 70 ? '#D97706' : '#B91C1C';
+      const statusText = supply >= 100 ? '재고 충족' : supply >= 70 ? '재고 부족' : '심각 미달';
       const monthLabel = b.month ? b.month + ' 기준' : '';
 
       // 경고 배너
@@ -1500,52 +2463,125 @@
     </div>` : '';
 
       // KPI 4종 카드 (원 단위) — 유일한 dStore/d/typeLabel 선언 지점
+      // [v3.2] 방어적 코드: 데이터 누락 시 기본 객체 할당하여 렌더링 중단 방지
       const dStore = DETAIL[st] || {};
       const dBrand = dStore[b.name] || {};
       const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
-      const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
+      const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {
+        item: { segs: [] }, dis: { segs: [] }, fresh: { segs: [] }, best: { segs: [] }, season: { segs: [] }
+      };
 
-      // [v74.3] 세그먼트 합산이 아닌 서버에서 제공하는 중복 제거된 유일 수량 사용
+      const area = b.area || 0;
+      const salesAmt = b.sales_amt || 0;
+      const dataMonthStr = b.data_month || "3월";
+      const days = dataMonthStr.includes('3월') ? 31 : (dataMonthStr.includes('2월') ? 28 : (dataMonthStr.includes('4월') || dataMonthStr.includes('6월') || dataMonthStr.includes('9월') || dataMonthStr.includes('11월') ? 30 : 31));
+      const _dataMonthNum = parseInt(dataMonthStr.replace('월', '')) || 3;
+      const _curYY = new Date().getFullYear() % 100;
+      const _nextMonthNum = _dataMonthNum === 12 ? 1 : _dataMonthNum + 1;
+      const _nextYY = _dataMonthNum === 12 ? _curYY + 1 : _curYY;
+      const _salesLabel = `${_curYY}년 ${_dataMonthNum}월 매출액(성장세)`;
+      const _targetLabel = `${_nextYY}년 ${_nextMonthNum}월 목표 매출`;
+      const val = area > 0 ? (salesAmt * 1000000 / days / area) : 0;
+      
+      const efficiencyColor = val < 40000 ? '#B91C1C' : (val >= 100000 ? '#065F46' : '#111827');
+      const efficiencyBadge = val < 40000 ? '저조' : (val >= 100000 ? '양호' : '평균수준');
+
       const totalQty = d.total_qty_unique || b.sQ || 0;
 
+      const salesAmtWon = salesAmt * 1000000;
+      const prevSalesWon = (b.prev_sales || 0) * 1000000;
+      let growthPct = (prevSalesWon > 0) ? (((salesAmtWon / prevSalesWon) - 1) * 100) : 0;
+      const growthColor = growthPct >= 0 ? '#DC2626' : '#2563EB';
+      const growthArrow = growthPct >= 0 ? '▲' : '▼';
+      const growthDisplay = `${growthArrow} ${Math.abs(growthPct).toFixed(1)}%`;
+
+      document.getElementById('kpiGrid').style.display = 'block'; 
       document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-item">
-      <div class="kpi-h">목표 매출액${monthLabel ? ' · ' + monthLabel : ''}</div>
-      <div class="kpi-v" style="font-size:19px;">${formatM(b.tM)}<span style="font-size:11px; margin-left:2px;">백만원</span></div>
-      <div class="kpi-status" style="color:var(--text-dim);font-weight:600">작년 동월대비 30% 성장</div>
-    </div>
-    <div class="kpi-item" style="grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between;">
-      <div class="kpi-h">재고 현황 (필요 목표 대비 실제 보유액)</div>
-      <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;">
-        <span style="font-size: 22px; font-weight: 950; color: #111;">${formatM(b.sM)}<span style="font-size:13px; font-weight:800; margin-left:1px; color:#64748B;">백만원</span></span>
-        <span style="font-size: 14px; font-weight: 700; color: #6B7280;">/ 목표 ${formatM(tM2)}<span style="font-size:11px; margin-left:1px;">백만원</span></span>
-        <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: #9CA3AF;">(${totalQty.toLocaleString()} EA 보유)</span>
-      </div>
-      <div>
-        <div class="bar-line-wrap" style="height:10px; background:#E5E7EB; border-radius: 5px; overflow: hidden;">
-            <div class="bar-line" style="width:${Math.min(100, supply)}%; background:${supplyColor}; height:100%; border-radius: 5px; transition: width 0.8s ease;"></div>
+    <div style="display: grid; grid-template-columns: 3fr 7fr; gap: 20px; width: 100%;">
+      <!-- [좌측 섹션] 매출현황 -->
+      <div style="background: #F8FAFF; border: 1.5px solid #E0E7FF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:0px;">
+          <div style="width:6px; height:18px; background:linear-gradient(to bottom, #6366F1, #4F46E5); border-radius:3px;"></div>
+          <span style="font-size:18px; font-weight:950; color:#0F172A; letter-spacing:-0.5px;">매출현황</span>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; font-weight:900; color:${supplyColor};">
-          <span>목표 대비 재고 달성률</span>
-          <span>${supply}%</span>
+        
+        <!-- [v146.0] 통합형 매출 지표 레이아웃 -->
+        <div style="flex: 1; display: flex; align-items: center; background: #fff; padding: 12px 20px; border-radius: 14px; border: 1px solid #EEF2FF; gap: 30px; min-height: 90px;">
+          <!-- 매출액 & 성장세 -->
+          <div style="flex: 1.2;">
+            <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:8px;">${_salesLabel}</div>
+            <div style="font-size:22px; font-weight:950; color:#1E293B; letter-spacing:-0.5px;">
+              ${(b.sales_amt || 0).toFixed(1)}<span style="font-size:14px; font-weight:800; color:#94A3B8; margin-right:6px;">백만원</span>
+              <span style="font-size:16px; font-weight:900; color:${(b.growth_pct || 0) >= 0 ? '#DC2626' : '#2563EB'};">
+                (${(b.growth_pct || 0) >= 0 ? '▲' : '▼'} ${Math.abs(b.growth_pct || 0).toFixed(1)}%)
+              </span>
+            </div>
+          </div>
+          
+          <!-- 평당 매출액 & 평수 -->
+          <div style="flex: 1; border-left: 1px solid #F1F5F9; padding-left: 35px;">
+            <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:8px;">평당 매출액(평수)</div>
+            <div style="font-size:22px; font-weight:950; color:${efficiencyColor}; letter-spacing:-0.5px;">
+              ${Math.round(val).toLocaleString()}<span style="font-size:14px; font-weight:800; color:#94A3B8; margin-right:6px;">원</span>
+              <span style="font-size:16px; font-weight:900; color:#1E293B;">(${area.toFixed(1)}평)</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="kpi-item">
-      <div class="kpi-h">보유 상태</div>
-      <div class="kpi-v" style="color:${supplyColor}">${supply >= 100 ? '적정 재고' : supply >= 70 ? '재고 부족' : '심각 미달'}</div>
-      <div class="kpi-status" style="color:${supplyColor}; font-weight:800; margin-top:12px;">
-        ${supply >= 100 ? `▲ ${supply}% 보유` : `▼ ${supply}% 보유`}
+
+      <!-- [우측 섹션] 재고현황 (디자인 통일) -->
+      <div style="background: #F8FAFF; border: 1.5px solid #E0E7FF; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:0px;">
+          <div style="width:6px; height:18px; background:linear-gradient(to bottom, #10B981, #059669); border-radius:3px;"></div>
+          <span style="font-size:18px; font-weight:950; color:#0F172A; letter-spacing:-0.5px;">재고현황</span>
+          <span id="h-month" class="type-badge month-type" style="margin-left:8px; display:${monthVal ? 'inline-flex' : 'none'};">📅 ${monthVal} 기준</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px;">
+          <!-- 카드 1: 4월 목표 매출 -->
+          <div style="background: #fff; border: 1px solid #EEF2FF; border-radius: 16px; padding: 14px;">
+            <div style="font-size:11px; font-weight:800; color:#64748B; margin-bottom:12px;">${_targetLabel}</div>
+            <div style="font-size:22px; font-weight:950; color:#111; margin-bottom:8px;">${formatM(b.tM)} <span style="font-size:14px; font-weight:800; color:#475569;">백만원</span></div>
+            <div style="font-size:11px; font-weight:700; color:#94A3B8;">
+              전년 동월 대비 ${b.name.includes('JJ지고트') ? '30' : Math.abs(b.growth_pct || 0).toFixed(0)}% 성장
+            </div>
+          </div>
+
+          <!-- 카드 2: 재고 현황 -->
+          <div style="background: #fff; border: 1px solid #EEF2FF; border-radius: 16px; padding: 14px; position: relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div style="font-size:11px; font-weight:800; color:#64748B;">재고 현황 <span style="font-size:9px; font-weight:600; opacity:0.6;">(목표 대비 실제 보유액)</span></div>
+              <div style="font-size:10px; font-weight:800; color:#94A3B8;">(${totalQty.toLocaleString()} EA)</div>
+            </div>
+            <div style="font-size:22px; font-weight:950; color:#111; margin-bottom:14px;">
+              ${formatM(b.sM)}<span style="font-size:14px; color:#475569;">M</span>
+              <span style="font-size:14px; color:#94A3B8; margin:0 4px;">/</span>
+              <span style="font-size:13px; color:#94A3B8; font-weight:700;">목표 ${formatM(tM2)}M</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <div style="flex:1; height:10px; background:#F1F5F9; border-radius:5px; overflow:hidden;">
+                <div style="width:${Math.min(100, supply)}%; background:${supplyColor}; height:100%;"></div>
+              </div>
+              <span style="font-size:11px; font-weight:900; color:#fff; background:${supplyColor}; padding:2px 10px; border-radius:20px; white-space:nowrap;">${statusText}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:900; color:${supplyColor};">재고 달성률</span>
+              <span style="font-size:14px; font-weight:950; color:${supplyColor};">${supply}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   `;
 
-      // 1. 4개 지표 카드 — 위에서 전역 선언된 dStore/dBrand/d/typeLabel 재사용
+      // 1. 5개 지표 카드 — 위에서 전역 선언된 dStore/dBrand/d/typeLabel 재사용
       const mList = [
         { id: 'dis', l: '할인율 점수', s: b.dis || 0, c: 'm-dis' },
         { id: 'fresh', l: '신선도 점수', s: b.fresh || 0, c: 'm-fresh' },
         { id: 'season', l: '시즌 점수', s: b.season || 0, c: 'm-season' },
-        { id: 'best', l: 'BEST 점수', s: b.best || 0, c: 'm-best' }
+        { id: 'best', l: 'BEST 점수', s: b.best || 0, c: 'm-best' },
+        { id: 'item', l: '아이템 점수', s: b.item || 0, c: 'm-item', zoning: b.zoning }
       ];
 
       function getRateColor(r) {
@@ -1565,6 +2601,94 @@
         return n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       }
 
+      // 아이템 코드 → 한글 레이블
+      const ITEM_KOR = {
+        'Outer':'아우터','Top':'상의','Dress':'원피스','Bottom':'하의','Skirt':'스커트',
+        'RunningShoes':'러닝화','CasualShoes':'워킹화','OtherShoes':'기타신발',
+        'Suits':'정장','Shirts':'셔츠','Casual':'캐주얼','Knit':'니트','Set':'상하세트'
+      };
+      const DIS_LBL_OUTLET  = {s70:'70%↑', s50:'50~70%', s30:'30~50%', s10:'~30%'};
+      const DIS_LBL_NORMAL  = {s0:'신상(0년차)', s10:'1년차', s30:'2년차', s50:'3년차', s70:'4년차↑'};
+      const FRESH_LBL = {new:'신상', plan:'기획'};
+      const SEA_LBL   = {spring:'봄', summer:'여름', autumn:'가을', winter:'겨울'};
+
+      function _fmtW(labelsMap, wObj) {
+        return Object.entries(labelsMap)
+          .filter(([k]) => (wObj[k] || 0) > 0)
+          .map(([k, lbl]) => `${lbl}(${wObj[k]}%)`)
+          .join(', ') || '—';
+      }
+      function _fmtSW(sw) {
+        return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%`;
+      }
+      function _fmtItem(itemW) {
+        return Object.entries(itemW)
+          .filter(([,v]) => v > 0)
+          .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
+          .join(', ') || '—';
+      }
+
+      // [v2.7] 로직 설명 팝업 동적 업데이트 (const 선언 후 호출)
+      updateScoreBubble(b);
+
+      // [v3.4] 로직 설명 팝업 — SCORING_GUIDE 기반 카테고리별 동적 렌더링
+      function updateScoreBubble(brand) {
+        if (!brand) return;
+        const title   = document.getElementById('bubble-title');
+        const weights = document.getElementById('bubble-weights');
+        const details = document.getElementById('bubble-details');
+        if (!title || !weights || !details) return;
+
+        const cat  = brand.category || '여성';
+        const g    = SCORING_GUIDE[cat] || SCORING_GUIDE['여성'] || {};
+        const norm = g.normal || {};
+        const outl = g.outlet || {};
+        const zonings = g.zonings || {};
+
+        title.textContent = `${cat} 카테고리 채점 로직`;
+
+        // ── 섹션 2: 정상·상설 지표 가중치 (두 줄)
+        weights.innerHTML = `
+          <div class="weight-row" style="color:#3B82F6; font-size:11px; margin-bottom:4px;">
+            <span>■ 정상 매장</span><span>${_fmtSW(norm.score_weights||{})}</span>
+          </div>
+          <div class="weight-row" style="color:#EF4444; font-size:11px; margin-bottom:8px;">
+            <span>■ 상설 매장</span><span>${_fmtSW(outl.score_weights||{})}</span>
+          </div>`;
+
+        // ── 섹션 3-1: 할인율 (정상·상설 각각)
+        const disNorm = _fmtW(DIS_LBL_NORMAL, norm.dis_w||{});
+        const disOutl = _fmtW(DIS_LBL_OUTLET, outl.dis_w||{});
+
+        // ── 섹션 3-2: 신선도 (정상·상설 각각)
+        const freshNorm = _fmtW(FRESH_LBL, norm.fresh_w||{});
+        const freshOutl = _fmtW(FRESH_LBL, outl.fresh_w||{});
+
+        // ── 섹션 3-3: 시즌·BEST (정상 기준 표시, 보통 공통)
+        const seaTxt  = _fmtW(SEA_LBL, norm.sea_w||{});
+        const bestPct = norm.best_pct || 0;
+
+        // ── 섹션 3-4: 아이템 — 모든 조닝 나열
+        const zoningRows = Object.entries(zonings)
+          .map(([zName, iw]) =>
+            `<p style="margin:1px 0 1px 8px;">· <b>${zName}</b>: ${_fmtItem(iw)}</p>`)
+          .join('');
+
+        details.innerHTML = `
+          <p style="font-size:11px; margin-bottom:2px;">- <b>할인율</b></p>
+          <p style="font-size:11px; margin:0 0 1px 8px;">[정상] ${disNorm}</p>
+          <p style="font-size:11px; margin:0 0 4px 8px;">[상설] ${disOutl}</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>신선도</b></p>
+          <p style="font-size:11px; margin:0 0 1px 8px;">[정상] ${freshNorm}</p>
+          <p style="font-size:11px; margin:0 0 4px 8px;">[상설] ${freshOutl}</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>시즌</b>: ${seaTxt}</p>
+          <p style="font-size:11px; margin-bottom:4px;">- <b>BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>아이템 (조닝별 최적 비중)</b></p>
+          ${zoningRows}
+          <p style="font-size:10px; color:#94A3B8; margin-top:6px;">※ 위 수치는 코드 config에서 직접 로딩됩니다.</p>
+        `;
+      }
+
       const grid = document.getElementById('detailGrid');
       grid.innerHTML = mList.map(m => {
         const groupData = d[m.id] || {};
@@ -1572,11 +2696,46 @@
         if (m.id === 'best') segs = segs.filter(s => !s.key.includes('worst'));
 
         // [v35.0] 그룹 내 최대 비중(maxOptPct) 추출 (상대적 바 길이 계산용)
-        // [v58.0] 필터링 완화: 할인율(dis) 및 시즌(season)의 경우 목표 비중이 0이더라도 모두 노출
-        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season');
+        // [v58.0] 필터링 완화: 할인율(dis), 시즌(season), 아이템(item)의 경우 목표 비중이 0이더라도 모두 노출
+        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season' || m.id === 'item');
         const maxOptPct = Math.max(...validSegs.map(s => s.opt_pct || 0), 1);
 
-        const indicatorColors = { dis: '#E30019', fresh: '#F59E0B', season: '#0055D4', best: '#8B5CF6' };
+        let shortageHtml = '';
+        let missingItems = [];
+        validSegs.forEach(s => {
+          const mVal = s.valM || 0;
+          const tVal = s.targetM || 0;
+          if (mVal < tVal) {
+             const diff = tVal - mVal;
+             missingItems.push(`
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; margin-bottom:12px; border-bottom:1px dashed rgba(254, 202, 202, 0.8);">
+                  <span style="color:#B91C1C; font-weight:800; font-size:14px; letter-spacing:-0.5px; display:flex; align-items:center; gap:6px;">
+                    <span style="width:4px; height:4px; border-radius:50%; background:#DC2626;"></span>${s.l}
+                  </span>
+                  <span style="color:#DC2626; font-weight:900; font-size:17px;">
+                    ${diff.toLocaleString(undefined, {minimumFractionDigits:1, maximumFractionDigits:1})}
+                    <span style="font-size:12px; margin-left:3px; color:#EF4444;">백만원</span>
+                  </span>
+                </div>
+             `);
+          }
+        });
+        if (missingItems.length > 0) {
+           shortageHtml = `
+           <div style="background:linear-gradient(135deg, #FFF1F2 0%, #FEF2F2 100%); border:1px solid #FECACA; border-radius:14px; padding:20px 24px; margin:-12px 0 32px 0; box-shadow:0 6px 16px rgba(220, 38, 38, 0.08);">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                 <div style="background:#FFF9C1; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid #FDE68A; font-size:24px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.15);">
+                   📢
+                 </div>
+                <div style="font-weight:900; color:#991B1B; font-size:16px; letter-spacing:-0.5px;">목표대비 추가 확보 필요</div>
+              </div>
+              <div style="display:flex; flex-direction:column; padding:0 4px;">
+                ${missingItems.join('')}
+              </div>
+           </div>`;
+        }
+
+        const indicatorColors = { item: '#8B5CF6', dis: '#E30019', fresh: '#2563EB', season: '#F59E0B', best: '#16A34A' };
         const baseColor = indicatorColors[m.id] || '#111';
 
         const segsHtml = validSegs.map(s => {
@@ -1653,14 +2812,22 @@
         }).join('') || '<div style="font-size:12px;color:#9CA3AF;padding:12px 0;text-align:center">데이터가 없습니다.</div>';
 
         return `
-      <div class="m-card">
-        <div class="m-head">
-          <span class="m-title">${m.l}</span>
+      <div class="m-card" style="display:flex; flex-direction:column;">
+        <div class="m-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="m-title">${m.l}</span>
+            ${m.zoning ? `<span style="font-size:11px; font-weight:800; color:#64748B; background:#F1F5F9; padding:2px 6px; border-radius:4px;">${m.zoning}</span>` : ''}
+          </div>
           <div style="text-align:right;">
             <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">점</span>
           </div>
         </div>
+        ${shortageHtml}
         <div class="m-body">${segsHtml}</div>
+        <div style="margin-top:auto; padding-top:20px; border-top:1px dashed #E2E8F0;">
+          <button onclick="runDiagnosis('${m.id}', this)" class="btn-diagnosis" style="width:100%; padding:14px; background:#1D1E1E; color:#fff; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; border:none; transition:all 0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.1); letter-spacing:-0.5px; font-family:inherit;">AI 상세 진단</button>
+          <div class="diagnosis-result" style="display:none; margin-top:14px; padding:16px; background:#F8FAFC; border-radius:10px; border:1px solid #E2E8F0; font-size:13px; line-height:1.6;"></div>
+        </div>
       </div>
     `;
       }).join('');
@@ -1669,7 +2836,7 @@
       const bStore = BEST_ITEMS[st] || {};
       const bBrand = bStore[b.name] || {};
       const best = (bBrand[typeLabel] || Object.values(bBrand)[0] || {})?.store || [];
-      document.getElementById('bestItems').innerHTML = best.length ? best.map(it => `
+    document.getElementById('bestItems').innerHTML = best.length ? best.map(it => `
     <tr>
       <td><div style="width:22px;height:22px;background:#111;color:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800">${it.rank}</div></td>
       <td style="font-size:12px;font-weight:600;color:#1e293b;text-align:left;">${it.item_name || '—'}</td>
@@ -1681,6 +2848,140 @@
       <td style="font-size:12px;font-weight:650;text-align:right;color:#64748B;">${(it.qty || 0).toLocaleString()} EA</td>
     </tr>
   `).join('') : `<tr><td colspan="8" style="text-align:center;padding:24px;color:#9CA3AF;font-size:12px">판매 데이터 없음</td></tr>`;
+  
+      // [ACTION GUIDE] 패널 렌더링 호출
+      renderActionPanel();
+    }
+
+    // ─── [ACTION GUIDE] 층장 액션 가이드 패널 렌더링 함수 ───
+    function renderActionPanel() {
+      const panel = document.getElementById('actionPanel');
+      if (!panel || !currentBrand) return;
+
+      const b = currentBrand;
+      const st = b.store;
+      const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
+
+      // ACTION_PLAN 데이터 조회 (없으면 빈 객체)
+      const stPlan = ACTION_PLAN[st] || {};
+      const bPlan  = stPlan[b.name] || {};
+      const plan   = bPlan[typeLabel] || Object.values(bPlan)[0] || {};
+
+      const pushList   = plan.push   || [];
+      const aiUnified  = plan.ai_unified || [];
+      const hasBp      = plan.has_bp_data === true;
+
+      // [v3.0] 재고 확보 필요 리스트 (ai_unified 데이터 활용)
+      function renderAiAdvice() {
+        if (!aiUnified.length) {
+           return `<div class="action-empty">현재 추가 확보가 시급한<br>BEST 10 품절 상품이 없습니다</div>`;
+        }
+        return aiUnified.map(adv => `
+          <div class="action-item-simple" style="padding:8px 18px; border-bottom:1px dashed #E2E8F0; display:flex; align-items:center; gap:12px;">
+            <div style="background:#4F46E5; color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">${adv.rank}</div>
+            <div style="flex:1;">
+              <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${adv.style_name}</div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-size:11px; font-family:monospace; font-weight:700;">${adv.style_code}</span>
+                <span style="color:#EF4444; font-size:13px; font-weight:800;">${adv.action_msg}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function getDisplayName(item) {
+        if (item.style_name && item.style_name.trim()) return item.style_name;
+        if (item.item_name && item.item_name.trim()) return item.item_name;
+        return item.style_code || '—';
+      }
+
+      // 추가 확보 리스트 HTML
+      function renderSecureItems() {
+        if (!secureList.length) {
+          return `<div class="action-empty">✅ 확보가 필요한 인기 품절 상품이<br>현재 없습니다</div>`;
+        }
+        return secureList.map(item => `
+          <div class="action-item">
+            <div class="action-rank">${item.rank}</div>
+            <div class="action-body">
+              <div class="action-name">${getDisplayName(item)}</div>
+              <div style="margin-bottom:3px;">
+                <span class="action-code">${item.style_code}</span>
+              </div>
+              <div class="action-reason">${item.reason}</div>
+              ${item.keywords && item.keywords.length ? `<div class="action-keywords">${item.keywords.map(k => `<span class="action-tag">#${k}</span>`).join('')}</div>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 집중 판매 리스트 HTML
+      function renderPushItems() {
+        if (!pushList.length) {
+          return `<div class="action-empty">✅ 전사 BEST 중<br>현재 판매 저조 상품이 없습니다</div>`;
+        }
+        return pushList.map(item => `
+          <div class="action-item-simple" style="padding:8px 18px; border-bottom:1px dashed #E2E8F0; display:flex; align-items:center; gap:12px;">
+            <div style="background:#F97316; color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">${item.rank}</div>
+            <div style="flex:1;">
+              <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${item.style_name}</div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-size:11px; font-family:monospace; font-weight:700;">${item.style_code}</span>
+                <span style="color:#F97316; font-size:13px; font-weight:800;">${item.reason}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 패널 전체 HTML
+      panel.innerHTML = `
+        <div style="background:#fff; border-radius:16px; border:1px solid #E2E8F0; overflow:hidden; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+          <div class="action-panel-header" onclick="
+            const p = this.nextElementSibling; 
+            const icon = this.querySelector('.toggle-icon'); 
+            if (p.style.display === 'none' || p.style.display === '') { 
+              p.style.display = 'grid'; 
+              icon.textContent = '▲ 닫기'; 
+            } else { 
+              p.style.display = 'none'; 
+              icon.textContent = '▼ 열기'; 
+            }
+          " style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; background: #F8FAFC;">
+            <div style="display:flex; align-items:center;">
+              <div class="action-panel-title" style="margin-bottom:0; font-size:16px; font-weight:800; color:#1e293b;">🎯 층장 액션 가이드</div>
+              <div class="action-panel-badge" style="margin-left:12px; background:#EEF2FF; color:#4338CA; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:800;">자사 판매 데이터 기반 정밀 진단</div>
+            </div>
+            <div class="toggle-icon" style="font-size:12px; font-weight:800; color:#475569; background:#fff; padding:6px 12px; border-radius:20px; border:1px solid #E2E8F0; transition:all 0.2s;">▲ 닫기</div>
+          </div>
+          <div class="action-panel" style="display: grid; padding: 24px; border-top: 1px solid #E2E8F0; gap: 24px;">
+            <!-- 추가 확보 필요 -->
+            <div class="action-col secure">
+              <div class="action-col-header" style="margin-bottom:20px;">
+                <div class="action-col-icon">💡</div>
+                <div>
+                  <div class="action-col-title">재고 확보 필요 상품</div>
+                  <div class="action-col-sub">우리 매장 BEST 10 중 재고 부족분</div>
+                </div>
+              </div>
+              ${renderAiAdvice()}
+            </div>
+
+            <!-- 집중 판매 필요 -->
+            <div class="action-col push">
+              <div class="action-col-header">
+                <div class="action-col-icon">🔥</div>
+                <div>
+                  <div class="action-col-title">집중 판매 필요 상품</div>
+                  <div class="action-col-sub">1등매장 BEST 10 중 현 지점 판매 저조분</div>
+                </div>
+              </div>
+              ${renderPushItems()}
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function toggleScoreBubble(e) {
@@ -1697,11 +2998,175 @@
       }
     });
 
+    async function runDiagnosis(indicatorId, btnElem) {
+      if (!currentBrand) return;
+      const resultDiv = btnElem.nextElementSibling;
+      
+      btnElem.disabled = true;
+      btnElem.textContent = '진단 리포트 생성 중... ⏳';
+      btnElem.style.opacity = '0.7';
+      resultDiv.style.display = 'none';
+
+      try {
+        const scores = {
+          total: currentBrand.total || 0,
+          dis: currentBrand.dis || 0,
+          fresh: currentBrand.fresh || 0,
+          best: currentBrand.best || 0,
+          season: currentBrand.season || 0
+        };
+
+        const typeLabel = currentBrand.type_label || (currentBrand.type === 'normal' ? '정상' : '상설');
+        const st = currentBrand.store;
+        const dStore = DETAIL[st] || {};
+        const dBrand = dStore[currentBrand.name] || {};
+        const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
+        const dataSummary = d[indicatorId] || {};
+
+        const bpStoreData = BP_DETAIL[st] || {};
+        const bpBrand = bpStoreData[currentBrand.name] || {};
+        const bpDataForType = bpBrand[typeLabel] || Object.values(bpBrand)[0] || {};
+        const bpSummary = bpDataForType[indicatorId] || {};
+
+        const reqBody = {
+          brand_name: currentBrand.name,
+          indicator_id: indicatorId,
+          scores: scores,
+          data_summary: dataSummary,
+          bp_summary: bpSummary
+        };
+
+        const response = await fetch(`${API_URL}/api/diagnose`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody)
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.result) {
+          const res = data.result;
+
+          // 1. BP 매장 비교 분석 시각화
+          let bpChartHtml = '';
+          if (dataSummary && bpSummary && dataSummary.segs && bpSummary.segs) {
+            const currentSegs = dataSummary.segs;
+            const bpSegs = bpSummary.segs;
+            
+            let rowsHtml = '';
+            currentSegs.forEach(curr => {
+               // Matching segment
+               const bpMatch = bpSegs.find(b => b.key === curr.key || b.l === curr.l);
+               if (!bpMatch) return;
+               
+               const curPct = Math.round(curr.mix_pct || curr.pct || 0);
+               const bpPct = Math.round(bpMatch.mix_pct || bpMatch.valM || bpMatch.pct || 0);
+               const diff = curPct - bpPct;
+               const diffColor = diff > 0 ? '#DC2626' : (diff < 0 ? '#16A34A' : '#64748B');
+               const diffSign = diff > 0 ? '+' : '';
+               const curName = st.replace('NC','').replace('점','').substring(0,4); // '신구로'
+               
+               rowsHtml += `
+                 <div style="margin-bottom:18px;">
+                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                     <span style="font-size:12px; font-weight:800; color:#111;">${curr.l}</span>
+                     <span style="font-size:12px; font-weight:900; color:${diffColor}">${diffSign}${diff}%p</span>
+                   </div>
+                   
+                   <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                     <span style="width:46px; font-size:11px; font-weight:800; color:#DC2626;">${curName}</span>
+                     <div style="flex:1; background:#F1F5F9; height:8px; border-radius:4px;">
+                       <div style="width:${curPct}%; background:#DC2626; height:100%; border-radius:4px;"></div>
+                     </div>
+                     <span style="width:28px; text-align:right; font-size:11px; font-weight:900; color:#DC2626">${curPct}%</span>
+                   </div>
+                   
+                   <div style="display:flex; align-items:center; gap:8px;">
+                     <span style="width:46px; font-size:11px; font-weight:800; color:#2563EB;">BP매장</span>
+                     <div style="flex:1; background:#F1F5F9; height:8px; border-radius:4px;">
+                       <div style="width:${bpPct}%; background:#2563EB; height:100%; border-radius:4px;"></div>
+                     </div>
+                     <span style="width:28px; text-align:right; font-size:11px; font-weight:900; color:#2563EB">${bpPct}%</span>
+                   </div>
+                 </div>
+               `;
+            });
+            
+            if (rowsHtml.length > 0) {
+               const curNameTitle = st.replace('NC','').replace('점','') + '점';
+               bpChartHtml = `
+                 <div style="border:1px solid #E5E7EB; border-radius:12px; overflow:hidden; margin-bottom:20px; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                    <div style="background:#1D1E1E; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                       <span style="font-weight:900; font-size:14px;">BP 매장 비교 분석</span>
+                       <span style="background:#E30019; font-size:10px; font-weight:900; padding:3px 8px; border-radius:12px;">BP 매장</span>
+                    </div>
+                    <div style="padding:16px;">
+                       <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:24px; font-size:12px; font-weight:800;">
+                         <span style="color:#DC2626; background:#FEF2F2; padding:4px 12px; border-radius:12px;">${curNameTitle} <span style="font-size:10px;">(현재)</span></span>
+                         <span style="color:#94A3B8; font-size:10px;">VS</span>
+                         <span style="color:#2563EB; background:#EFF6FF; padding:4px 12px; border-radius:12px;">BP 매장 <span style="font-size:10px;">(기준)</span></span>
+                       </div>
+                       ${rowsHtml}
+                    </div>
+                 </div>
+               `;
+            }
+          }
+
+          // 2. AI Action Insights
+          const actionsHtml = (res.actions || []).map(a => `
+            <div style="background:#FEF2F2; border-left:4px solid #DC2626; border-radius:8px; padding:14px; margin-bottom:10px; font-size:13px; font-weight:800; color:#111; line-height:1.5;">
+              ${a}
+            </div>
+          `).join('');
+
+          resultDiv.innerHTML = `
+            ${bpChartHtml}
+            ${actionsHtml}
+          `;
+          resultDiv.style.background = 'transparent';
+          resultDiv.style.border = 'none';
+          resultDiv.style.padding = '0';
+          resultDiv.style.display = 'block';
+        } else {
+          resultDiv.innerHTML = `<div style="color:#DC2626; font-weight:800;">❌ 진단 실패: ${data.error || '오류 발생'}</div>`;
+          resultDiv.style.display = 'block';
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `<div style="color:#DC2626; font-weight:800;">❌ 네트워크 오류: ${err.message}</div>`;
+        resultDiv.style.display = 'block';
+      } finally {
+        btnElem.disabled = false;
+        btnElem.textContent = 'AI 상세 진단';
+        btnElem.style.opacity = '1';
+      }
+    }
+
     function _loadData(d) {
       CATS = d.CATS || CATS; STORES = d.STORES || []; scoreData = d.scoreData || {};
       BRANDS = d.BRANDS || []; DETAIL = d.DETAIL || {};
       BP_DETAIL = d.BP_DETAIL || {}; BEST_ITEMS = d.BEST_ITEMS || {};
+      ACTION_PLAN = d.ACTION_PLAN || {};
+      SCORING_GUIDE = d.SCORING_GUIDE || {};
       if (BRANDS.length) currentBrand = BRANDS[0];
+    }
+
+    function updateP1MonthIndicator() {
+      const badge = document.getElementById('p1-month-badge');
+      if (!badge || !BRANDS || !BRANDS.length) return;
+      const months = [...new Set(BRANDS.map(b => b.data_month || b.month).filter(Boolean))];
+      if (months.length > 0) {
+        months.sort((a, b) => {
+          const aNum = parseInt(a.replace(/[^0-9]/g, '')) || 0;
+          const bNum = parseInt(b.replace(/[^0-9]/g, '')) || 0;
+          return aNum - bNum;
+        });
+        const latestMonth = months[months.length - 1];
+        badge.textContent = `📅 ${latestMonth} 기준`;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
     }
 
     function _showError(msg) {
@@ -1716,6 +3181,7 @@
         const d = window.__INITIAL_DATA__;
         if (d.error) { _showError(`데이터 로드 실패 — ${d.error}`); return; }
         _loadData(d);
+        updateP1MonthIndicator();
         buildMainTable(); renderBrandDetail();
         return;
       }
@@ -1725,6 +3191,7 @@
           const d = await r.json();
           if (d.error) { _showError(`API 오류 — ${d.error}`); return; }
           _loadData(d);
+          updateP1MonthIndicator();
         } else { _showError('API 서버 응답 없음.'); return; }
       } catch (e) { _showError('연결 실패.'); return; }
       buildMainTable(); renderBrandDetail();
