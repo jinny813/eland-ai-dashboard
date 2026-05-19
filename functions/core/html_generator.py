@@ -65,6 +65,13 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     scorer = AssortmentScorer(config)
     zoning = config.get('zoning', '여성')
 
+    # [v4.9] category_group 기반 조닝 폴백: config 조닝이 없거나 여성 기본값이면 카테고리로 보정
+    category_group = str(df['category_group'].iloc[0]).strip() if 'category_group' in df.columns and not df.empty else ''
+    _KNOWN_ZONINGS = {'스포츠', '아웃도어', '애슬레저', '신발', '남성', '아동', '캐릭터', '커리어', '시니어', '캐주얼'}
+    _CAT_ZONING    = {'스포츠': '스포츠', '아웃도어': '아웃도어', '신사': '남성', '아동': '아동', '캐주얼': '캐주얼'}
+    if zoning not in _KNOWN_ZONINGS:
+        zoning = _CAT_ZONING.get(category_group, zoning)
+
     # [v135.0] 스마트 아이템 그룹핑 (scoring_logic과 동일하게 동기화)
     def _get_group_smart(row):
         # item_code 우선, 비어있으면 style_code fallback
@@ -110,8 +117,10 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         '스포츠':   {'Top': 0.40, 'Bottom': 0.30, 'RunningShoes': 0.20, 'OtherShoes': 0.10},
         '아웃도어': {'Outer': 0.40, 'Top': 0.40, 'Bottom': 0.20},
         '애슬레저': {'Top': 0.50, 'Bottom': 0.40, 'OtherShoes': 0.10},
+        '남성':     {'Suits': 0.40, 'Shirts': 0.20, 'Casual': 0.20, 'Knit': 0.10, 'Bottom': 0.10},
+        '아동':     {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.25, 'Dress': 0.05, 'Set': 0.10},
+        '캐주얼':   {'Outer': 0.35, 'Top': 0.25, 'Bottom': 0.10, 'Skirt': 0.15, 'Dress': 0.15},
         '일반':     {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10},
-        '아동':     {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.25, 'Dress': 0.05, 'Set': 0.10}
     }
     item_weights = inv_w.get('item', default_item_w.get(zoning, default_item_w['일반']))
     
@@ -166,7 +175,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)), 
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
                    ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)), 
-                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10))]
+                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10)),
+                   ('d0',  '0%', (df['_dis_rate']==0), dis_inv.get('s0', 0.00))]
     else:
         # 정상 또는 할인율 데이터 없는 상설: 연차(year) 기준 매핑
         dis_cfg = [('d70', '70% 이상', (df['_age']>=4), dis_inv.get('s70', 0.00)),

@@ -296,6 +296,7 @@ class AssortmentScorer:
                 {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},
                 {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': dis_inv.get('s30', 0.30)},
                 {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': dis_inv.get('s10', 0.10)},
+                {'m': (df['_dis_rate'] == 0), 'r': dis_inv.get('s0', 0.00)},
             ]
         else:
             dis_cfg = [
