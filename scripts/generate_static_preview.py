@@ -33,7 +33,7 @@ try:
         html_template = f.read()
         
     # 데이터 주입
-    data_json = json.dumps(db_data, ensure_ascii=False)
+    data_json = json.dumps(db_data, ensure_ascii=False, default=lambda o: float(o) if hasattr(o, '__float__') and type(o).__module__ == 'numpy' else str(o))
     script_inject = f"<script>window.__INITIAL_DATA__ = {data_json};</script>"
     
     # <script> 태그 바로 앞에 데이터 주입

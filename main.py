@@ -158,7 +158,7 @@ def main():
                     with open(template_path, "r", encoding="utf-8") as f:
                         html_template = f.read()
 
-                    data_json = json.dumps(db_data, ensure_ascii=False)
+                    data_json = json.dumps(db_data, ensure_ascii=False, default=lambda o: float(o) if hasattr(o, '__float__') and type(o).__module__ == 'numpy' else str(o))
                     script_inject = f"<script>window.__INITIAL_DATA__ = {data_json};</script>"
                     final_html = html_template.replace('<script>', script_inject + '<script>', 1)
 
