@@ -150,7 +150,7 @@ class ActionAnalyzer:
                     "sales_qty": int(my_sales),
                     "stock_qty": int(my_stock),
                     "tag": tag,
-                    "reason": f"<b>1등 매장 BEST {bp_rank}위 / 현 지점 판매 저조 - 집중 노출 필요</b>"
+                    "reason": f"<b>1등 매장 BEST {bp_rank}위 / 현 지점 재고 {int(my_stock)}장</b>"
                 })
                 if len(push_list) >= 10: break
 
