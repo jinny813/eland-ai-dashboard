@@ -93,8 +93,18 @@ class AssortmentScorer:
         # 3. 여성 카테고리 특화 조닝 가중치 적용
         if cat_group == '여성' and zoning in self.ZONING_ITEM_WEIGHTS['여성']:
             return self.ZONING_ITEM_WEIGHTS['여성'][zoning]
-            
-        # 4. Fallback: 기본 가중치
+
+        # 4. [v4.9] category_group 기반 폴백: 스포츠/아동/신사/캐주얼 전용 가중치
+        _CAT_ITEM_WEIGHTS = {
+            '스포츠':   {'Top': 0.40, 'Bottom': 0.30, 'RunningShoes': 0.20, 'OtherShoes': 0.10},
+            '아동':     {'Outer': 0.30, 'Top': 0.30, 'Bottom': 0.25, 'Dress': 0.05, 'Set': 0.10},
+            '신사':     {'Suits': 0.40, 'Shirts': 0.20, 'Casual': 0.20, 'Knit': 0.10, 'Bottom': 0.10},
+            '캐주얼':   {'Outer': 0.35, 'Top': 0.25, 'Bottom': 0.10, 'Skirt': 0.15, 'Dress': 0.15},
+        }
+        if cat_group in _CAT_ITEM_WEIGHTS:
+            return _CAT_ITEM_WEIGHTS[cat_group]
+
+        # 5. Fallback: 기본 가중치 (여성 일반)
         return self.DEFAULT_ITEM_WEIGHTS
 
     def _get_item_group(self, raw_code: str) -> str:
