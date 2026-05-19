@@ -373,31 +373,11 @@ class AssortmentScorer:
             dis_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else (100.0 if act <= 0 else 0.0))
         discount_score = (sum(dis_atts) / len(dis_atts)) if dis_atts else 0.0
 
-        # B. 신선도
-        # [v4.4.6] 사용자 요청: year=2026이면 최우선 신상(New), year가 없으면 freshness_type에서 '신상' 확인
-        if 'year' in df.columns:
-            def _parse_y(val):
-                try:
-                    if pd.isna(val): return None
-                    s = str(val).replace('년', '').strip()
-                    if s in ('', 'nan', 'None', '#N/A', '#REF!', '#VALUE!'): return None
-                    y_num = int(float(s))
-                    if y_num < 100: y_num += 2000
-                    return y_num
-                except:
-                    return None
-            parsed_year = df['year'].apply(_parse_y)
-        else:
-            parsed_year = pd.Series([None] * len(df), index=df.index)
-
+        # B. 신선도 — DB의 freshness_type 컬럼 직접 사용
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
         fresh_inv = inv_weights.get('fresh', {})
 
-        is_year_2026 = (parsed_year == 2026)
-        is_year_missing = parsed_year.isna()
-        has_fresh_text = ft.str.contains('신상', na=False)
-
-        _new_mask = is_year_2026 | (is_year_missing & has_fresh_text)
+        _new_mask = ft.str.contains('신상', na=False)
         _plan_mask = ft.str.contains('기획', na=False)
         
         if is_outlet:
