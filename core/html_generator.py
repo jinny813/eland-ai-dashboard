@@ -77,8 +77,23 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         # item_code 우선, 비어있으면 style_code fallback
         ic = str(row.get('item_code', '')).strip()
         code = ic if ic and ic not in ('nan', '0') else str(row.get('style_code', '')).strip()
+        raw = code.upper() if code else ''
+
+        # [v4.9c] 아동/남성 조닝: ITEM_CODE 전용 매핑 직접 조회 (슬라이딩 스캔 보다 정확)
+        if raw and raw not in ('NAN', '0'):
+            if zoning == '아동':
+                hit = AssortmentScorer.ITEM_CODE_KIDS.get(raw) or \
+                      AssortmentScorer.ITEM_CODE_KIDS.get(raw[2:4] if len(raw) >= 4 else raw[:2])
+                if hit:
+                    return hit
+            elif zoning == '남성':
+                hit = AssortmentScorer.ITEM_CODE_MENS.get(raw) or \
+                      AssortmentScorer.ITEM_CODE_MENS.get(raw[:2])
+                if hit:
+                    return hit
+
         group = scorer._get_item_group(code)
-        
+
         is_sports = (zoning == '스포츠')
         if is_sports and group in ['Top', 'Bottom', 'Others']:
             name = str(row.get('style_name', row.get('item_name', ''))).strip()
@@ -205,18 +220,16 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     _off_mask = ~_new_mask & ~_plan_mask
     
     if outlet: 
-        # 상설: 신상(10%), 기획(20%) + 나머지 이월(화면 총합용, 0%)
+        # 상설: 신상(10%), 기획(20%)
         fresh_cfg = [
             ('new', '신상', _new_mask, 0.10), 
-            ('plan', '기획', _plan_mask, 0.20),
-            ('carryover', '이월', _off_mask, 0.00)
+            ('plan', '기획', _plan_mask, 0.20)
         ]
     else:
-        # 정상: 신상(70%) + 기획(0%) + 이월(0%)
+        # 정상: 신상(70%), 기획(0%)
         fresh_cfg = [
             ('new', '신상', _new_mask, 0.70),
-            ('plan', '기획', _plan_mask, 0.00),
-            ('carryover', '이월', _off_mask, 0.00)
+            ('plan', '기획', _plan_mask, 0.00)
         ]
     
     fresh_segs = []
