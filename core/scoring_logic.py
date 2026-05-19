@@ -55,13 +55,13 @@ class AssortmentScorer:
         try:
             s = str(val).replace('%', '').replace(' ', '').strip()
             if not s or s in ('nan', 'None', '', '#N/A', '#REF!', '#VALUE!'):
-                return 0.0
+                return -1.0
             f = float(s)
             if 0.0 < f <= 1.0:
                 f = f * 100.0
             return f
         except (TypeError, ValueError):
-            return 0.0
+            return -1.0
 
     # 알려진 모든 아이템 코드 집합 (fast-lookup용 캐시)
     _ALL_ITEM_CODES: dict = {}  # {'코드': '그룹명'} — 첫 호출 시 빌드
@@ -329,11 +329,9 @@ class AssortmentScorer:
         if _brand_nm in _eland:
             # 이랜드월드: 기존 _age 기반 로직 유지
             if is_outlet:
-                _off_mask = ~ft.str.contains('신상', na=False) & ~ft.str.contains('기획', na=False)
                 fresh_cfg = [
                     {'m': ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.10)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)},
-                    {'m': _off_mask, 'r': 0.70}
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
                 ]
             else:
                 fresh_cfg = [
@@ -348,11 +346,8 @@ class AssortmentScorer:
                     {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
                 ]
             else:
-                _off_mask = ~_new_mask & ~ft.str.contains('기획', na=False)
                 fresh_cfg = [
-                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)},
-                    {'m': _off_mask, 'r': fresh_inv.get('carryover', 0.20)}
+                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)}
                 ]
         
         fresh_atts = []

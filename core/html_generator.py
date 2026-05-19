@@ -199,31 +199,21 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     # 3. 신선도 세부
     ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series(['']*len(df))
+    # [v4.5] 사용자 요청: 모든 매장(정상/상설 및 이랜드 무관)에서 할인율 0%(_dis_rate == 0)를 '신상'으로 강제 인지
+    _new_m_unified = (df['_age'] == 0) | ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
+    _plan_m_unified = ft.str.contains('기획', na=False)
+    
     if outlet: 
-        # 상설: 명시적 필드 (키워드 대응 강화)
-        # [v4.5] 사용자 요청: 상설매장의 경우 '이월' 항목은 노출판 및 대시보드에서 제외
-        _new_m_out = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
+        # 상설: 신상(10%), 기획(20%)
         fresh_cfg = [
-            ('new', '신상', _new_m_out, 0.10), 
-            ('plan', '기획', (ft.str.contains('기획', na=False)), 0.20)
+            ('new', '신상', _new_m_unified, 0.10), 
+            ('plan', '기획', _plan_m_unified, 0.20)
         ]
     else:
-        # 정상: freshness_type + discount_rate 기반 (이랜드월드만 _age 유지)
-        _br = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
-        if _br in {'스파오키즈', '뉴발란스키즈'}:
-            fresh_cfg = [
-                ('new', '신상', (df['_age'] == 0) | ft.str.contains('신상', na=False), 0.70),
-                ('plan', '기획', ft.str.contains('기획', na=False), 0.10)
-            ]
-        else:
-            _new_m_h = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
-            _plan_m_h = ft.str.contains('기획', na=False)
-            _off_m_h = ~_new_m_h & ~_plan_m_h
-            fresh_cfg = [
-                ('new', '신상', _new_m_h, 0.70),
-                ('plan', '기획', _plan_m_h, 0.10),
-                ('carryover', '이월', _off_m_h, 0.20)
-            ]
+        # 정상: 신상(70%)
+        fresh_cfg = [
+            ('new', '신상', _new_m_unified, 0.70)
+        ]
     
     fresh_segs = []
     for key, lbl, mask, ratio in fresh_cfg:
