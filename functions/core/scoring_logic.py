@@ -173,46 +173,51 @@ class AssortmentScorer:
     def _get_item_group(self, raw_code: str) -> str:
         """
         item_code 또는 style_code → 아이템 그룹 매핑.
-        단순 복종코드("JK") 뿐 아니라 풀 스타일코드("GR3M0JK921")도 처리:
-        - 1-3자 → 직접 매핑
-        - 4자 이상 → 위치 2-8에서 2자리 슬라이딩 윈도우로 스캔
+        - 남성: ITEM_CODE_MENS 전용 경로
+        - 아동(Set 가중치 존재): ITEM_CODE_KIDS 우선 (ST→Set, SK→Bottom, BD→Top 보장)
+        - 스포츠/여성/캐주얼: ITEM_CODE_DIRECT → ITEM_GROUPS 순
         """
         self._build_code_index()
         if not raw_code or (isinstance(raw_code, float) and pd.isna(raw_code)):
             return 'Others'
 
         raw = str(raw_code).strip().upper()
+        item_cfg = self.config.get('inv_weights', {}).get('item', {})
 
-        # 스포츠 전용
-        if "RunningShoes" in self.config.get("inv_weights", {}).get("item", {}):
-            return 'Top'
+        # 남성복 전용 — ITEM_CODE_MENS 사용
+        if 'Suits' in item_cfg or self.config.get('_eff_cat', '') == '신사':
+            hit = self.ITEM_CODE_MENS.get(raw) or self.ITEM_CODE_MENS.get(raw[:2])
+            return hit if hit else 'Casual'
 
-        # 남성복 전용 — ITEM_CODE_MENS 사용 (Suits/Shirts/Casual/Knit는 남성 전용 그룹)
-        if "Suits" in self.config.get("inv_weights", {}).get("item", {}) or self.config.get('_eff_cat', '') == '신사':
-            hit = self.ITEM_CODE_MENS.get(raw)
-            if hit: return hit
-            hit = self.ITEM_CODE_MENS.get(raw[:2])
-            if hit: return hit
-            return 'Casual'
+        # 아동 여부: Set 가중치가 있으면 아동 모드 (ITEM_CODE_KIDS 우선)
+        is_kids = 'Set' in item_cfg
 
-        # 공통: 짧은 코드(≤4자) 직접 조회 — ITEM_CODE_DIRECT → ITEM_CODE_KIDS 순
+        # 짧은 코드(≤4자) 직접 조회
         if len(raw) <= 4:
+            # 1. 공통 직접 매핑 (신발 코드 포함)
             hit = self.ITEM_CODE_DIRECT.get(raw)
             if hit: return hit
-            hit = self.ITEM_CODE_KIDS.get(raw)
+            # 2. 아동: ITEM_CODE_KIDS 우선 (ST→Set, SK→Bottom, BD→Top)
+            if is_kids:
+                hit = self.ITEM_CODE_KIDS.get(raw)
+                if hit: return hit
+            # 3. ITEM_GROUPS (여성/캐주얼: SK→Skirt, BD→Bottom 등 정확 분류)
+            hit = self._lookup(raw)
             if hit: return hit
 
-        # 1-3자 복종코드: ITEM_GROUPS 기반 조회
+        # 1-3자 복종코드: ITEM_GROUPS 기반 조회 (접두 fallback 포함)
         if len(raw) <= 3:
             hit = self._lookup(raw) or self._lookup(raw[:2]) or self._lookup(raw[:1])
             return hit if hit else 'Others'
 
-        # 풀 스타일코드: 위치 2~8에서 2자리 슬라이딩 스캔 (ITEM_GROUPS → ITEM_CODE_KIDS 순)
+        # 풀 스타일코드: 위치 2~8에서 2자리 슬라이딩 스캔
         for start in range(2, min(len(raw) - 1, 9)):
             sub = raw[start:start + 2]
+            # 아동: ITEM_CODE_KIDS 우선 (ST→Set이 ITEM_GROUPS ST→Top보다 우선)
+            if is_kids:
+                hit = self.ITEM_CODE_KIDS.get(sub)
+                if hit: return hit
             hit = self._lookup(sub)
-            if hit: return hit
-            hit = self.ITEM_CODE_KIDS.get(sub)  # 슬라이딩에서 못 찾은 코드 보완
             if hit: return hit
         return 'Others'
 
