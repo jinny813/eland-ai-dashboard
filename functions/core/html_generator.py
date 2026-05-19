@@ -200,10 +200,19 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         # 정상: freshness_type + discount_rate 기반 (이랜드월드만 _age 유지)
         _br = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
         if _br in {'스파오키즈', '뉴발란스키즈'}:
-            fresh_cfg = [('new', '신상', (df['_age'] == 0), 0.70)]
+            fresh_cfg = [
+                ('new', '신상', (df['_age'] == 0) | ft.str.contains('신상', na=False), 0.70),
+                ('plan', '기획', ft.str.contains('기획', na=False), 0.10)
+            ]
         else:
             _new_m_h = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
-            fresh_cfg = [('new', '신상', _new_m_h, 0.70)]
+            _plan_m_h = ft.str.contains('기획', na=False)
+            _off_m_h = ~_new_m_h & ~_plan_m_h
+            fresh_cfg = [
+                ('new', '신상', _new_m_h, 0.70),
+                ('plan', '기획', _plan_m_h, 0.10),
+                ('carryover', '이월', _off_m_h, 0.20)
+            ]
     
     fresh_segs = []
     for key, lbl, mask, ratio in fresh_cfg:

@@ -332,9 +332,11 @@ class AssortmentScorer:
                     {'m': _off_mask, 'r': 0.70}
                 ]
             else:
+                _off_mask = ~_new_mask & ~ft.str.contains('기획', na=False)
                 fresh_cfg = [
                     {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)}
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)},
+                    {'m': _off_mask, 'r': fresh_inv.get('carryover', 0.20)}
                 ]
         
         fresh_atts = []

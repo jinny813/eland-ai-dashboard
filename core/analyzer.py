@@ -109,11 +109,11 @@ class ActionAnalyzer:
         if "JJ지고트" in brand_name_raw:
             logger.info(f"[{brand_name_raw}] Applying Hard-coded Focus List (unconditional).")
             jj_focus_list = [
-                {"rank": 1, "code": "GR3M0TC921", "name": "트렌치 코트",                    "msg": "NC 1위 / 본매장 재고 1EA"},
-                {"rank": 2, "code": "GR3A0TCJ11", "name": "레더 디테쳐블 칼라 트렌치 코트", "msg": "NC 2위 / 본매장 재고 13EA"},
-                {"rank": 3, "code": "GP4A0OP811", "name": "브레이드 패치 포켓 원피스",       "msg": "NC 3위 / 본매장 재고 16EA"},
-                {"rank": 4, "code": "GP4A0OP331", "name": "벨티드 플리츠 원피스+재킷 세트", "msg": "NC 4위 / 본매장 재고 42EA"},
-                {"rank": 5, "code": "GP3A0JKJ41", "name": "롤업 슬리브 트위드 재킷",        "msg": "NC 5위 / 본매장 재고 9EA"},
+                {"rank": 1, "code": "GR3M0TC921", "name": "트렌치 코트",                    "msg": "1등매장 1위 / 본매장 재고 1EA"},
+                {"rank": 2, "code": "GR3A0TCJ11", "name": "레더 디테쳐블 칼라 트렌치 코트", "msg": "1등매장 2위 / 본매장 재고 13EA"},
+                {"rank": 3, "code": "GP4A0OP811", "name": "브레이드 패치 포켓 원피스",       "msg": "1등매장 3위 / 본매장 재고 16EA"},
+                {"rank": 4, "code": "GP4A0OP331", "name": "벨티드 플리츠 원피스+재킷 세트", "msg": "1등매장 4위 / 본매장 재고 42EA"},
+                {"rank": 5, "code": "GP3A0JKJ41", "name": "롤업 슬리브 트위드 재킷",        "msg": "1등매장 5위 / 본매장 재고 9EA"},
             ]
             for item in jj_focus_list:
                 push_list.append({
