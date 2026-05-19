@@ -27,7 +27,10 @@ trigger: always_on
   2. [코드 블록]
   3. [상세 설명] 순서로 답변할 것.
 
-
+Agent Limits
+실패 명령 자동 재시도 최대 2회
+500KB 이상 파일 자동 분석 금지
+장시간 빌드/대용량 처리 전 확인 요청
 
 1. Never retry a failing terminal command or script more than 2 times automatically.
 2. If an error persists after 2 attempts, STOP and ask the user for guidance.
