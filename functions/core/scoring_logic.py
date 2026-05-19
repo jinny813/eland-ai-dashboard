@@ -12,15 +12,78 @@ class AssortmentScorer:
     """상품구색 5개 지표 채점 엔진 — v11.0 평매출 반영 이중 채점 체계 도입"""
 
     ITEM_GROUPS = {
-        'Outer':  ['JK', 'JA', 'JD', 'JE', 'JH', 'JJ', 'JL', 'JP', 'JT', 'JV', 'JW', 'SJ', 'VK', 'VW', 'CK', 'CM', 'VT', 'CT', 'CD', 'BY', 'KC', 'PD', 'FU', 'U', 'E', 'J', 'C', 'D', 'Y', 'L'],
-        'Top':    ['BL', 'BA', 'BB', 'BN', 'BW', 'DR', 'GM', 'HA', 'HS', 'HW', 'KA', 'KN', 'KR', 'KV', 'KW', 'LA', 'LS', 'LW', 'MA', 'MB', 'MH', 'MW', 'MZ', 'RA', 'RB', 'RN', 'RP', 'RS', 'RW', 'SM', 'YA', 'YC', 'YH', 'YS', 'YW', 'XH', 'MN', 'MR', 'PP', 'GN', 'BR', 'FZ', 'FW', 'TS', 'ST', 'PO', 'SH', 'WS', 'KO', 'KP', 'B', 'K', 'T'],
-        'Bottom': ['SL', 'PT', 'TA', 'TC', 'TH', 'TJ', 'TM', 'TN', 'TR', 'ST', 'IL', 'YI', 'YF', 'XF', 'XD', 'WP', 'WQ', 'XV', 'YV', 'SP', 'LE', 'DK', 'N', 'P'],
-        'Skirt':  ['SK', 'TS', 'WH', 'WJ', 'WK', 'WM', 'KS', 'S'],
-        'Dress':  ['OP', 'OJ', 'OK', 'OM', 'ON', 'OW', 'YO', 'LO', 'SP', 'YJ', 'DP', 'O'],
+        'Outer':  ['JK', 'JA', 'JD', 'JE', 'JH', 'JJ', 'JL', 'JP', 'JT', 'JV', 'JW', 'SJ', 'VK', 'VW', 'CK', 'CM', 'VT', 'CT', 'BY', 'KC', 'PD', 'FU', 'U', 'E', 'J', 'C', 'D', 'Y', 'L',
+                   'CO', 'OT', 'JU'],                                          # 코트·오버코트·점퍼
+        'Top':    ['BL', 'BA', 'BB', 'BN', 'BW', 'GM', 'HA', 'HS', 'HW', 'KA', 'KN', 'KR', 'KV', 'KW', 'LA', 'LS', 'LW', 'MA', 'MB', 'MH', 'MW', 'MZ', 'RA', 'RB', 'RN', 'RP', 'RS', 'RW', 'SM', 'YA', 'YC', 'YH', 'YS', 'YW', 'XH', 'MN', 'MR', 'PP', 'GN', 'BR', 'FZ', 'FW', 'TS', 'ST', 'PO', 'SH', 'WS', 'KO', 'KP', 'B', 'K', 'T',
+                   'MT', 'NT', 'CD', 'SW', 'HD', 'HN', 'GT', 'PW', 'LT', 'DS', 'SF'],  # 맨투맨·니트·가디건·스웨터·후드·셔츠
+        'Bottom': ['SL', 'PT', 'TA', 'TC', 'TH', 'TJ', 'TM', 'TN', 'TR', 'IL', 'YI', 'YF', 'XF', 'XD', 'WP', 'WQ', 'XV', 'YV', 'SP', 'LE', 'DK', 'N', 'P',
+                   'CH', 'DN', 'GP', 'PA', 'BD'],                             # 청바지·데님·반바지·팬츠
+        'Skirt':  ['SK', 'WH', 'WJ', 'WK', 'WM', 'KS', 'S'],
+        'Dress':  ['OP', 'OJ', 'OK', 'OM', 'ON', 'OW', 'YO', 'LO', 'YJ', 'DP', 'O',
+                   'DR', 'JR', 'PL', 'ONE'],                                  # 드레스·주름원피스·플리츠
     }
     # 잡화·소품 등 계산 제외 코드
     ITEM_EXCLUDE = {'SO','SF','MF','HT','BT','BG','GL','CP','ET','WL','XP','ZY',
                     'AY','AS','AU','AW','AP','AG','AJ','AK','AM','ARJ'}
+
+    # [v4.9c] DB item_code 직접 매핑 테이블 (카테고리별)
+    ITEM_CODE_KIDS = {
+        # 상하세트
+        'ST':'Set',  'SET':'Set', 'SU':'Set',
+        # 아우터
+        'JK':'Outer','OT':'Outer','PD':'Outer','CO':'Outer',
+        # 상의
+        'TS':'Top',  'BD':'Top', 'MT':'Top', 'SH':'Top', 'NT':'Top', 'BL':'Top',
+        # 하의
+        'PT':'Bottom','SK':'Bottom','CH':'Bottom','SL':'Bottom',
+        # 원피스
+        'OP':'Dress','DR':'Dress','ONE':'Dress',
+    }
+    ITEM_CODE_MENS = {
+        # 수트/셋업
+        'ST':'Suits','SU':'Suits','SET':'Suits','JK':'Suits','SJ':'Suits',
+        # 드레스셔츠
+        'DS':'Shirts','SH':'Shirts',
+        # 캐주얼/티셔츠
+        'TS':'Casual','HN':'Casual','GT':'Casual','AC':'Casual',
+        'JA':'Casual','JH':'Casual','OT':'Casual','PD':'Casual',
+        # 니트/가디건
+        'NT':'Knit','SW':'Knit','CD':'Knit','PW':'Knit','VT':'Knit',
+        # 하의
+        'SL':'Bottom','PT':'Bottom','DN':'Bottom','CH':'Bottom',
+    }
+    # 공통 직접 매핑 (여성·캐주얼·스포츠 등, 위 전용 맵 다음에 시도)
+    ITEM_CODE_DIRECT = {
+        # 아우터
+        'CO':'Outer','OT':'Outer','JU':'Outer','TR':'Outer',
+        'DXBK':'Outer','DWWJ':'Outer','DXBG':'Outer','DMTR':'Outer',
+        'DXCP':'Outer','DXCR':'Outer','DXTG':'Outer',
+        # 상의/블라우스/니트
+        'BL':'Top','MT':'Top','DS':'Top','NT':'Top','CD':'Top',
+        'PO':'Top','SW':'Top','HD':'Top','HN':'Top','GT':'Top',
+        'PW':'Top','LT':'Top','TC':'Top','HT':'Top',
+        'B':'Top','K':'Top','X':'Top',
+        'DXSH':'Top','DKSH':'Top','DXHS':'Top','DXSO':'Top','DMMT':'Top','DMSP':'Top',
+        # 하의
+        'CH':'Bottom','DN':'Bottom','GP':'Bottom','PA':'Bottom',
+        'DXLP':'Bottom','DXMR':'Bottom','DXTR':'Bottom',
+        'DMRS':'Bottom','DXRS':'Bottom','DXBN':'Bottom',
+        # 스커트
+        'S':'Skirt',
+        # 원피스
+        'ONE':'Dress','JR':'Dress','PL':'Dress','O':'Dress',
+        'DMPD':'Dress','DMSS':'Dress',
+        # 상하세트
+        'SET':'Set','SU':'Set',
+        # 신발
+        'MC':'CasualShoes','WC':'CasualShoes','MB':'CasualShoes',
+        'MS':'RunningShoes','WS':'RunningShoes',
+        'MW':'OtherShoes','WW':'OtherShoes','MO':'OtherShoes','WO':'OtherShoes','WD':'OtherShoes',
+        'MD37':'OtherShoes','MD38':'OtherShoes',
+        # 잡화
+        'AC':'Others','GL':'Others','BP':'Others','BK':'Others',
+        'HA':'Others','QV':'Others','QC':'Others',
+    }
 
     # [v13.5] 카테고리별/조닝별 아이템 가중치 정의
     ZONING_ITEM_WEIGHTS = {
@@ -324,31 +387,20 @@ class AssortmentScorer:
         # B. 신선도
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
         fresh_inv = inv_weights.get('fresh', {})
-        _eland = {'스파오키즈', '뉴발란스키즈'}
-        _brand_nm = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
-        if _brand_nm in _eland:
-            # 이랜드월드: 기존 _age 기반 로직 유지
-            if is_outlet:
-                fresh_cfg = [
-                    {'m': ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.10)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
-                ]
-            else:
-                fresh_cfg = [
-                    {'m': (df['_age'] == 0) | ft.str.contains('신상', na=False), 'r': fresh_inv.get('new', 0.70)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.10)}
-                ]
+        # [v4.4.5] 사용자 요청: 할인율(_dis_rate) 추정 배제하고 DB의 freshness_type 텍스트만 100% 신뢰
+        _new_mask = ft.str.contains('신상', na=False)
+        _plan_mask = ft.str.contains('기획', na=False)
+        
+        if is_outlet:
+            fresh_cfg = [
+                {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
+                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.20)}
+            ]
         else:
-            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
-            if is_outlet:
-                fresh_cfg = [
-                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
-                ]
-            else:
-                fresh_cfg = [
-                    {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)}
-                ]
+            fresh_cfg = [
+                {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
+                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.00)} # 정상 매장의 기획 목표가 0이더라도 재고가 있으면 방어적 채점을 위해 추가
+            ]
         
         fresh_atts = []
         for item in fresh_cfg:
