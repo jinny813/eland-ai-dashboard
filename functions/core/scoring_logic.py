@@ -124,8 +124,8 @@ class AssortmentScorer:
         if "RunningShoes" in self.config.get("inv_weights", {}).get("item", {}):
             return 'Top'
 
-        # 아동복 전용 (접두어 NK/PK/SP 등 대응) — zoning='아동'인 경우에만 적용
-        if self.config.get('zoning', '') == '아동':
+        # 아동복 전용 (접두어 NK/PK/SP 등 대응) — zoning='아동' 또는 category_group 폴백
+        if self.config.get('zoning', '') == '아동' or self.config.get('_eff_cat', '') == '아동':
             # 브랜드 접두어 2자리 제외 후 품종코드(3~4자리) 분석 (예: PKJK... -> JK)
             c2 = raw[2:4] if len(raw) >= 4 else raw[:2]
             if c2 in ['JK','JA','JH','JP']: return 'Outer'
@@ -143,7 +143,7 @@ class AssortmentScorer:
             return 'Top'
 
         # 남성복 전용
-        if "Suits" in self.config.get("inv_weights", {}).get("item", {}):
+        if "Suits" in self.config.get("inv_weights", {}).get("item", {}) or self.config.get('_eff_cat', '') == '신사':
             c2 = raw[:2]
             if c2 in ['JK','SJ','ST']: return 'Suits'
             if c2 in ['SH','WS']:      return 'Shirts'
@@ -189,11 +189,18 @@ class AssortmentScorer:
                     return nepa_map[ic_key]
 
             code = ic if ic and ic not in ('nan', '0') else str(row.get('style_code', '')).strip()
+            cat_group = str(row.get('category_group', '')).strip()
+            # [v4.9] category_group 기반 아동/남성 경로 강제 진입
+            if cat_group == '아동':
+                self.config['_eff_cat'] = '아동'
+            elif cat_group == '신사' and 'Suits' not in self.config.get('inv_weights', {}).get('item', {}):
+                self.config['_eff_cat'] = '신사'
             group = self._get_item_group(code)
-            
+            self.config.pop('_eff_cat', None)
+
             # 2. 스포츠/아웃도어 브랜드 특화: 품번 매핑 실패 시 상품명/카테고리 키워드 분석
             zoning = self.config.get('zoning', '')
-            is_sports_logic = zoning in ["스포츠", "아웃도어", "애슬레저"]
+            is_sports_logic = zoning in ["스포츠", "아웃도어", "애슬레저"] or cat_group in ["스포츠", "아웃도어"]
             if is_sports_logic and group in ['Top', 'Bottom', 'Others']:
                 name = str(row.get('style_name', row.get('item_name', ''))).strip()
                 cat = str(row.get('category_group', '')).strip()
@@ -336,11 +343,9 @@ class AssortmentScorer:
         else:
             _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
             if is_outlet:
-                _off_mask = ~_new_mask & ~ft.str.contains('기획', na=False)
                 fresh_cfg = [
                     {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
-                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)},
-                    {'m': _off_mask, 'r': 0.70}
+                    {'m': ft.str.contains('기획', na=False), 'r': fresh_inv.get('plan', 0.20)}
                 ]
             else:
                 _off_mask = ~_new_mask & ~ft.str.contains('기획', na=False)

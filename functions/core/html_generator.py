@@ -202,8 +202,9 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     if outlet: 
         # 상설: 명시적 필드 (키워드 대응 강화)
         # [v4.5] 사용자 요청: 상설매장의 경우 '이월' 항목은 노출판 및 대시보드에서 제외
+        _new_m_out = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
         fresh_cfg = [
-            ('new', '신상', (ft.str.contains('신상', na=False)), 0.10), 
+            ('new', '신상', _new_m_out, 0.10), 
             ('plan', '기획', (ft.str.contains('기획', na=False)), 0.20)
         ]
     else:
