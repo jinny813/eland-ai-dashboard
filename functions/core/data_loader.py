@@ -9,6 +9,7 @@ Google Sheets → 대시보드 JSON 변환 파이프라인
 - 데이터 미업로드 브랜드에 대한 0점 자리표시자(Placeholder) 생성 로직 추가
 """
 
+import unicodedata
 import pandas as pd
 from datetime import datetime
 from database.gsheet_manager import GSheetManager
@@ -113,6 +114,10 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         for c in str_cols:
             if c in df.columns:
                 df[c] = df[c].astype(str).str.strip()
+
+        # Unicode NFC 정규화: GAS 응답의 한글이 NFD(조합형 자모)로 오는 경우 완성형으로 통일
+        if 'freshness_type' in df.columns:
+            df['freshness_type'] = df['freshness_type'].apply(lambda x: unicodedata.normalize('NFC', x))
 
         # [v74.6] 수치형 컬럼 강제 변환 (정렬 및 계산 오류 방지)
         # stock_amt, stock_qty 등 컬럼에 콤마가 포함된 문자열이 섞여 있을 경우 sort_values 시 TypeError 발생 가능
