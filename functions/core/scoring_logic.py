@@ -378,13 +378,13 @@ class AssortmentScorer:
             dis_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else (100.0 if act <= 0 else 0.0))
         discount_score = (sum(dis_atts) / len(dis_atts)) if dis_atts else 0.0
 
-        # B. 신선도 — DB의 freshness_type 컬럼 직접 사용
+        # B. 신선도 — freshness_type 기준으로 통일
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
         fresh_inv = inv_weights.get('fresh', {})
 
-        _new_mask = ft.str.contains('신상', na=False)
+        _new_mask  = ft.str.contains('신상', na=False)
         _plan_mask = ft.str.contains('기획', na=False)
-        
+
         if is_outlet:
             fresh_cfg = [
                 {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
@@ -393,14 +393,18 @@ class AssortmentScorer:
         else:
             fresh_cfg = [
                 {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
-                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.00)} # 정상 매장의 기획 목표가 0이더라도 재고가 있으면 방어적 채점을 위해 추가
+                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.00)}
             ]
-        
+
         fresh_atts = []
         for item in fresh_cfg:
             act = _get_record_ref(item['m'])['_amt'].sum()
             tgt = target_total * item['r']
-            fresh_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
+            if tgt > 0:
+                fresh_atts.append(min(100.0, (act / tgt * 100)))
+            elif act > 0:
+                fresh_atts.append(0.0)  # 목표 없는 구간에 재고 있음 = 패널티
+            # tgt==0 and act==0 → 무시 (점수에 영향 없음)
         freshness_score = (sum(fresh_atts) / len(fresh_atts)) if fresh_atts else 0.0
 
         # C. 시즌 — DIAG_MONTH(4월) 고정 기준, SS/FW 2시즌 동적 매핑
