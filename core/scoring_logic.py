@@ -411,8 +411,10 @@ class AssortmentScorer:
                 fresh_tgt_sum += tgt
         freshness_score = (fresh_earned / fresh_tgt_sum * 100) if fresh_tgt_sum > 0 else 0.0
 
-        # C. 시즌 — DIAG_MONTH(4월) 고정 기준, SS/FW 2시즌 동적 매핑
-        month = self.current_month  # 항상 DIAG_MONTH(4)
+        # C. 시즌 — data_month 기준: 1~3월=봄시즌, 4~6월=여름시즌
+        _raw_m = df['data_month'].iloc[0] if 'data_month' in df.columns and not df.empty else ''
+        _m_str = str(_raw_m).replace('월', '').strip()
+        month = int(_m_str) if _m_str.isdigit() else self.current_month
         sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
         CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
         CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
@@ -424,8 +426,8 @@ class AssortmentScorer:
             # SS/FW 2시즌 브랜드: 현시즌=primary(0.50), 보조시즌=secondary(0.30) 동적 매핑
             primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
             secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
-            if month in [1, 2, 3, 4]:   curr_codes, sub_codes = CO_SPRING, CO_SUMMER
-            elif month in [5, 6]:        curr_codes, sub_codes = CO_SUMMER, CO_SPRING
+            if month in [1, 2, 3]:      curr_codes, sub_codes = CO_SPRING, CO_SUMMER
+            elif month in [4, 5, 6]:    curr_codes, sub_codes = CO_SUMMER, CO_SPRING
             elif month in [7, 8, 9]:     curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
             else:                         curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
             season_cfg = [
@@ -564,19 +566,21 @@ class AssortmentScorer:
         for label, mask, r_val in fresh_cfg:
             if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
 
-        # 시즌 부족 — score()와 동일한 DIAG_MONTH 기준 매핑
+        # 시즌 부족 — score()와 동일한 data_month 기준 매핑
         sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
         CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
         CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
-        month = self.current_month  # DIAG_MONTH(4) 고정
+        _raw_m2 = df['data_month'].iloc[0] if 'data_month' in df.columns and not df.empty else ''
+        _m_str2 = str(_raw_m2).replace('월', '').strip()
+        month = int(_m_str2) if _m_str2.isdigit() else self.current_month
         sea_inv = inv_weights.get('season', {})
         non_zero_seasons = sum(1 for v in sea_inv.values() if v > 0)
 
         if non_zero_seasons <= 2:
             primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
             secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
-            if month in [1, 2, 3, 4]:   curr_codes, sub_codes = CO_SPRING, CO_SUMMER
-            elif month in [5, 6]:        curr_codes, sub_codes = CO_SUMMER, CO_SPRING
+            if month in [1, 2, 3]:      curr_codes, sub_codes = CO_SPRING, CO_SUMMER
+            elif month in [4, 5, 6]:    curr_codes, sub_codes = CO_SUMMER, CO_SPRING
             elif month in [7, 8, 9]:     curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
             else:                         curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
             season_checks = [('봄(현시즌)', curr_codes, primary_r), ('여름(보조)', sub_codes, secondary_r)]

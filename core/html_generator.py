@@ -261,11 +261,11 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         {'key': 'winter', 'l': '겨울 (FW)', 'codes': ['겨울', '4', '9']}
     ]
     
-    # 목표 비중 결정 로직 (사용자 요청: 4월 봄 50%, 여름 30%)
-    target_weights = {} # {코어라벨: 비중}
-    if month in [1, 2, 3, 4]:
+    # 목표 비중 결정: data_month 기준 (1~3월=봄시즌, 4~6월=여름시즌)
+    target_weights = {}
+    if month in [1, 2, 3]:
         target_weights = {"봄": 0.50, "여름": 0.30}
-    elif month in [5, 6]:
+    elif month in [4, 5, 6]:
         target_weights = {"여름": 0.50, "봄": 0.30}
     elif month in [7, 8, 9]:
         target_weights = {"가을": 0.50, "겨울": 0.30}
