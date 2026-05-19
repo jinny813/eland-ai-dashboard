@@ -138,6 +138,9 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         '일반':     {'Outer':0.30, 'Top':0.30, 'Bottom':0.20, 'Skirt':0.10, 'Dress':0.10},
     }
     item_weights = inv_w.get('item', default_item_w.get(zoning, default_item_w['일반']))
+    # 남성 조닝인데 Suits 키가 없으면(여성 config 상속 오류) → 남성 기본값 강제 적용
+    if zoning == '남성' and 'Suits' not in item_weights:
+        item_weights = default_item_w['남성']
     
     item_segs = []
     for i, (eng, kor) in enumerate(item_map.items()):

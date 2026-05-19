@@ -144,14 +144,17 @@ class AssortmentScorer:
     def _get_dynamic_item_weights(self, df: pd.DataFrame) -> dict:
         """[v13.5] 카테고리 및 조닝(zoning) 기반 동적 아이템 가중치 산출"""
         inv_weights = self.config.get('inv_weights', {})
-        
-        # 1. config에 직접 명시된 가중치가 있으면 최우선 (커스터마이징 대응)
-        if 'item' in inv_weights:
-            return inv_weights['item']
-            
-        # 2. 데이터프레임에서 카테고리 추출
+
+        # 2. 데이터프레임에서 카테고리 추출 (신사 여부 판단에 필요하므로 먼저 실행)
         cat_group = str(df['category_group'].iloc[0]) if 'category_group' in df.columns and not df.empty else '일반'
         zoning = self.config.get('zoning', '')
+
+        # 1. config에 직접 명시된 가중치가 있으면 최우선 (커스터마이징 대응)
+        # 단, 신사 브랜드인데 남성 전용 키(Suits)가 없으면 → 여성 기본값 상속 오류이므로 무시하고 category 기반으로 낙하
+        if 'item' in inv_weights:
+            item_cfg = inv_weights['item']
+            if cat_group != '신사' or 'Suits' in item_cfg:
+                return item_cfg
         
         # 3. 여성 카테고리 특화 조닝 가중치 적용
         if cat_group == '여성' and zoning in self.ZONING_ITEM_WEIGHTS['여성']:
