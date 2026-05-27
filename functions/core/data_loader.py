@@ -203,7 +203,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             is_fresh_new = df['freshness_type'].astype(str).str.contains('신상', na=False) if 'freshness_type' in df.columns else pd.Series([False] * len(df))
             
             # [v162] 신규 유입 지점(강남점 등) 및 실적 데이터가 있는 정상 점포가 year 누락으로 유실되는 현상 방어
-            is_gangnam = df['store_name'].str.contains('강남', na=False)
+            is_gangnam = df['store_name'].str.contains('강남', na=False) | df['store_name'].str.contains('쇼핑', na=False)
             has_sales = (df['sales_qty'] > 0) | (df['sales_amt'] > 0)
             df = df[~(is_normal & ~is_no_year_cat & bad_year & ~is_fresh_new & ~is_gangnam & ~has_sales)]
         
