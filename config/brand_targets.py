@@ -1534,31 +1534,42 @@ def normalize_brand_name(name: str) -> str:
         return ""
     return re.sub(r'\s*\([^)]*\)', '', str(name)).strip()
 
-# 로딩 시점에 모든 설정 및 데이터 딕셔너리의 브랜드 키를 전역 정화 적용
+def clean_store_name(name: str) -> str:
+    """NC/뉴코아/동아/2001 수식어를 완벽하게 제거하는 표준 유틸리티"""
+    if not name:
+        return ""
+    name = str(name).strip()
+    for prefix in ["NC", "뉴코아", "동아", "2001"]:
+        if name.startswith(prefix):
+            name = name[len(prefix):].strip()
+    return name
+
+# 로딩 시점에 모든 설정 및 데이터 딕셔너리의 지점 키와 브랜드 키를 전역 정화 적용
 MONTHLY_TM = {
-    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    clean_store_name(k): {normalize_brand_name(bk): bv for bk, bv in v.items()}
     for k, v in MONTHLY_TM.items()
 }
 PREV_MONTH_SALES = {
-    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    clean_store_name(k): {normalize_brand_name(bk): bv for bk, bv in v.items()}
     for k, v in PREV_MONTH_SALES.items()
 }
 PREV_YEAR_SALES = {
-    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    clean_store_name(k): {normalize_brand_name(bk): bv for bk, bv in v.items()}
     for k, v in PREV_YEAR_SALES.items()
 }
 PREV_YEAR_MONTHLY_SALES = {
-    k: {
+    clean_store_name(k): {
         mk: {normalize_brand_name(bk): bv for bk, bv in mv.items()}
         for mk, mv in v.items()
     }
     for k, v in PREV_YEAR_MONTHLY_SALES.items()
 }
 STORE_BRAND_TM = {
-    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    clean_store_name(k): {normalize_brand_name(bk): bv for bk, bv in v.items()}
     for k, v in STORE_BRAND_TM.items()
 }
 BRAND_DEFAULT_TM = {normalize_brand_name(k): v for k, v in BRAND_DEFAULT_TM.items()}
+
 
 
 def _auto_calc_tm(brand_name: str, store_name: str, month_key: str):
