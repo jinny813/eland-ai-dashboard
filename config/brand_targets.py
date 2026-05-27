@@ -1528,6 +1528,38 @@ def _normalize_month_key(month: str):
 
     return None
 
+def normalize_brand_name(name: str) -> str:
+    """브랜드명 괄호 제거 정규화 (예: '보브(VOV)' -> '보브', '로엠(ROEM)' -> '로엠')"""
+    if not name:
+        return ""
+    return re.sub(r'\s*\([^)]*\)', '', str(name)).strip()
+
+# 로딩 시점에 모든 설정 및 데이터 딕셔너리의 브랜드 키를 전역 정화 적용
+MONTHLY_TM = {
+    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    for k, v in MONTHLY_TM.items()
+}
+PREV_MONTH_SALES = {
+    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    for k, v in PREV_MONTH_SALES.items()
+}
+PREV_YEAR_SALES = {
+    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    for k, v in PREV_YEAR_SALES.items()
+}
+PREV_YEAR_MONTHLY_SALES = {
+    k: {
+        mk: {normalize_brand_name(bk): bv for bk, bv in mv.items()}
+        for mk, mv in v.items()
+    }
+    for k, v in PREV_YEAR_MONTHLY_SALES.items()
+}
+STORE_BRAND_TM = {
+    k: {normalize_brand_name(bk): bv for bk, bv in v.items()}
+    for k, v in STORE_BRAND_TM.items()
+}
+BRAND_DEFAULT_TM = {normalize_brand_name(k): v for k, v in BRAND_DEFAULT_TM.items()}
+
 
 def _auto_calc_tm(brand_name: str, store_name: str, month_key: str):
     """전년동월 × 1.3 자동계산. 전년 데이터 없으면 None."""
@@ -1538,7 +1570,8 @@ def _auto_calc_tm(brand_name: str, store_name: str, month_key: str):
         prev_yr_key = f"{int(yr)-1}_{mo}"
     except Exception:
         return None
-    prev_yr = PREV_YEAR_MONTHLY_SALES.get(store_name, {}).get(prev_yr_key, {}).get(brand_name)
+    b_norm = normalize_brand_name(brand_name)
+    prev_yr = PREV_YEAR_MONTHLY_SALES.get(store_name, {}).get(prev_yr_key, {}).get(b_norm)
     if not prev_yr or prev_yr <= 0:
         return None
     return float(prev_yr * 1.3)
@@ -1559,41 +1592,42 @@ def get_tm(brand_name: str, store_name: str = None, month: str = None) -> float:
       7. DEFAULT_TM
     """
     key = _normalize_month_key(month) if month else None
+    b_norm = normalize_brand_name(brand_name) if brand_name else None
 
     # 1순위: 전년동월 × 1.3 자동계산 (가장 정확한 동월 비교 기반)
-    if store_name and key:
-        auto = _auto_calc_tm(brand_name, store_name, key)
+    if store_name and key and b_norm:
+        auto = _auto_calc_tm(b_norm, store_name, key)
         if auto is not None:
             return auto
 
     # 2순위: MONTHLY_TM 명시 설정 (전년 데이터 없는 브랜드 직접 입력값)
-    if store_name and key:
-        val = MONTHLY_TM.get(store_name, {}).get(key, {}).get(brand_name)
+    if store_name and key and b_norm:
+        val = MONTHLY_TM.get(store_name, {}).get(key, {}).get(b_norm)
         if val:
             return float(val)
 
     # 3순위: MONTHLY_TM 최근월 fallback
-    if store_name and key:
+    if store_name and key and b_norm:
         store_monthly = MONTHLY_TM.get(store_name, {})
         if store_monthly:
             for fallback_key in sorted(store_monthly.keys(), reverse=True):
-                fb_val = store_monthly[fallback_key].get(brand_name)
+                fb_val = store_monthly[fallback_key].get(b_norm)
                 if fb_val:
                     return float(fb_val)
 
     # 4순위: 지점별 기본값 (M 단위 → 원 변환)
-    if store_name and store_name in STORE_BRAND_TM:
-        val = STORE_BRAND_TM[store_name].get(brand_name)
+    if store_name and store_name in STORE_BRAND_TM and b_norm:
+        val = STORE_BRAND_TM[store_name].get(b_norm)
         if val is not None:
             return float(val) * 1_000_000
 
     # 5순위: 브랜드 기본값
-    if brand_name in BRAND_DEFAULT_TM:
-        return float(BRAND_DEFAULT_TM[brand_name]) * 1_000_000
+    if b_norm and b_norm in BRAND_DEFAULT_TM:
+        return float(BRAND_DEFAULT_TM[b_norm]) * 1_000_000
 
     # 6순위: 전월 × 1.3 (PREV_MONTH_SALES 기반)
-    if store_name:
-        prev_mo = PREV_MONTH_SALES.get(store_name, {}).get(brand_name)
+    if store_name and b_norm:
+        prev_mo = PREV_MONTH_SALES.get(store_name, {}).get(b_norm)
         if prev_mo and prev_mo > 0:
             return float(prev_mo * 1.3)
 

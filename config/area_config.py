@@ -55,10 +55,23 @@ AREA_CONFIG = {
     "2001중계점": { "리스트": 10.1, "나이스클랍": 12.7 },
     "NC송파점": { "쉬즈미스": 17.2 },
     "동아쇼핑점": { "로엠": 18.0 },
-    "NC야탑점": { "베네통": 9.1, "시슬리": 15.2 },
     "NC강서점": { "JJ지고트": 13.5, "로엠": 32.0, "미쏘": 50.0 },
     "NC평촌점": { "바바팩토리": 27.4 }
 }
+
+def clean_store_name(name: str) -> str:
+    """NC/뉴코아/동아/2001 수식어를 완벽하게 박멸하는 표준 유틸리티"""
+    if not name:
+        return ""
+    name = str(name).strip()
+    for prefix in ["NC", "뉴코아", "동아", "2001"]:
+        if name.startswith(prefix):
+            name = name[len(prefix):].strip()
+    return name
+
+# [v162] 로딩 시점에 지점명 키를 정화하여 표준명으로 저장
+AREA_CONFIG = {clean_store_name(k): v for k, v in AREA_CONFIG.items()}
+
 
 def _normalize(name: str) -> str:
     """브랜드명에서 괄호 및 내부 텍스트, 공백 제거 (매칭용)"""
@@ -68,9 +81,10 @@ def _normalize(name: str) -> str:
     # 공백 및 영문 대소문자 통일
     return s.replace(' ', '').upper()
 
+
 def get_area(store_name: str, brand_name: str) -> float:
     """지점 및 브랜드에 해당하는 평수를 반환합니다. (괄호 내용 무시 매칭 지원)"""
-    store_cfg = AREA_CONFIG.get(store_name, {})
+    store_cfg = AREA_CONFIG.get(clean_store_name(store_name), {})
     if not store_cfg:
         return 0.0
         

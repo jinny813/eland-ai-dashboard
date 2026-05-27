@@ -93,11 +93,23 @@ BRAND_STORE_TYPES = {
         "루이까스텔": "정상", "제이디엑스(JDX)": "정상", "팬텀": "정상",
     },
 }
+def clean_store_name(name: str) -> str:
+    """NC/뉴코아/동아/2001 수식어를 완벽하게 박멸하는 표준 유틸리티"""
+    if not name:
+        return ""
+    name = str(name).strip()
+    for prefix in ["NC", "뉴코아", "동아", "2001"]:
+        if name.startswith(prefix):
+            name = name[len(prefix):].strip()
+    return name
+
+# [v162] 로딩 시점에 지점명 키를 정화하여 표준명으로 저장
+BRAND_STORE_TYPES = {clean_store_name(k): v for k, v in BRAND_STORE_TYPES.items()}
 
 
 def get_store_type(store_name: str, brand_name: str):
     """config에 정의된 매장유형 반환. '#N/A' 또는 미정의 시 None 반환 (로직 오버라이드 없음)"""
-    raw = BRAND_STORE_TYPES.get(store_name, {}).get(brand_name)
+    raw = BRAND_STORE_TYPES.get(clean_store_name(store_name), {}).get(brand_name)
     if raw is None or raw == "#N/A":
         return None
     return raw
@@ -105,7 +117,7 @@ def get_store_type(store_name: str, brand_name: str):
 
 def get_display_label(store_name: str, brand_name: str, fallback: str = "") -> str:
     """화면 표시용 매장유형 레이블 반환"""
-    raw = BRAND_STORE_TYPES.get(store_name, {}).get(brand_name, fallback)
+    raw = BRAND_STORE_TYPES.get(clean_store_name(store_name), {}).get(brand_name, fallback)
     return _to_display(raw if raw else fallback)
 
 

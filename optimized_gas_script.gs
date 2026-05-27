@@ -78,6 +78,15 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // 4. 원시 데이터 고속 조회 (read_raw)
+    else if (action === "read_raw") {
+      var data = sheet.getDataRange().getValues();
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        data: data
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unknown action: " + action }))
       .setMimeType(ContentService.MimeType.JSON);
 

@@ -24,6 +24,9 @@ def init_db():
         discount_rate REAL,
         brand TEXT,
         keywords TEXT,
+        tag_price INTEGER DEFAULT 0,
+        predicted_online_price INTEGER,
+        predicted_discount_rate REAL,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)

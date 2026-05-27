@@ -5,14 +5,25 @@ main.py — Streamlit 메인 앱 v2
 - SmartBrandDetector 통합: 업로드 시 법인 자동 인식 결과 표시
 - 브랜드 scoring config 키를 '카테고리_매장유형_브랜드명' 형식으로 통일
 - 업로드 탭 UX 개선: 자동인식 → 확인 → 업로드 플로우
+- [v160] P1 뷰에 st.tabs() 적용: 대시보드 탭 / 노출/측정판 다운로드 탭 분리
 """
 
 import streamlit as st
 import json
 import sys
+import logging
 from datetime import datetime
 import pandas as pd
 import io
+
+import importlib
+
+logger = logging.getLogger(__name__)
+import core.report_generator
+from core.report_generator import dashboard_fingerprint
+
+# ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
+REPORT_VERSION = "v12"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -28,6 +39,86 @@ from core.data_manager import DataManager
 from database.gsheet_manager import GSheetManager
 
 
+def _json_default(o):
+    if hasattr(o, "__float__") and type(o).__module__ == "numpy":
+        return float(o)
+    return str(o)
+
+
+def serialize_dashboard_json(db_data: dict) -> str:
+    return json.dumps(db_data, ensure_ascii=False, default=_json_default)
+
+
+@st.cache_data(show_spinner="노출판 엑셀 생성 중...")
+def generate_optimized_excel(
+    store_filter: str,
+    cat_filter: str,
+    metrics_key: str,
+    data_fingerprint: str,
+    dashboard_json: str,
+    report_version: str = REPORT_VERSION,  # 버전 변경 시 캐시 자동 무효화
+):
+    del data_fingerprint, report_version  # 캐시 키로만 사용
+    if not dashboard_json:
+        return None
+    
+    # ── [v7] report_generator 모듈 강제 리로드하여 실시간 코드 수정 즉시 반영 ──
+    importlib.reload(core.report_generator)
+    
+    data = json.loads(dashboard_json)
+    metrics = [m.strip() for m in metrics_key.split(",") if m.strip()]
+    return core.report_generator.export_to_excel_bytes(
+        data=data,
+        store_filter=store_filter,
+        cat_filter=cat_filter,
+        metrics_filter=metrics or None,
+    )
+
+
+@st.cache_data(show_spinner="최신 데이터를 불러오는 중...")
+def _cached_load_internal(_mgr, max_no: int):
+    del max_no  # 캐시 키 자동 갱신 트리거로만 사용
+    from core.data_loader import load_dashboard_data
+    res = load_dashboard_data(mgr=_mgr)
+    if not res or "error" in res or not res.get("CATS") or not res.get("BRANDS"):
+        raise ValueError("No valid dashboard data")
+    return res
+
+
+@st.cache_data(ttl=180, show_spinner=False)
+def _cached_get_max_no(_mgr):
+    """[v167] _get_max_no 결과를 3분 캐싱하여 불필요한 GSheet HTTP 렉을 원천 차단"""
+    try:
+        val = _mgr._get_max_no()
+        return val if val and val > 0 else 1
+    except Exception:
+        return 1
+
+
+def cached_load_dashboard_data(mgr):
+    # [v170] max_no=0 (GAS 지연) 시 캐시를 강제 무효화하여 무한 로딩이 걸리는 치명적 구조 제거
+    max_no = _cached_get_max_no(mgr)
+    
+    # 세션 상태에 마지막으로 성공한 로드 데이터가 있다면 네트워크 조회를 하지 않고 즉시 반환하여 극단적 로딩 속도 보장
+    if 'last_valid_dashboard_data' in st.session_state and st.session_state.last_valid_dashboard_data:
+        return st.session_state.last_valid_dashboard_data
+        
+    try:
+        res = _cached_load_internal(mgr, max_no)
+        st.session_state.last_valid_dashboard_data = res
+        return res
+    except Exception as e:
+        logger.error(f"[Cache] 로드 실패: {e}. 백업 로컬 조회를 시도합니다.")
+        from core.data_loader import load_dashboard_data
+        res = load_dashboard_data(mgr=mgr)
+        if res and "error" not in res:
+            st.session_state.last_valid_dashboard_data = res
+            return res
+        return {"error": "데이터 로드 실패"}
+
+
+
+
 def parse_text_to_df(text_data: str) -> pd.DataFrame:
     """텍스트 붙여넣기(Tab 구분) → DataFrame 변환"""
     if not text_data.strip():
@@ -39,7 +130,6 @@ def parse_text_to_df(text_data: str) -> pd.DataFrame:
         return None
 
 
-# [v65.0] 캐시로 인한 로직 지연 방지를 위해 캐싱 해제
 def get_gsheet_manager():
     """[v100.4] 매번 최신 로직을 반영하도록 객체 생성 시 시트명을 명시적으로 지정"""
     return GSheetManager(sheet_name="Records")
@@ -69,7 +159,7 @@ def main():
     if 'overwrite_approval' not in st.session_state:
         st.session_state.overwrite_approval = {}
 
-    # [v112.0] 브랜드 맵핑 데이터를 최상단 전역 수준으로 이동하여 안정성 확보
+    # [v112.0] 브랜드 맵핑 데이터
     CATEGORY_BRAND_MAP = {
         "여성": [
             "로엠 (정상)", "미쏘 (정상)", "더아이잗 (정상)", "에잇컨셉 (정상)",
@@ -84,7 +174,7 @@ def main():
         ]
     }
 
-    # [v90.0] 프리미엄 UI 설정: 사이드바 기본 축소 및 와이드 모드
+    # [v90.0] 프리미엄 UI 설정
     st.set_page_config(
         page_title="E·LAND AI 상품구색 진단 시스템",
         page_icon="🎯",
@@ -92,48 +182,122 @@ def main():
         initial_sidebar_state="collapsed"
     )
 
-    # ━━━ CSS Injection: Streamlit 기본 UI 강제 숨김 및 여백 제거 ━━━
+    # ━━━ CSS Injection ━━━
     st.markdown("""
         <style>
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
         footer {visibility: hidden;}
-        /* 메인 내용 영역 여백 제거 */
         .block-container {
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
             padding-left: 0rem !important;
             padding-right: 0rem !important;
         }
-        /* Iframe(대시보드)을 화면에 꽉 차게 설정하되, 최소 높이만 지정하여 스크롤 허용 */
         iframe {
             width: 100vw !important;
             min-height: 100vh !important;
             border: none !important;
         }
-        /* 사이드바 너비 조정 및 스타일 */
         [data-testid="stSidebar"] {
             background-color: #f8f9fa;
         }
-        /* 스크롤 가로막는 요소 해제 */
         [data-testid="stAppViewContainer"] {
             overflow-y: auto !important;
         }
         .main {
             overflow: visible !important;
         }
+        /* 탭 스타일 프리미엄 개선 */
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 8px;
+            padding: 8px 16px 8px 16px;
+            background: #ffffff;
+            border-bottom: 2px solid #E30019; /* 이랜드 브랜드 레드 컬러 */
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            font-weight: 700;
+            font-size: 14px;
+            color: #4B5563;
+            border-radius: 4px;
+            padding: 8px 16px;
+            transition: all 0.2s ease-in-out;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+            color: #E30019;
+            background: #FEF2F2;
+        }
+        [data-testid="stTabs"] [aria-selected="true"] {
+            color: #E30019 !important;
+            background: #FEF2F2 !important;
+        }
         </style>
     """, unsafe_allow_html=True)
 
     check_mgr = get_gsheet_manager()
 
-    # ━━━ 사이드바 네비게이션 ━━━
+    # ━━━ 사이드바 네비게이션 역할 분리 ━━━
+    # 기본은 대시보드만 공개, URL에 ?role=admin이 있거나 비밀 패스코드를 입력하면 관리자 기능 활성화
+    is_admin = st.query_params.get("role") == "admin"
+    
+    # 세션 상태로 관리자 모드 유지
+    if "admin_mode" not in st.session_state:
+        st.session_state.admin_mode = is_admin
+
+    menu_options = ["📊 실시간 대시보드"]
+    
+    if st.session_state.admin_mode:
+        menu_options += [
+            "📤 데이터 업로드",
+            "📂 RAW 데이터 업로드",
+            "📄 노출/측정판 다운로드",
+        ]
+
     with st.sidebar:
         st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/E-Land_Group_logo.svg/1024px-E-Land_Group_logo.svg.png", width=120)
-        st.title("Admin Menu")
-        menu = st.radio("이동", ["📊 실시간 대시보드", "📤 데이터 업로드", "📄 노출판 다운로드", "📂 RAW 데이터 업로드"], label_visibility="collapsed")
+        
+        if st.session_state.admin_mode:
+            st.title("Admin Menu")
+        else:
+            st.title("Dashboard Menu")
+
+        menu = st.radio(
+            "이동",
+            menu_options,
+            index=0,
+            label_visibility="collapsed",
+        )
         st.markdown("---")
+        
+        # 관리자 비밀 모드 진입용 패스워드 (비밀코드: elandkpi!)
+        if not st.session_state.admin_mode:
+            with st.expander("🔐 관리자 모드"):
+                passkey = st.text_input("접속 비밀번호", type="password", key="admin_passkey")
+                if passkey == "elandkpi!":
+                    st.session_state.admin_mode = True
+                    st.success("관리자 권한 획득!")
+                    st.rerun()
+        else:
+            if st.button("🔒 관리자 로그아웃", use_container_width=True):
+                st.session_state.admin_mode = False
+                st.query_params.clear()
+                st.rerun()
+
+        # [v7.1] 캐시 강제 초기화 버튼 (관리자 전용 노출)
+        if st.session_state.admin_mode:
+            if st.button("🔄 캐시 초기화 (신규 지점 반영)", use_container_width=True):
+                st.cache_data.clear()
+                if 'last_valid_dashboard_data' in st.session_state:
+                    del st.session_state['last_valid_dashboard_data']
+                st.success("✅ 캐시 초기화 완료! 페이지를 새로고침하세요.")
+                st.rerun()
+        
         st.caption(f"DB Connected: {check_mgr.is_connected}")
+
+
 
     # ────────────────────────────────────────────
     # 뷰 1: 실시간 대시보드 (기본 화면)
@@ -142,32 +306,122 @@ def main():
         if not check_mgr.is_connected:
             st.error("구글 시트 연동 오류입니다.")
         else:
-            # 데이터 로드 및 렌더링 (자동 실행)
             try:
-                from core.data_loader import load_dashboard_data
                 import streamlit.components.v1 as components
-                
-                db_data = load_dashboard_data(mgr=check_mgr)
+
+                db_data = cached_load_dashboard_data(check_mgr)
 
                 if "error" in db_data:
                     st.error(f"❌ 데이터 빌드 실패: {db_data['error']}")
                 elif not db_data.get("CATS"):
                     st.info("현재 데이터가 없습니다. 데이터를 업로드해 주세요.")
                 else:
-                    template_path = "ui/dashboard_template.html"
-                    with open(template_path, "r", encoding="utf-8") as f:
-                        html_template = f.read()
+                    data_fp = dashboard_fingerprint(db_data)
+                    dashboard_json = serialize_dashboard_json(db_data)
 
-                    data_json = json.dumps(db_data, ensure_ascii=False, default=lambda o: float(o) if hasattr(o, '__float__') and type(o).__module__ == 'numpy' else str(o))
-                    script_inject = f"<script>window.__INITIAL_DATA__ = {data_json};</script>"
-                    final_html = html_template.replace('<script>', script_inject + '<script>', 1)
+                    # ── [역할 분리] 일반 사용자는 대시보드 탭 자체를 노출하지 않고 즉시 렌더링 ──
+                    if st.session_state.admin_mode:
+                        tab_dash, tab_dl = st.tabs(["📊 대시보드", "📄 노출/측정판 다운로드"])
+                    else:
+                        tab_dash = st.container()
+                        tab_dl = None
 
-                    # 대시보드 Iframe 렌더링
-                    # [v145.0] 하단 잘림 방지: 높이 2400px로 대폭 확장 및 스크롤 활성화
-                    components.html(final_html, height=2400, scrolling=True)
-                    
-                    # 최하단 여백 추가 (스크롤 끝 도달 시 여유 확보)
-                    st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
+                    # ── 탭 1: 대시보드 iframe (마진 0px 화면 전체 꽉 차게 렌더링) ──
+                    with tab_dash:
+                        template_path = "ui/dashboard_template.html"
+                        with open(template_path, "r", encoding="utf-8") as f:
+                            html_template = f.read()
+
+                        stores_json = json.dumps(["전체 지점"] + db_data.get("STORES", []), ensure_ascii=False)
+                        cats_json = json.dumps(["전체 카테고리"] + db_data.get("CATS", []), ensure_ascii=False)
+                        script_inject = (
+                            f"<script>window.__INITIAL_DATA__ = {dashboard_json}; "
+                            f"window.__STORES__ = {stores_json}; window.__CATS__ = {cats_json};</script>"
+                        )
+                        final_html = html_template.replace("<script>", script_inject + "<script>", 1)
+                        components.html(final_html, height=2400, scrolling=True)
+                        st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
+
+                    # ── 탭 2: 노출/측정판 다운로드 (가장자리 여백 2.5rem 추가 확보) ──
+                    if tab_dl is not None:
+                        with tab_dl:
+                            st.markdown('<div style="padding: 2.5rem 2rem 2rem 2rem;">', unsafe_allow_html=True)
+                            st.markdown("#### 📄 노출/측정판 다운로드")
+                            st.caption("지점·카테고리·지표를 선택한 후 엑셀을 다운로드하세요.")
+                            st.markdown("---")
+                            # [v172] 라디오 버튼 제거 및 공식 st.tabs 서브탭 레이아웃 적용
+                            subtab_p1, subtab_p2 = st.tabs([
+                                "🏬 지점 요약 점수 다운로드 (P1 스타일)",
+                                "👚 브랜드 상세 노출판 다운로드 (P2 상세)"
+                            ])
+
+                            with subtab_p1:
+                                st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
+                                st.info("💡 카테고리를 선택하시면 지점별 상세 노출/측정 지표가 브랜드 항목 없이 집계되어 다운로드됩니다.")
+                                
+                                cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
+                                p1_cat = st.selectbox("👚 카테고리 선택 (P1)", cats, key="tab_dl_p1_cat")
+                                
+                                if st.button("🚀 요약 엑셀 파일 생성", key="tab_dl_p1_gen", use_container_width=True):
+                                    with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
+                                        import core.report_generator as rg
+                                        excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat)
+                                        dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                                        if excel_data:
+                                            st.success(f"✅ {dl_filename} 생성 완료!")
+                                            st.download_button(
+                                                label="📄 요약 엑셀 다운로드",
+                                                data=excel_data,
+                                                file_name=dl_filename,
+                                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                                use_container_width=True,
+                                            )
+                                        else:
+                                            st.warning("데이터가 없습니다.")
+                                st.markdown("</div>", unsafe_allow_html=True)
+
+                            with subtab_p2:
+                                st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
+                                stores = ["전체 지점"] + list(db_data.get("STORES", []))
+                                cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
+
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    sel_store = st.selectbox("🏬 지점 선택", stores, key="tab_dl_store")
+                                with col2:
+                                    sel_cat = st.selectbox("👚 카테고리 선택", cats, key="tab_dl_cat")
+
+                                sel_metrics = st.multiselect(
+                                    "📊 지표 선택",
+                                    ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                    default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                    key="tab_dl_metrics",
+                                )
+                                metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
+
+                                st.markdown("---")
+                                if st.button("🚀 상세 엑셀 파일 생성", key="tab_dl_gen", use_container_width=True):
+                                    excel_data = generate_optimized_excel(
+                                        sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
+                                    )
+                                    if excel_data:
+                                        now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                        dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                        st.success(f"✅ {dl_filename} 생성 완료!")
+                                        st.download_button(
+                                            label="📄 노출/측정판 엑셀 다운로드",
+                                            data=excel_data,
+                                            file_name=dl_filename,
+                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                            use_container_width=True,
+                                        )
+                                    else:
+                                        st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                                st.markdown("</div>", unsafe_allow_html=True)
+                            st.markdown('</div>', unsafe_allow_html=True)
+
+
+
             except Exception as e:
                 st.error(f"대시보드 생성 실패: {e}")
 
@@ -184,12 +438,30 @@ def main():
         col_store, col_cat = st.columns(2)
         with col_store:
             st.caption("🏬 1. 진단 지점")
-            store_list = [
-                'NC신구로점', 'NC강서점', 'NC송파점', 'NC불광점', 'NC고잔점', 
-                'NC평촌점', 'NC야탑점', 'NC청주점', '뉴코아강남점', '뉴코아부천점', 
-                '뉴코아인천점', '2001중계점', '2001분당점', '동아쇼핑점', 
-                '동아수성점', 'NC대전유성점'
-            ]
+            # [v162] clean_store_name 표준 유틸리티 로컬 정의
+            def clean_store_name(name: str) -> str:
+                if not name: return ""
+                name = str(name).strip()
+                for prefix in ["NC", "뉴코아", "동아", "2001"]:
+                    if name.startswith(prefix):
+                        name = name[len(prefix):].strip()
+                return name
+
+            # [v162] officemaster 동적 연동 및 지점명 리스트 추출
+            try:
+                df_office = check_mgr.load_office_master()
+                store_list = sorted(list(set(clean_store_name(s) for s in df_office['지점명'] if s)))
+            except Exception as e:
+                _fallback_raw = [
+                    'NC신구로점', 'NC강서점', 'NC송파점', 'NC불광점', 'NC고잔점',
+                    'NC평촌점', 'NC야탑점', 'NC청주점', '뉴코아강남점', '뉴코아부천점',
+                    '뉴코아인천점', '2001중계점', '2001분당점', '동아쇼핑점',
+                    '동아수성점', 'NC대전유성점', 'NC광명점', 'NC산본점',
+                    'NC일산점', 'NC부평점', '뉴코아동수원점', '뉴코아수원터미널점',
+                    'NC평택점', 'NC천호점'
+                ]
+                store_list = sorted(list(set(clean_store_name(s) for s in _fallback_raw)))
+
             raw = st.selectbox("지점", store_list,
                                index=None, placeholder="진단할 지점을 선택하세요...", label_visibility="collapsed")
             if raw: selected_store = raw
@@ -207,10 +479,9 @@ def main():
         with col_brand:
             st.caption("🏷️ 3. 대상 브랜드(매장유형)")
             if selected_category:
-                # 해당 카테고리의 브랜드 목록 가져오기
                 base_list = CATEGORY_BRAND_MAP.get(selected_category, [])
                 brand_list = base_list + ["직접 입력(범용)"]
-                
+
                 raw = st.selectbox("브랜드", brand_list, index=None, placeholder="브랜드를 선택하세요...", label_visibility="collapsed")
                 if raw:
                     if "(" in raw and "범용" not in raw:
@@ -218,7 +489,6 @@ def main():
                         selected_type = "정상" if "정상" in raw else "상설"
                     else:
                         selected_brand = raw
-                        # 범용 입력의 경우 지점별 특성에 맞게 직접 선택
                         selected_type = st.radio("매장 유형 선택", ["정상", "상설"], horizontal=True)
             else:
                 st.selectbox("브랜드", ["👈 카테고리를 먼저 선택하세요"], disabled=True, label_visibility="collapsed")
@@ -256,7 +526,7 @@ def main():
                         uf_inv = st.file_uploader(f"[{selected_brand}] 재고조회 파일", type=['xls', 'xlsx'], key=f"inv_{state_key}")
                     with col_sales:
                         uf_sales = st.file_uploader(f"[{selected_brand}] 판매조회 파일", type=['xls', 'xlsx'], key=f"sales_{state_key}")
-                    
+
                     if uf_inv:
                         try:
                             from core.smart_brand_detector import SmartBrandDetector
@@ -270,8 +540,8 @@ def main():
 
                 with subtab_text:
                     st.caption("💡 엑셀에서 헤더(첫 줄)를 포함하여 전체 범위를 복사해서 아래에 붙여넣으세요.")
-                    text_inv = st.text_area(f"[{selected_brand}] 재고 텍스트 (품번, 수량, 금액 등 포함)", height=150, help="엑셀의 '품번', '재고', '금액' 등이 포함된 영역을 복사해서 붙여넣으세요.")
-                    text_sales = st.text_area(f"[{selected_brand}] 판매 텍스트 (품번, 수량, 금액 등 포함)", height=150, help="판매 데이터가 없다면 빈칸으로 두셔도 되지만, 품번별 판매금액 분석을 위해 입력을 권장합니다.")
+                    text_inv = st.text_area(f"[{selected_brand}] 재고 텍스트 (품번, 수량, 금액 등 포함)", height=150)
+                    text_sales = st.text_area(f"[{selected_brand}] 판매 텍스트 (품번, 수량, 금액 등 포함)", height=150)
                     if text_inv:
                         inv_data = parse_text_to_df(text_inv)
                     if text_sales:
@@ -288,71 +558,25 @@ def main():
                                 if final_df is not None and not final_df.empty:
                                     if is_dup: is_saved = check_mgr.overwrite_record(final_df, selected_store, selected_brand, selected_month)
                                     else: is_saved = check_mgr.append_record(final_df)
-                                    
+
                                     if is_saved:
                                         st.success(f"🎊 {len(final_df)}행 저장 완료!")
-                                        # [v2.5] 업로드 데이터 프리뷰 추가
+                                        st.cache_data.clear()
                                         with st.expander("📊 업로드 데이터 미리보기 (상위 5행)", expanded=True):
                                             st.dataframe(final_df.head(5), use_container_width=True)
                                         st.session_state.overwrite_approval.pop(state_key, None)
-                                    else: 
+                                    else:
                                         st.error(f"DB 저장 실패: {check_mgr.error_msg}")
                         except Exception as e:
                             st.error(f"오류: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
 
-
     # ────────────────────────────────────────────
-    # 뷰 3: 노출판 다운로드 (P3)
-    # ────────────────────────────────────────────
-    elif menu == "📄 노출판 다운로드":
-        st.title("📄 노출판 다운로드 (P3)")
-        st.info("지점 및 카테고리별 상품구색 진단 결과(노출판)를 엑셀로 추출합니다.")
-        st.markdown("---")
-        
-        try:
-            from core.data_loader import load_dashboard_data
-            from core.report_generator import export_to_excel_bytes
-            
-            with st.spinner("최신 데이터를 불러오는 중..."):
-                db_data = load_dashboard_data(mgr=check_mgr)
-            
-            if "error" in db_data:
-                st.error(f"데이터 로드 실패: {db_data['error']}")
-            else:
-                col1, col2 = st.columns(2)
-                stores = ["전체 지점"] + db_data.get("STORES", [])
-                cats = ["전체 카테고리"] + db_data.get("CATS", [])
-                
-                with col1:
-                    sel_store = st.selectbox("추출 대상 지점 선택", stores)
-                with col2:
-                    sel_cat = st.selectbox("추출 대상 카테고리 선택", cats)
-                
-                st.markdown("### 🛠 보고서 생성")
-                if st.button("🚀 엑셀 보고서 생성 및 다운로드 준비", use_container_width=True):
-                    with st.spinner("엑셀 파일을 생성하고 있습니다..."):
-                        excel_data = export_to_excel_bytes(data=db_data, store_filter=sel_store, cat_filter=sel_cat)
-                        if excel_data:
-                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
-                            dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
-                            st.success(f"✅ {dl_filename} 생성 완료!")
-                            st.download_button(
-                                label="💾 생성된 엑셀 파일 다운로드",
-                                data=excel_data,
-                                file_name=dl_filename,
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                use_container_width=True
-                            )
-        except Exception as e:
-            st.error(f"보고서 생성 오류: {e}")
-
-    # ────────────────────────────────────────────
-    # 뷰 4: RAW 데이터 업로드 (P4)
+    # 뷰 3: RAW 데이터 업로드
     # ────────────────────────────────────────────
     elif menu == "📂 RAW 데이터 업로드":
         st.markdown("<div style='padding: 2rem;'>", unsafe_allow_html=True)
-        st.title("📂 RAW 데이터 업로드 (P4)")
+        st.title("📂 RAW 데이터 업로드")
         st.subheader("상품 정보 입력 RAW")
         st.info("스타일 마스터 및 상품 기준 정보를 업로드하여 시스템의 자동 인식 기능을 강화합니다.")
         st.markdown("---")
@@ -362,24 +586,19 @@ def main():
         with subtab_file:
             st.caption("💡 품번, 상품명, 복종, 소재 등이 포함된 엑셀 파일을 업로드하세요.")
             master_file = st.file_uploader("상품 마스터 엑셀 업로드", type=['xls', 'xlsx'], key="master_upload")
-            
+
             if master_file:
                 try:
                     df_master = pd.read_excel(master_file)
                     st.write("업로드 데이터 미리보기:")
                     st.dataframe(df_master.head(5), use_container_width=True)
-                    
+
                     if st.button("마스터 DB 반영 (Bulk)", type="primary"):
                         with st.spinner("상품 정보를 정규화하여 DB에 반영 중..."):
-                            # [v150.0] DB 반영 로직 호출 (핵심 컬럼 정규화)
                             import sqlite3
                             db_path = "database/product_master.db"
                             conn = sqlite3.connect(db_path)
-                            
-                            # 컬럼명 맵핑 (업로드 파일 -> DB)
-                            # 간단한 예시로 style_code, product_name, category 등 매칭 시도
                             df_db = df_master.copy()
-                            # 실제로는 컬럼명 정규화 로직 필요
                             df_db.to_sql('products', conn, if_exists='append', index=False)
                             conn.close()
                             st.success(f"{len(df_db)}건의 상품 정보가 성공적으로 반영되었습니다.")
@@ -391,7 +610,7 @@ def main():
             style_input = st.text_input("스타일 코드(품번)")
             name_input = st.text_input("상품명")
             cat_input = st.selectbox("카테고리", ["여성", "스포츠", "신사", "아동", "캐주얼", "잡화"])
-            
+
             if st.button("개별 정보 업데이트"):
                 if not style_input:
                     st.warning("스타일 코드를 입력하세요.")
@@ -410,6 +629,103 @@ def main():
                     except Exception as e:
                         st.error(f"DB 업데이트 실패: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
+
+    # ────────────────────────────────────────────
+    # 뷰 4: 노출/측정판 다운로드 (독립 화면)
+    # ────────────────────────────────────────────
+    elif menu == "📄 노출/측정판 다운로드":
+        st.title("📄 노출/측정판 다운로드")
+        st.caption("지점 카테고리 지표 요약을 선택하여 엑셀 보고서를 다운로드합니다.")
+        st.markdown("---")
+
+        if not check_mgr.is_connected:
+            st.error("구글 시트 연동 오류입니다.")
+        else:
+            try:
+                db_data = cached_load_dashboard_data(check_mgr)
+
+                if "error" in db_data:
+                    st.error(f"데이터 로드 실패: {db_data['error']}")
+                elif not db_data.get("BRANDS"):
+                    st.info("현재 데이터가 없습니다. 데이터를 업로드해 주세요.")
+                else:
+                    data_fp = dashboard_fingerprint(db_data)
+                    dashboard_json = serialize_dashboard_json(db_data)
+
+                    # [v172] 라디오 버튼 제거 및 공식 st.tabs 서브탭 레이아웃 적용
+                    subtab_p1, subtab_p2 = st.tabs([
+                        "🏬 지점 요약 점수 다운로드 (P1 스타일)",
+                        "👚 브랜드 상세 노출판 다운로드 (P2 상세)"
+                    ])
+
+                    with subtab_p1:
+                        st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
+                        st.info("💡 카테고리를 선택하시면 지점별 상세 노출/측정 지표가 브랜드 항목 없이 집계되어 다운로드됩니다.")
+                        
+                        cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
+                        p1_cat = st.selectbox("👚 카테고리 선택 (P1)", cats, key="p4_tab_dl_p1_cat")
+                        
+                        if st.button("🚀 요약 엑셀 파일 생성", key="p4_gen_p1_tab", use_container_width=True):
+                            with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
+                                import core.report_generator as rg
+                                excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat)
+                                dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                                if excel_data:
+                                    st.success(f"✅ {dl_filename} 생성 완료!")
+                                    st.download_button(
+                                        label="📄 요약 엑셀 다운로드",
+                                        data=excel_data,
+                                        file_name=dl_filename,
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        use_container_width=True,
+                                    )
+                                else:
+                                    st.error("엑셀 파일 생성 실패")
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                    with subtab_p2:
+                        st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
+                        col1, col2 = st.columns(2)
+                        stores = ["전체 지점"] + list(db_data.get("STORES", []))
+                        cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
+
+                        with col1:
+                            sel_store = st.selectbox("🏬 지점 선택", stores, key="p4_store")
+                        with col2:
+                            sel_cat = st.selectbox("👚 카테고리 선택", cats, key="p4_cat")
+
+                        sel_metrics = st.multiselect(
+                            "📊 지표 선택",
+                            ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                            default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                            key="p4_metrics",
+                        )
+                        metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
+
+                        st.markdown("---")
+                        if st.button("🚀 상세 엑셀 파일 생성", key="p4_gen_detail_tab", use_container_width=True):
+                            with st.spinner("브랜드 상세 노출판 엑셀 생성 중..."):
+                                excel_data = generate_optimized_excel(
+                                    sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
+                                )
+                                now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                if excel_data:
+                                    st.success(f"✅ {dl_filename} 생성 완료!")
+                                    st.download_button(
+                                        label="📄 노출/측정판 엑셀 다운로드",
+                                        data=excel_data,
+                                        file_name=dl_filename,
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        use_container_width=True,
+                                    )
+                                else:
+                                    st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                        st.markdown("</div>", unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"보고서 생성 오류: {e}")
+
+
 
 if __name__ == "__main__":
     main()

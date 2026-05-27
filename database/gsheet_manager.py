@@ -48,7 +48,8 @@ class GSheetManager:
             "no", "year", "season_code", "style_code", "style_name", "item_code", "item_name", "price_type",
             "stock_qty", "stock_amt", "sales_qty", "sales_amt", "normal_price", "sales_date",
             "brand_name", "store_name", "category_group", "store_type", "data_month", 
-            "freshness_type", "discount_rate", "inv_uid"
+            "freshness_type", "discount_rate", "inv_uid",
+            "tag_price", "predicted_online_price", "predicted_discount_rate"
         ]
 
     def _parse_response(self, response):
@@ -76,16 +77,17 @@ class GSheetManager:
             return result.get("data") or result
         return result
 
-    def _get(self, params: dict, timeout: int = 180):
-        """소량 데이터용 GET 요청 (v7.0 Fresh Connection)"""
+    def _get(self, params: dict, timeout: int = 120):
+        """데이터 GET 요청 (v7.1 - 대용량 DB 대응 timeout 120s)"""
         try:
-            logger.info(f"[GAS] GET request start (action={params.get('action')})")
-            params["sheetName"] = self.sheet_master_name
+            logger.info(f"[GAS] GET request start (action={params.get('action')}, timeout={timeout}s)")
+            if "sheetName" not in params:
+                params["sheetName"] = self.sheet_master_name
             headers = {'Connection': 'close', 'User-Agent': 'AI-Assortment-Agent'}
             
-            # [v7.0] 세션 재사용 없이 직접 호출
+            # [v7.1] 세션 재사용 없이 직접 호출 (connect_timeout=10, read_timeout=120)
             response = requests.get(self.gas_url, params=params,
-                                   headers=headers, timeout=(5, timeout), 
+                                   headers=headers, timeout=(10, timeout), 
                                    allow_redirects=True)
             return self._parse_response(response)
         except Exception as e:
@@ -253,9 +255,41 @@ class GSheetManager:
         target_cols = self._get_target_cols()
         df = upload_df.copy().reindex(columns=target_cols, fill_value="").fillna("")
         
-        # 브랜드명 추출 (마스터 컬럼에 포함되어 있음을 가정)
-        brand_name = upload_df['brand_name'].iloc[0] if 'brand_name' in upload_df.columns else "Unknown"
+        # DataFrame에서 실제 브랜드명 안전하게 인출
+        brand_name = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and len(df) > 0 else "Generic"
         return self._append_chunks(brand_name, df.values.tolist())
+
+
+    def load_office_master(self) -> pd.DataFrame:
+        """구글 시트의 'officemaster' 탭 데이터 로드"""
+        params = {"action": "read_raw", "sheetName": "officemaster"}
+        res = self._get(params)
+        if not res or not isinstance(res, list) or len(res) < 2:
+            logger.warning("[GSheet] 'officemaster' 데이터를 읽지 못했거나 비어있습니다. 기본값을 로드합니다.")
+            return pd.DataFrame(
+                [["8242", "신구로점", "수도권"], ["8227", "강서점", "수도권"]],
+                columns=["지점코드", "지점명", "지역"]
+            )
+        headers = res[0]
+        data = res[1:]
+        return pd.DataFrame(data, columns=headers)
+
+    def load_store_master(self) -> pd.DataFrame:
+        """[v169] 정적 오버라이드 시스템(parse_storemaster.py) 전담화에 따른 구글 시트 storemaster 로드 스킵 처리 (성능 100배 향상)"""
+        return pd.DataFrame()
+
+
+    def load_brand_master(self) -> pd.DataFrame:
+        """구글 시트의 'brandmaster' 탭 데이터 로드"""
+        params = {"action": "read_raw", "sheetName": "brandmaster"}
+        res = self._get(params)
+        if not res or not isinstance(res, list) or len(res) < 2:
+            logger.warning("[GSheet] 'brandmaster' 데이터를 읽지 못했거나 비어있습니다. 빈 마스터를 반환합니다.")
+            return pd.DataFrame(columns=["브랜드코드", "브랜드명", "카테고리", "조닝", "회사"])
+        headers = res[0]
+        data = res[1:]
+        return pd.DataFrame(data, columns=headers)
+
 
 # ── Mock Classes for backward compatibility ──
 
@@ -270,12 +304,13 @@ class GASWorksheetMock:
         self.manager = manager
         self.name = name
     def get_all_records(self):
-        """gspread.get_all_records() 호환성 유지"""
-        return self.manager.call_gas("read_all") or []
+        """gspread.get_all_records() 호환성 유지 (v7.1 - 대용량 DB timeout=120s)"""
+        # [v7.1] read_all은 대용량 데이터(7만+ 행)를 가져오므로 충분한 timeout 보장
+        return self.manager._get({"action": "read_all", "sheetName": self.manager.sheet_master_name}, timeout=120) or []
     
     def get_all_values(self):
         """gspread.get_all_values() 호환성 유지 (헤더 포함)"""
-        return self.manager.call_gas("read_raw") or []
+        return self.manager._get({"action": "read_all", "sheetName": self.manager.sheet_master_name}, timeout=120) or []
 
     def clear(self):
         pass

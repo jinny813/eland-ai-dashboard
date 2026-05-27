@@ -1794,22 +1794,26 @@
                   <select id="ux_store" onchange="onUxStep(1)"
                     style="width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:14px; background:#fff; cursor:pointer;">
                     <option value="" disabled selected>선택...</option>
-                    <option>NC신구로점</option>
-                    <option>NC강서점</option>
-                    <option>NC송파점</option>
-                    <option>NC불광점</option>
-                    <option>NC고잔점</option>
-                    <option>NC평촌점</option>
-                    <option>NC야탑점</option>
-                    <option>NC청주점</option>
-                    <option>뉴코아강남점</option>
-                    <option>뉴코아부천점</option>
-                    <option>뉴코아인천점</option>
-                    <option>2001중계점</option>
-                    <option>2001분당점</option>
-                    <option>동아쇼핑점</option>
-                    <option>동아수성점</option>
-                    <option>NC대전유성점</option>
+                    <option>강남점</option>
+                    <option>강서점</option>
+                    <option>고잔점</option>
+                    <option>광명점</option>
+                    <option>동수원점</option>
+                    <option>분당점</option>
+                    <option>불광점</option>
+                    <option>부천점</option>
+                    <option>부평점</option>
+                    <option>산본점</option>
+                    <option>송파점</option>
+                    <option>수원터미널점</option>
+                    <option>신구로점</option>
+                    <option>야탑점</option>
+                    <option>인천점</option>
+                    <option>일산점</option>
+                    <option>중계점</option>
+                    <option>천호점</option>
+                    <option>평택점</option>
+                    <option>평촌점</option>
                   </select>
                 </div>
                 <div>
@@ -2258,7 +2262,7 @@
       tb.innerHTML = '';
       STORES.forEach(st => {
         let badgeHtml = '';
-        if (st === 'NC신구로점' || st === '뉴코아부천점') {
+        if (st === '신구로점' || st === '부천점') {
           badgeHtml = `<span style="background-color:#EF4444; color:white; font-size:10px; padding:2px 8px; border-radius:10px; margin-right:6px; font-weight:600; display:inline-block; vertical-align:middle;">진척중</span>`;
         }
         // 지점명 셀: 클릭 시 모달 오픈
@@ -3143,11 +3147,25 @@
     }
 
     function _loadData(d) {
-      CATS = d.CATS || CATS; STORES = d.STORES || []; scoreData = d.scoreData || {};
+      CATS = d.CATS || CATS; scoreData = d.scoreData || {};
+      STORES = d.STORES || [];
       BRANDS = d.BRANDS || []; DETAIL = d.DETAIL || {};
       BP_DETAIL = d.BP_DETAIL || {}; BEST_ITEMS = d.BEST_ITEMS || {};
       ACTION_PLAN = d.ACTION_PLAN || {};
       SCORING_GUIDE = d.SCORING_GUIDE || {};
+      
+      // [v178] 가장 카테고리가 많은 지점(부천점, 신구로점 등)이 리스트 최상단에 오도록 정렬
+      if (STORES.length) {
+        STORES.sort((a, b) => {
+          const countA = (scoreData[a] || []).filter(v => v > 0).length;
+          const countB = (scoreData[b] || []).filter(v => v > 0).length;
+          if (countA !== countB) {
+            return countB - countA; // 내림차순
+          }
+          return a.localeCompare(b, 'ko'); // 가나다순
+        });
+      }
+      
       if (BRANDS.length) currentBrand = BRANDS[0];
     }
 

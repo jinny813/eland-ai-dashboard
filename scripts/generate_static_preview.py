@@ -42,7 +42,7 @@ try:
     with open(preview_path, "w", encoding="utf-8") as f:
         f.write(final_html)
         
-    print(f"🎉 성공! 프리뷰 파일이 생성되었습니다: {os.path.abspath(preview_path)}")
+    print(f"[SUCCESS] 성공! 프리뷰 파일이 생성되었습니다: {os.path.abspath(preview_path)}")
     print("브라우저에서 이 파일을 열어 대시보드를 확인하세요.")
 
 except Exception as e:

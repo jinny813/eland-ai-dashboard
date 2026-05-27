@@ -1664,6 +1664,35 @@
             </div>
             <div class="section-sub">점수 클릭 → 지점 분석 | 브랜드 행 클릭 → 브랜드 상세</div>
           </div>
+
+          <div id="dl-modal-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeDownloadModal()">
+            <div style="background:#fff;border-radius:20px;padding:36px 40px;width:520px;max-width:90vw;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+                <div style="font-size:18px;font-weight:900;color:#111;">📄 측정/노출판 다운로드</div>
+                <button type="button" onclick="closeDownloadModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94A3B8;">✕</button>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div>
+                  <div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:8px;">🏬 지점</div>
+                  <select id="dl-store-sel" style="width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-family:inherit;font-size:13px;"></select>
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:8px;">👚 카테고리</div>
+                  <select id="dl-cat-sel" style="width:100%;padding:10px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-family:inherit;font-size:13px;"></select>
+                </div>
+              </div>
+              <div style="margin-bottom:24px;">
+                <div style="font-size:12px;font-weight:800;color:#374151;margin-bottom:10px;">📊 지표</div>
+                <div id="dl-metrics-wrap" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+              </div>
+              <button type="button" onclick="confirmDownload()" style="width:100%;background:#E30019;color:#fff;border:none;border-radius:12px;padding:14px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;">🚀 엑셀 다운로드</button>
+            </div>
+          </div>
+          <style>
+            .dl-metric-chip { padding:8px 16px; border-radius:20px; font-size:12px; font-weight:800; cursor:pointer; border:2px solid #E5E7EB; background:#F9FAFB; color:#374151; user-select:none; }
+            .dl-metric-chip.active { background:#1D1E1E; color:#fff; border-color:#1D1E1E; }
+          </style>
+
           <div class="card" style="overflow-x:auto;">
             <table class="table-wrap">
               <thead>
@@ -1794,22 +1823,26 @@
                   <select id="ux_store" onchange="onUxStep(1)"
                     style="width:100%; padding:12px 16px; border:1px solid #D1D5DB; border-radius:12px; font-family:inherit; font-size:14px; background:#fff; cursor:pointer;">
                     <option value="" disabled selected>선택...</option>
-                    <option>NC신구로점</option>
-                    <option>NC강서점</option>
-                    <option>NC송파점</option>
-                    <option>NC불광점</option>
-                    <option>NC고잔점</option>
-                    <option>NC평촌점</option>
-                    <option>NC야탑점</option>
-                    <option>NC청주점</option>
-                    <option>뉴코아강남점</option>
-                    <option>뉴코아부천점</option>
-                    <option>뉴코아인천점</option>
-                    <option>2001중계점</option>
-                    <option>2001분당점</option>
-                    <option>동아쇼핑점</option>
-                    <option>동아수성점</option>
-                    <option>NC대전유성점</option>
+                    <option>강남점</option>
+                    <option>강서점</option>
+                    <option>고잔점</option>
+                    <option>광명점</option>
+                    <option>동수원점</option>
+                    <option>분당점</option>
+                    <option>불광점</option>
+                    <option>부천점</option>
+                    <option>부평점</option>
+                    <option>산본점</option>
+                    <option>송파점</option>
+                    <option>수원터미널점</option>
+                    <option>신구로점</option>
+                    <option>야탑점</option>
+                    <option>인천점</option>
+                    <option>일산점</option>
+                    <option>중계점</option>
+                    <option>천호점</option>
+                    <option>평택점</option>
+                    <option>평촌점</option>
                   </select>
                 </div>
                 <div>
@@ -2258,7 +2291,7 @@
       tb.innerHTML = '';
       STORES.forEach(st => {
         let badgeHtml = '';
-        if (st === 'NC신구로점' || st === '뉴코아부천점') {
+        if (st === '신구로점' || st === '부천점') {
           badgeHtml = `<span style="background-color:#EF4444; color:white; font-size:10px; padding:2px 8px; border-radius:10px; margin-right:6px; font-weight:600; display:inline-block; vertical-align:middle;">진척중</span>`;
         }
         // 지점명 셀: 클릭 시 모달 오픈
@@ -3143,11 +3176,25 @@
     }
 
     function _loadData(d) {
-      CATS = d.CATS || CATS; STORES = d.STORES || []; scoreData = d.scoreData || {};
+      CATS = d.CATS || CATS; scoreData = d.scoreData || {};
+      STORES = d.STORES || [];
       BRANDS = d.BRANDS || []; DETAIL = d.DETAIL || {};
       BP_DETAIL = d.BP_DETAIL || {}; BEST_ITEMS = d.BEST_ITEMS || {};
       ACTION_PLAN = d.ACTION_PLAN || {};
       SCORING_GUIDE = d.SCORING_GUIDE || {};
+      
+      // [v178] 가장 카테고리가 많은 지점(부천점, 신구로점 등)이 리스트 최상단에 오도록 정렬
+      if (STORES.length) {
+        STORES.sort((a, b) => {
+          const countA = (scoreData[a] || []).filter(v => v > 0).length;
+          const countB = (scoreData[b] || []).filter(v => v > 0).length;
+          if (countA !== countB) {
+            return countB - countA; // 내림차순
+          }
+          return a.localeCompare(b, 'ko'); // 가나다순
+        });
+      }
+      
       if (BRANDS.length) currentBrand = BRANDS[0];
     }
 
@@ -3176,11 +3223,59 @@
         `<div class="alert-box"><div class="alert-icon">!</div><div class="alert-text">${msg}</div></div>`;
     }
 
+    const DL_METRICS = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
+    let _dlModalReady = false;
+
+    function _initDownloadModal() {
+      if (_dlModalReady) return;
+      const stores = window.__STORES__ || ['전체 지점', ...(STORES || [])];
+      const cats = window.__CATS__ || ['전체 카테고리', ...(CATS || [])];
+      const storeSel = document.getElementById('dl-store-sel');
+      const catSel = document.getElementById('dl-cat-sel');
+      const wrap = document.getElementById('dl-metrics-wrap');
+      if (!storeSel || !catSel || !wrap) return;
+      storeSel.innerHTML = stores.map(s => `<option value="${s}">${s}</option>`).join('');
+      catSel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+      wrap.innerHTML = DL_METRICS.map(m =>
+        `<span class="dl-metric-chip active" data-metric="${m}" onclick="toggleDlMetric(this)">${m}</span>`
+      ).join('');
+      _dlModalReady = true;
+    }
+
+    function toggleDlMetric(el) { el.classList.toggle('active'); }
+    function openDownloadModal() {
+      _initDownloadModal();
+      const ov = document.getElementById('dl-modal-overlay');
+      if (ov) ov.style.display = 'flex';
+    }
+    function closeDownloadModal() {
+      const ov = document.getElementById('dl-modal-overlay');
+      if (ov) ov.style.display = 'none';
+    }
+    function confirmDownload() {
+      const store = document.getElementById('dl-store-sel')?.value || '전체 지점';
+      const cat = document.getElementById('dl-cat-sel')?.value || '전체 카테고리';
+      const active = document.querySelectorAll('#dl-metrics-wrap .dl-metric-chip.active');
+      const metrics = Array.from(active).map(el => el.dataset.metric).join(',');
+      if (!metrics) { alert('최소 1개 지표를 선택해 주세요.'); return; }
+      closeDownloadModal();
+      const params = new URLSearchParams({ dl_action: 'download', store, cat, metrics });
+      try {
+        const target = (window.top && window.top !== window) ? window.top : window.parent;
+        const u = new URL(target.location.href);
+        params.forEach((v, k) => u.searchParams.set(k, v));
+        target.location.href = u.toString();
+      } catch (e) {
+        alert('다운로드 연동 실패. 사이드바 P3 메뉴를 이용해 주세요.');
+      }
+    }
+
     async function init() {
       if (window.__INITIAL_DATA__) {
         const d = window.__INITIAL_DATA__;
         if (d.error) { _showError(`데이터 로드 실패 — ${d.error}`); return; }
         _loadData(d);
+        _initDownloadModal();
         updateP1MonthIndicator();
         buildMainTable(); renderBrandDetail();
         return;
@@ -3191,6 +3286,7 @@
           const d = await r.json();
           if (d.error) { _showError(`API 오류 — ${d.error}`); return; }
           _loadData(d);
+          _initDownloadModal();
           updateP1MonthIndicator();
         } else { _showError('API 서버 응답 없음.'); return; }
       } catch (e) { _showError('연결 실패.'); return; }

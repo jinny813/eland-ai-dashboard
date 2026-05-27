@@ -17,7 +17,7 @@ from core.scoring_logic import AssortmentScorer
 from config.scoring_config import SCORING_CONFIG, get_weights_by_category, get_category_guide
 from config.brand_targets import (
     get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES, MONTHLY_TM,
-    PREV_YEAR_MONTHLY_SALES, CURR_MONTH_ACTUALS,
+    PREV_YEAR_MONTHLY_SALES, CURR_MONTH_ACTUALS, normalize_brand_name,
 )
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
@@ -109,28 +109,40 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         df = pd.DataFrame(all_recs)
 
         # [v74.1] 공격적 데이터 정규화: 모든 텍스트 컬럼의 앞뒤 공백 강제 제거
-        # (인합 및 분류 성공률을 극대화)
         str_cols = ['brand_name', 'store_name', 'style_code', 'freshness_type', 'season_code', 'store_type', 'data_month']
         for c in str_cols:
             if c in df.columns:
                 df[c] = df[c].astype(str).str.strip()
 
         # Unicode NFC 정규화: GAS 응답의 한글이 NFD(조합형 자모)로 오는 경우 완성형으로 통일
-        if 'freshness_type' in df.columns:
-            df['freshness_type'] = df['freshness_type'].apply(lambda x: unicodedata.normalize('NFC', x))
+        for c in ['store_name', 'brand_name', 'freshness_type', 'category_group', 'data_month']:
+            if c in df.columns:
+                df[c] = df[c].apply(lambda x: unicodedata.normalize('NFC', str(x)).strip())
 
-        # [v74.6] 수치형 컬럼 강제 변환 (정렬 및 계산 오류 방지)
-        # stock_amt, stock_qty 등 컬럼에 콤마가 포함된 문자열이 섞여 있을 경우 sort_values 시 TypeError 발생 가능
+        # [v173] store_name 정규화: NC/뉴코아/동아/2001 수식어 제거 → 내부 키 통일
+        # DB에는 'NC불광점'으로 저장되어 있으나 scoring, storemaster 등 모든 로직은 '불광점' 기준
+        def _clean_store(name: str) -> str:
+            name = str(name).strip()
+            for prefix in ['NC', '뉴코아', '동아', '2001']:
+                if name.startswith(prefix):
+                    name = name[len(prefix):].strip()
+                    break
+            return name
+
+        if 'store_name' in df.columns:
+            before_stores = df['store_name'].unique().tolist()
+            df['store_name'] = df['store_name'].apply(_clean_store)
+            after_stores = df['store_name'].unique().tolist()
+            print(f"DEBUG: store_name 정규화 전={before_stores[:5]}...")
+            print(f"DEBUG: store_name 정규화 후={after_stores[:5]}...")
+
+        # [v74.6] 수치형 컬럼 강제 변환
         num_cols = ['stock_amt', 'stock_qty', 'sales_qty', 'sales_amt', 'normal_price']
         for c in num_cols:
             if c in df.columns:
                 df[c] = pd.to_numeric(df[c].astype(str).str.replace(',', '', regex=False).str.strip(), errors='coerce').fillna(0)
 
         # [v126.0] year 필터: 정상 매장 중 스포츠/잡화 카테고리 제외
-        # 스포츠·잡화 브랜드는 year 컬럼 미사용 (freshness_type으로 신선도 관리)
-        # → year가 비어있어도 필터링하지 않도록 예외 처리
-        # 아울렛 계열(압소바 등) 브랜드는 시트 store_type이 정상으로 등록돼 있더라도
-        #   year 없이 운영하므로 상설로 사전 보정 후 필터에서 제외
         _no_year_outlet_brands = ['압소바', '더레노마']
         for _b in _no_year_outlet_brands:
             _m = df['brand_name'].str.contains(_b, na=False)
@@ -138,13 +150,17 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
         if 'year' in df.columns and 'store_type' in df.columns and 'category_group' in df.columns:
             is_normal = ~df['store_type'].apply(_is_outlet_type)
-            # 잡화: 전 건 year 없음 → 패션 시즌 year 불필요 카테고리
             is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화'])
-            bad_year  = df['year'].astype(str).str.strip().eq("")
-            # freshness_type='신상' 행은 year가 없어도 유효 (신상품은 이전 연도 없음)
+            bad_year = df['year'].astype(str).str.strip().eq("")
             is_fresh_new = df['freshness_type'].astype(str).str.contains('신상', na=False) if 'freshness_type' in df.columns else pd.Series([False] * len(df))
-            # 정상 매장 + year 필요 카테고리 + year 없음 + 신상 아님 → 필터링
-            df = df[~(is_normal & ~is_no_year_cat & bad_year & ~is_fresh_new)]
+            # 정규화 후 이름 기준 safe store (NC 제거된 이름)
+            _safe_stores = ['불광점', '강남점']
+            is_safe_store = df['store_name'].isin(_safe_stores)
+            has_sales = (df['sales_qty'] > 0) | (df['sales_amt'] > 0)
+            before = len(df)
+            df = df[~(is_normal & ~is_no_year_cat & bad_year & ~is_fresh_new & ~is_safe_store & ~has_sales)]
+            print(f"DEBUG: year 필터 후 {before} → {len(df)}행 (제거: {before - len(df)})")
+            print(f"DEBUG: 필터 후 지점 목록: {df['store_name'].unique().tolist()}")
         
         # [v125.0] 카테고리 통합 및 자동 매핑
         if 'category_group' in df.columns:
@@ -274,7 +290,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         logger.warning(f"[P1] 채점 실패 — {store}/{brand}: {_e}")
                         score = 0
                     
-                    prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(brand, 0.0)
+                    prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(normalize_brand_name(brand), 0.0)
                     if prev_benchmark_sales > 0:
                         b_sales = prev_benchmark_sales
                     else:
