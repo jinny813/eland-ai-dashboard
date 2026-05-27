@@ -365,6 +365,10 @@ def _fill_exposure_sheet(
 
     # ── 지표 헤더 3층 기재 ──
     from config.scoring_config import get_weights_by_category
+    
+    # 각 지표별 정상/상설 만점을 저장해 두고 ROW_H3 세그먼트 컬럼에도 사용
+    metric_norm_outl_w = {}  # {m_id: (norm_w, outl_w)}
+    
     for m_id, m_info in metrics_config.items():
         colspan = len(m_info["keys"]) + 1
 
@@ -383,16 +387,21 @@ def _fill_exposure_sheet(
         w_key = weight_key_map.get(m_id, "")
         norm_w = int(round(norm_cfg.get(w_key, 0.0) * 100)) if w_key else 0
         outl_w = int(round(outl_cfg.get(w_key, 0.0) * 100)) if w_key else 0
+        metric_norm_outl_w[m_id] = (norm_w, outl_w)
         
+        # H1 (2행): 지표명 + 정상/상설 점수를 한 줄로 표기
+        # 정상≠상설인 경우: "할인율\n정상30점 / 상설40점"
+        # 동일한 경우:       "할인율\n(30점)"
         if norm_w != outl_w and norm_w > 0 and outl_w > 0:
-            header_val = f"{m_info['title']}\n(정상){norm_w}점\n(상설){outl_w}점"
+            header_val = f"{m_info['title']}\n정상{norm_w}점 / 상설{outl_w}점"
+        elif norm_w > 0:
+            header_val = f"{m_info['title']}\n({norm_w}점)"
         else:
             sample_w_map = sample_b.get("scoring_guide", {}).get("score_weights", {})
             sample_w_key = "sea" if m_id == "season" else m_id
             sample_w = sample_w_map.get(sample_w_key, 0)
-            header_val = f"{m_info['title']}({int(round(sample_w))}점)"
+            header_val = f"{m_info['title']}\n({int(round(sample_w))}점)"
 
-        # H1 (2행): 지표명 (예: 할인율(40점))
         cell_h1 = ws.cell(row=ROW_H1, column=col_idx, value=header_val)
         cell_h1.alignment = styles.align_center
         ws.merge_cells(
@@ -413,9 +422,9 @@ def _fill_exposure_sheet(
             styles.apply_header_cell(ws.cell(row=r, column=c))
 
     ws.row_dimensions[ROW_TITLE].height = 36
-    ws.row_dimensions[ROW_H1].height = 45  # 3줄 텍스트가 모두 보이도록 넉넉한 높이 부여
+    ws.row_dimensions[ROW_H1].height = 36  # 2줄(지표명 + 점수) 표기
     ws.row_dimensions[ROW_H2].height = 24
-    ws.row_dimensions[ROW_H3].height = 24
+    ws.row_dimensions[ROW_H3].height = 30  # 정상/상설 2줄 표기 위해 높이 증가
 
     empty_txt = "-\n(-)"
     row_idx = ROW_DATA
@@ -606,9 +615,16 @@ def _fill_exposure_sheet(
                 _fmt_score(earned_score_rounded), earned_score_rounded, global_m_weight,
             )
             if row_idx == ROW_DATA:
+                # 4행 합계 컬럼: 정상/상설 만점을 각각 표기
+                _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
+                if _nw != _ow and _nw > 0 and _ow > 0:
+                    _h3_total_val = f"정상{_nw}점\n상설{_ow}점"
+                elif global_m_weight > 0:
+                    _h3_total_val = f"{int(round(global_m_weight))}점"
+                else:
+                    _h3_total_val = "-"
                 styles.apply_header_cell(
-                    ws.cell(row=ROW_H3, column=col_offset),
-                    f"{int(round(global_m_weight))}점" if global_m_weight > 0 else "-"
+                    ws.cell(row=ROW_H3, column=col_offset), _h3_total_val
                 )
             col_offset += 1
 
@@ -617,9 +633,16 @@ def _fill_exposure_sheet(
                     styles.apply_yellow_cell(ws.cell(row=row_idx, column=col_offset), empty_txt)
                     if row_idx == ROW_DATA:
                         ref_seg_max_pt = ref_seg_max_pt_map.get(key, 0.0)
+                        _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
+                        _num_segs = len(seg_keys) if seg_keys else 1
+                        if _nw != _ow and _nw > 0 and _ow > 0:
+                            _seg_n = round(_nw / _num_segs) if _num_segs > 0 else _nw
+                            _seg_o = round(_ow / _num_segs) if _num_segs > 0 else _ow
+                            _h3_seg_val = f"정상{_seg_n}점\n상설{_seg_o}점"
+                        else:
+                            _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
                         styles.apply_header_cell(
-                            ws.cell(row=ROW_H3, column=col_offset),
-                            f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
+                            ws.cell(row=ROW_H3, column=col_offset), _h3_seg_val
                         )
                     col_offset += 1
                 continue
@@ -657,16 +680,35 @@ def _fill_exposure_sheet(
                             cell.font = styles.font_for_fill(fill)
 
                     if row_idx == ROW_DATA:
+                        # 4행 세그먼트 컬럼: 정상/상설 비례 만점을 각각 표기
+                        _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
+                        _num_segs = len(seg_keys) if seg_keys else 1
+                        _ref_sum = sum(ref_seg_max_pt_map.get(k, 0.0) for k in seg_keys) if seg_keys else 0.0
+                        if _nw != _ow and _nw > 0 and _ow > 0 and _ref_sum > 0:
+                            _seg_ratio = ref_seg_max_pt / _ref_sum if _ref_sum > 0 else 0.0
+                            _seg_n = round(_nw * _seg_ratio)
+                            _seg_o = round(_ow * _seg_ratio)
+                            _h3_seg_val = f"정상{_seg_n}점\n상설{_seg_o}점"
+                        else:
+                            _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
                         styles.apply_header_cell(
-                            ws.cell(row=ROW_H3, column=col_offset),
-                            f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
+                            ws.cell(row=ROW_H3, column=col_offset), _h3_seg_val
                         )
                 else:
                     styles.apply_yellow_cell(ws.cell(row=row_idx, column=col_offset), empty_txt)
                     if row_idx == ROW_DATA:
+                        _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
+                        _num_segs = len(seg_keys) if seg_keys else 1
+                        _ref_sum = sum(ref_seg_max_pt_map.get(k, 0.0) for k in seg_keys) if seg_keys else 0.0
+                        if _nw != _ow and _nw > 0 and _ow > 0 and _ref_sum > 0:
+                            _seg_ratio = ref_seg_max_pt / _ref_sum if _ref_sum > 0 else 0.0
+                            _seg_n = round(_nw * _seg_ratio)
+                            _seg_o = round(_ow * _seg_ratio)
+                            _h3_seg_val = f"정상{_seg_n}점\n상설{_seg_o}점"
+                        else:
+                            _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
                         styles.apply_header_cell(
-                            ws.cell(row=ROW_H3, column=col_offset),
-                            f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
+                            ws.cell(row=ROW_H3, column=col_offset), _h3_seg_val
                         )
                 col_offset += 1
 
