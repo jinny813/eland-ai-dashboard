@@ -154,7 +154,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             bad_year = df['year'].astype(str).str.strip().eq("")
             is_fresh_new = df['freshness_type'].astype(str).str.contains('신상', na=False) if 'freshness_type' in df.columns else pd.Series([False] * len(df))
             # 정규화 후 이름 기준 safe store (NC 제거된 이름)
-            _safe_stores = ['불광점', '강남점']
+            _safe_stores = ['불광점', '강남점', '쇼핑점']
             is_safe_store = df['store_name'].isin(_safe_stores)
             has_sales = (df['sales_qty'] > 0) | (df['sales_amt'] > 0)
             before = len(df)
