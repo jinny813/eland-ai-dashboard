@@ -361,10 +361,17 @@ def main():
                                 cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
                                 p1_cat = st.selectbox("👚 카테고리 선택 (P1)", cats, key="tab_dl_p1_cat")
                                 
+                                sel_metrics_p1 = st.multiselect(
+                                    "📊 포함할 지표 선택 (P1)",
+                                    ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                    default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                    key="tab_dl_p1_metrics"
+                                )
+                                
                                 if st.button("🚀 요약 엑셀 파일 생성", key="tab_dl_p1_gen", use_container_width=True):
                                     with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                         import core.report_generator as rg
-                                        excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat)
+                                        excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1)
                                         dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
                                         if excel_data:
                                             st.success(f"✅ {dl_filename} 생성 완료!")
@@ -664,10 +671,17 @@ def main():
                         cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
                         p1_cat = st.selectbox("👚 카테고리 선택 (P1)", cats, key="p4_tab_dl_p1_cat")
                         
+                        sel_metrics_p1_p4 = st.multiselect(
+                            "📊 포함할 지표 선택 (P1)",
+                            ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                            default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                            key="p4_tab_dl_p1_metrics"
+                        )
+                        
                         if st.button("🚀 요약 엑셀 파일 생성", key="p4_gen_p1_tab", use_container_width=True):
                             with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                 import core.report_generator as rg
-                                excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat)
+                                excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4)
                                 dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
                                 if excel_data:
                                     st.success(f"✅ {dl_filename} 생성 완료!")

@@ -809,8 +809,10 @@ def export_to_excel_bytes(
     return buf.getvalue()
 
 
-def export_p1_summary_excel_bytes(data: dict, cat_filter: str):
+def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=None):
     """[v173] P1 대시보드 다운로드: 카테고리 필터 기반 지점별 상세 지표 집계"""
+    if metrics_filter is None:
+        metrics_filter = ALL_METRICS
     if not data or "error" in data:
         return None
         
@@ -965,7 +967,7 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str):
     _fill_exposure_sheet(
         ws, agg_brands, agg_detail,
         title_store="전체 지점", title_cat=cat_filter,
-        metrics_filter=ALL_METRICS,
+        metrics_filter=metrics_filter,
         show_store_col=True,
         hide_brand_col=True,
     )
