@@ -119,7 +119,10 @@ def cached_load_dashboard_data(mgr):
         if res and "error" not in res:
             st.session_state.last_valid_dashboard_data = res
             return res
-        return {"error": "데이터 로드 실패"}
+        
+        # 실제 발생한 에러를 UI에 노출하여 원인을 파악할 수 있도록 수정
+        error_msg = res.get("error", str(e)) if res else str(e)
+        return {"error": f"데이터 로드 실패 (상세: {error_msg})"}
 
 
 
