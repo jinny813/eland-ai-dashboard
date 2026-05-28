@@ -225,6 +225,7 @@ def _fill_exposure_sheet(
         s_weights = b.get("scoring_guide", {}).get("score_weights", {})
         
         b_earned_scores = {}
+        b_max_weights = {}
         for m_id in ("dis", "fresh", "best", "season", "item"):
             m_data = b_detail.get(m_id) or {}
             w_key = "sea" if m_id == "season" else m_id
@@ -270,10 +271,24 @@ def _fill_exposure_sheet(
             else:
                 raw_score_0_to_100 = float(b.get(m_id, 0.0))
                 b_earned_scores[m_id] = raw_score_0_to_100 * (m_weight / 100.0)
+            b_max_weights[m_id] = m_weight
 
-        tot = sum(b_earned_scores.values())
-        # 총점수는 5개 지표 합산, 100점 만점 켜핑
-        b["calculated_total"] = _round1(min(tot, 100.0))
+        metric_filter_map = {"dis": "할인율", "best": "BEST상품", "fresh": "신선도", "season": "시즌", "item": "아이템"}
+        is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 5)
+        
+        tot = 0.0
+        max_tot = 0.0
+        for m_id in ("dis", "fresh", "best", "season", "item"):
+            if is_all or metric_filter_map[m_id] in metrics_filter:
+                tot += b_earned_scores[m_id]
+                max_tot += b_max_weights.get(m_id, 0.0)
+                
+        if max_tot > 0 and max_tot < 100.0 and not is_all:
+            normalized_tot = (tot / max_tot) * 100.0
+        else:
+            normalized_tot = tot
+
+        b["calculated_total"] = _round1(min(normalized_tot, 100.0))
 
     sorted_brands = sorted(filtered_brands, key=lambda x: x.get("calculated_total", 0.0), reverse=True)
 
@@ -876,6 +891,7 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
 
         # 5개 지표 점수의 합이 총점수가 되도록 실시간 합산
         agg_calc = 0.0
+        agg_max_weights = 0.0
         for m in metrics:
             store_det[m] = {"segs": []}
             seg_map = {}
@@ -967,10 +983,22 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
                     "label": v.get("label")
                 })
             # 지표 만점(avg_m_weight) 컵핑 후 아웃터 루프에서 총점 누적
-            agg_calc += min(m_total_earned, avg_m_weight)
+            m_earned = min(m_total_earned, avg_m_weight)
+            
+            metric_filter_map = {"dis": "할인율", "best": "BEST상품", "fresh": "신선도", "season": "시즌", "item": "아이템"}
+            is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 5)
+            
+            if is_all or metric_filter_map[m] in metrics_filter:
+                agg_calc += m_earned
+                agg_max_weights += avg_m_weight
         
-        # 합산 완료된 점수를 calculated_total에 바인딩
-        agg_b["calculated_total"] = _round1(agg_calc)
+        # 선택된 지표에 대해 100점 만점으로 환산 (정규화)
+        if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 5)):
+            normalized_calc = (agg_calc / agg_max_weights) * 100.0
+        else:
+            normalized_calc = agg_calc
+            
+        agg_b["calculated_total"] = _round1(min(normalized_calc, 100.0))
         agg_brands.append(agg_b)
 
     if not agg_brands:
