@@ -60,10 +60,10 @@ AREA_CONFIG = {
 }
 
 def clean_store_name(name: str) -> str:
-    """NC/뉴코아/동아/2001 수식어를 완벽하게 박멸하는 표준 유틸리티"""
-    if not name:
-        return ""
+    """NC/뉴코아/동아/2001 수식어를 제거하여 매핑을 안정화하는 유틸리티"""
+    if not name: return ""
     name = str(name).strip()
+    name = name.replace("(진척중)", "").replace("[진척중]", "").replace("진척중", "").strip()
     for prefix in ["NC", "뉴코아", "동아", "2001"]:
         if name.startswith(prefix):
             name = name[len(prefix):].strip()

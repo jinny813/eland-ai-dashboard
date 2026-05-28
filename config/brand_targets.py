@@ -1539,6 +1539,7 @@ def clean_store_name(name: str) -> str:
     if not name:
         return ""
     name = str(name).strip()
+    name = name.replace("(진척중)", "").replace("[진척중]", "").replace("진척중", "").strip()
     for prefix in ["NC", "뉴코아", "동아", "2001"]:
         if name.startswith(prefix):
             name = name[len(prefix):].strip()
