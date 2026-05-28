@@ -2262,9 +2262,6 @@
       tb.innerHTML = '';
       STORES.forEach(st => {
         let badgeHtml = '';
-        if (st === '신구로점' || st === '부천점') {
-          badgeHtml = `<span style="background-color:#EF4444; color:white; font-size:10px; padding:2px 8px; border-radius:10px; margin-right:6px; font-weight:600; display:inline-block; vertical-align:middle;">진척중</span>`;
-        }
         // 지점명 셀: 클릭 시 모달 오픈
         let r = `<td style="cursor:pointer;" onclick="openStoreModal('${st}','전체')">
       ${badgeHtml}<span style="font-weight:800; color:#111; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#D1D5DB; vertical-align:middle;">${st}</span>
