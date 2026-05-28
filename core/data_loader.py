@@ -93,6 +93,17 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
         sheet = mgr.spreadsheet.worksheet("Records")
         all_recs = sheet.get_all_records()
+        
+        # [NEW] brandmaster 데이터 로드 (조닝 매핑용)
+        brand_master_df = mgr.load_brand_master()
+        brand_zoning_map = {}
+        if not brand_master_df.empty:
+            for _, r in brand_master_df.iterrows():
+                b_name_raw = str(r.get('브랜드명', '')).strip()
+                zoning_raw = str(r.get('조닝', '')).strip()
+                if b_name_raw and zoning_raw:
+                    brand_zoning_map[b_name_raw] = zoning_raw
+                    
         if not all_recs:
             # 데이터가 없을 경우에도 UI가 깨지지 않도록 기본 구조를 반환합니다.
             return {
@@ -105,6 +116,43 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 "BEST_ITEMS": {},
                 "ACTION_PLAN": {}
             }
+
+        # ── storemaster_override.py 정적 오버라이드 적용 (parse_storemaster.py 생성분)
+        try:
+            import importlib
+            import config.storemaster_override as sm_ov
+            import config.brand_targets as _cfg_targets
+            import config.area_config as _cfg_area
+            import config.store_type_config as _cfg_type
+            importlib.reload(sm_ov)
+            if getattr(sm_ov, 'STORE_AREA', None):
+                for _s, _bmap in sm_ov.STORE_AREA.items():
+                    _cfg_area.AREA_CONFIG.setdefault(_s, {}).update(_bmap)
+            if getattr(sm_ov, 'STORE_BRAND_TYPE', None):
+                for _s, _bmap in sm_ov.STORE_BRAND_TYPE.items():
+                    _cfg_type.BRAND_STORE_TYPES.setdefault(_s, {}).update(_bmap)
+            if getattr(sm_ov, 'PREV_YEAR_MONTHLY_SALES_OVERRIDE', None):
+                for _ym, _store_map in sm_ov.PREV_YEAR_MONTHLY_SALES_OVERRIDE.items():
+                    for _s, _bmap in _store_map.items():
+                        _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+            if getattr(sm_ov, 'CURR_YEAR_MONTHLY_SALES_OVERRIDE', None):
+                for _ym, _store_map in sm_ov.CURR_YEAR_MONTHLY_SALES_OVERRIDE.items():
+                    for _s, _bmap in _store_map.items():
+                        _cfg_targets.CURR_MONTH_ACTUALS.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+            if getattr(sm_ov, 'MONTHLY_TARGET_OVERRIDE', None):
+                _cur_mo = f"{datetime.now().month:02d}"
+                _cur_yr = str(datetime.now().year)
+                for _ym, _store_map in sm_ov.MONTHLY_TARGET_OVERRIDE.items():
+                    _yr, _mo = _ym.split('_')
+                    for _s, _bmap in _store_map.items():
+                        _cfg_targets.MONTHLY_TM.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+                        if _yr == _cur_yr and _mo == _cur_mo:
+                            _cfg_targets.STORE_BRAND_TM.setdefault(_s, {}).update(_bmap)
+            logger.info("[storemaster_override] 정적 오버라이드 적용 완료")
+        except ImportError:
+            pass
+        except Exception as _soe:
+            logger.error(f"[storemaster_override] 적용 실패: {_soe}")
 
         df = pd.DataFrame(all_recs)
 
@@ -394,7 +442,8 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
                 b_data_month = str(b_df.iloc[0].get('data_month', '')).strip()
                 b_df['area'] = get_area(store, b_name)
-                prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(b_name, 0.0)
+                _b_norm = normalize_brand_name(b_name)
+                prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(_b_norm, 0.0)
 
                 # 브랜드 월 매출: CURR_MONTH_ACTUALS 최근 가용 월 → PREV_MONTH_SALES(3월) → 합산
                 # _active_mk: 실제로 사용 중인 실적 월 키 (성장률 비교 기준 결정에 사용)
@@ -403,7 +452,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 if _cur_mk:
                     for _try_mk in sorted(CURR_MONTH_ACTUALS.get(store, {}).keys(), reverse=True):
                         if _try_mk <= _cur_mk:
-                            v = CURR_MONTH_ACTUALS[store][_try_mk].get(b_name, 0)
+                            v = CURR_MONTH_ACTUALS[store][_try_mk].get(_b_norm, 0)
                             if v > 0:
                                 _active_mk = _try_mk
                                 _active_sales = v
@@ -438,9 +487,9 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                     if _active_mk and '_' in _active_mk:
                         _act_yr, _act_mo = _active_mk.split('_')
                         _prev_yr_mk = f"{int(_act_yr)-1}_{_act_mo}"
-                        _prev_yr_sales = PREV_YEAR_MONTHLY_SALES.get(store, {}).get(_prev_yr_mk, {}).get(b_name)
+                        _prev_yr_sales = PREV_YEAR_MONTHLY_SALES.get(store, {}).get(_prev_yr_mk, {}).get(_b_norm)
                     if not _prev_yr_sales:
-                        _prev_yr_sales = PREV_YEAR_SALES.get(store, {}).get(b_name)
+                        _prev_yr_sales = PREV_YEAR_SALES.get(store, {}).get(_b_norm)
 
                     if _prev_yr_sales and _prev_yr_sales > 0:
                         g_pct = (cur_sales_sum - _prev_yr_sales) / _prev_yr_sales * 100
@@ -464,7 +513,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "product_score": int(row.get('product_score', 0)),
                         "eff_score": int(row.get('eff_score', 0)),
                         "item": int(round(float(row.get('item_score', 0)))),
-                        "zoning": cfg.get('zoning', '미분류'),
+                        "zoning": brand_zoning_map.get(b_name) or cfg.get('zoning', '미분류'),
                         "dis": int(round(float(row.get('discount_score', 0)))),
                         "fresh": int(round(float(row.get('freshness_score', 0)))),
                         "best": int(round(float(row.get('best_score', 0)))),

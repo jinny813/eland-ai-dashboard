@@ -109,6 +109,17 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
         sheet = mgr.spreadsheet.worksheet("Records")
         all_recs = sheet.get_all_records()
+        
+        # [NEW] brandmaster 데이터 로드 (조닝 매핑용)
+        brand_master_df = mgr.load_brand_master()
+        brand_zoning_map = {}
+        if not brand_master_df.empty:
+            for _, r in brand_master_df.iterrows():
+                b_name_raw = str(r.get('브랜드명', '')).strip()
+                zoning_raw = str(r.get('조닝', '')).strip()
+                if b_name_raw and zoning_raw:
+                    brand_zoning_map[b_name_raw] = zoning_raw
+                    
         if not all_recs:
             # 데이터가 없을 경우에도 UI가 깨지지 않도록 기본 구조를 반환합니다.
             return {
@@ -704,7 +715,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "product_score": int(row.get('product_score', 0)),
                         "eff_score": int(row.get('eff_score', 0)),
                         "item": int(round(float(row.get('item_score', 0)))),
-                        "zoning": cfg.get('zoning', '미분류'),
+                        "zoning": brand_zoning_map.get(b_name) or cfg.get('zoning', '미분류'),
                         "dis": int(round(float(row.get('discount_score', 0)))),
                         "is_predicted_dis": is_predicted_dis,  # 추정 배지 표기용 플래그
                         "fresh": int(round(float(row.get('freshness_score', 0)))),
