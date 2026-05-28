@@ -232,8 +232,16 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             
         all_stores = [s for s in df['store_name'].unique()
                       if s and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
-        # [v162] 지점 정렬 로직 표준명 기준으로 전면 패치
-        stores = sorted(all_stores, key=lambda s: (0 if s == '신구로점' else (1 if s == '부천점' else 2), s))
+        # [v162] 지점 정렬 로직 표준명 기준으로 전면 패치 + [v175] override 지점 강제 포함 (데이터 없어도 목표 노출)
+        try:
+            from config.storemaster_override import STORE_AREA
+            for s in STORE_AREA.keys():
+                if s not in all_stores:
+                    all_stores.append(s)
+        except BaseException:
+            pass
+            
+        stores = sorted(list(set(all_stores)), key=lambda s: (0 if s == '신구로점' else (1 if s == '부천점' else 2), s))
         
         bp_stores = [s for s in all_stores if s.startswith("__BP__")]
         bp_df = df[df['store_name'].isin(bp_stores)] if bp_stores else pd.DataFrame()
