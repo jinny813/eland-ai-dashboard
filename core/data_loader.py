@@ -450,13 +450,19 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 _active_mk = None
                 _active_sales = 0
                 if _cur_mk:
-                    for _try_mk in sorted(CURR_MONTH_ACTUALS.get(store, {}).keys(), reverse=True):
-                        if _try_mk <= _cur_mk:
-                            v = CURR_MONTH_ACTUALS[store][_try_mk].get(_b_norm, 0)
+                    _store_actuals = CURR_MONTH_ACTUALS.get(store, {})
+                    for _try_mk in sorted(_store_actuals.keys(), reverse=True):
+                        if _try_mk <= _cur_mk and isinstance(_store_actuals[_try_mk], dict):
+                            v = _store_actuals[_try_mk].get(_b_norm, 0)
                             if v > 0:
                                 _active_mk = _try_mk
                                 _active_sales = v
                                 break
+                    if _active_sales == 0 and not isinstance(_store_actuals.get(_b_norm), dict):
+                        _fallback_val = _store_actuals.get(_b_norm, 0)
+                        if _fallback_val > 0:
+                            _active_sales = _fallback_val
+                            _active_mk = _cur_mk
 
                 if _active_sales > 0:
                     b_df['brand_month_sales'] = _active_sales

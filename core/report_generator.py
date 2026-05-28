@@ -389,11 +389,11 @@ def _fill_exposure_sheet(
         outl_w = int(round(outl_cfg.get(w_key, 0.0) * 100)) if w_key else 0
         metric_norm_outl_w[m_id] = (norm_w, outl_w)
         
-        # H1 (2행): 지표명 + 정상/상설 점수를 한 줄로 표기
-        # 정상≠상설인 경우: "할인율\n정상30점 / 상설40점"
+        # H1 (2행): 지표명 + 상설/정상 점수를 한 줄로 표기
+        # 정상≠상설인 경우: "할인율\n상설40점 / 정상30점"
         # 동일한 경우:       "할인율\n(30점)"
         if norm_w != outl_w and norm_w > 0 and outl_w > 0:
-            header_val = f"{m_info['title']}\n정상{norm_w}점 / 상설{outl_w}점"
+            header_val = f"{m_info['title']}\n상설{outl_w}점 / 정상{norm_w}점"
         elif norm_w > 0:
             header_val = f"{m_info['title']}\n({norm_w}점)"
         else:
@@ -688,7 +688,7 @@ def _fill_exposure_sheet(
                             _seg_ratio = ref_seg_max_pt / _ref_sum if _ref_sum > 0 else 0.0
                             _seg_n = round(_nw * _seg_ratio)
                             _seg_o = round(_ow * _seg_ratio)
-                            _h3_seg_val = f"정상{_seg_n}점\n상설{_seg_o}점"
+                            _h3_seg_val = f"상설{_seg_o}점\n정상{_seg_n}점"
                         else:
                             _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
                         styles.apply_header_cell(
@@ -704,7 +704,7 @@ def _fill_exposure_sheet(
                             _seg_ratio = ref_seg_max_pt / _ref_sum if _ref_sum > 0 else 0.0
                             _seg_n = round(_nw * _seg_ratio)
                             _seg_o = round(_ow * _seg_ratio)
-                            _h3_seg_val = f"정상{_seg_n}점\n상설{_seg_o}점"
+                            _h3_seg_val = f"상설{_seg_o}점\n정상{_seg_n}점"
                         else:
                             _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
                         styles.apply_header_cell(
