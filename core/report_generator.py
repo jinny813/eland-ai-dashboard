@@ -469,12 +469,15 @@ def _fill_exposure_sheet(
         c_amt = ws.cell(row=row_idx, column=col)
         c_amt.value = _fmt_num(s_val)
         
-        # [v171] 총재고액 목표재고 대비 달성률 색상 판정 로직: 100% ~ 120% 이내만 초록색 하이라이트
+        # [v171] 총재고액 목표재고 대비 달성률 색상 판정 로직: 100% ~ 120% 이내만 초록색, 그 외는 빨간색 하이라이트
         target_stock = t_val * 2.0
         if target_stock > 0:
             stock_ratio = s_val / target_stock
             if 1.0 <= stock_ratio <= 1.2:
                 c_amt.fill = styles.fill_green
+                c_amt.font = styles.font_white_bold
+            else:
+                c_amt.fill = styles.fill_red
                 c_amt.font = styles.font_white_bold
 
         c_amt.alignment = styles.align_center
