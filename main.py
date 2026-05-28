@@ -461,7 +461,7 @@ def main():
             # [v162] officemaster 동적 연동 및 지점명 리스트 추출
             try:
                 df_office = check_mgr.load_office_master()
-                store_list = sorted(list(set(clean_store_name(s) for s in df_office['지점명'] if s)))
+                store_list_set = set(clean_store_name(s) for s in df_office['지점명'] if s)
             except Exception as e:
                 _fallback_raw = [
                     'NC신구로점', 'NC강서점', 'NC송파점', 'NC불광점', 'NC고잔점',
@@ -471,7 +471,17 @@ def main():
                     'NC일산점', 'NC부평점', '뉴코아동수원점', '뉴코아수원터미널점',
                     'NC평택점', 'NC천호점'
                 ]
-                store_list = sorted(list(set(clean_store_name(s) for s in _fallback_raw)))
+                store_list_set = set(clean_store_name(s) for s in _fallback_raw)
+
+            # [v.xxx] Override 기반 로컬 추가 지점 반영 (ex. 인천점)
+            try:
+                from config.storemaster_override import STORE_AREA
+                for s in STORE_AREA.keys():
+                    store_list_set.add(clean_store_name(s))
+            except Exception:
+                pass
+            
+            store_list = sorted(list(store_list_set))
 
             raw = st.selectbox("지점", store_list,
                                index=None, placeholder="진단할 지점을 선택하세요...", label_visibility="collapsed")
