@@ -77,7 +77,7 @@ def generate_optimized_excel(
 
 @st.cache_data(show_spinner="최신 데이터를 불러오는 중...")
 def _cached_load_internal(_mgr, max_no: int):
-    _force_cache_bust = "v15"  # 캐시 강제 무효화용 더미 변수
+    _force_cache_bust = "v16"  # 캐시 강제 무효화용 더미 변수
     del max_no  # 캐시 키 자동 갱신 트리거로만 사용
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
@@ -166,6 +166,13 @@ def _show_detector_result(result: dict):
 def main():
     if 'overwrite_approval' not in st.session_state:
         st.session_state.overwrite_approval = {}
+
+    # [v17] 긴급 패치: 사용자 환경의 고착화된 세션 캐시(빈 화면/에러) 강제 해제
+    if 'v16_cache_cleared' not in st.session_state:
+        st.cache_data.clear()
+        if 'last_valid_dashboard_data' in st.session_state:
+            del st.session_state['last_valid_dashboard_data']
+        st.session_state.v16_cache_cleared = True
 
     # [v112.0] 브랜드 맵핑 데이터
     CATEGORY_BRAND_MAP = {
