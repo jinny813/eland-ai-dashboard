@@ -78,6 +78,10 @@ def generate_optimized_excel(
 @st.cache_data(show_spinner="최신 데이터를 불러오는 중...")
 def _cached_load_internal(_mgr, max_no: int):
     del max_no  # 캐시 키 자동 갱신 트리거로만 사용
+    import importlib, sys
+    for _m in ['core.data_loader', 'config.storemaster_override']:
+        if _m in sys.modules:
+            importlib.reload(sys.modules[_m])
     from core.data_loader import load_dashboard_data
     res = load_dashboard_data(mgr=_mgr)
     if not res or "error" in res or not res.get("CATS") or not res.get("BRANDS"):
