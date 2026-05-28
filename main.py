@@ -77,6 +77,7 @@ def generate_optimized_excel(
 
 @st.cache_data(show_spinner="최신 데이터를 불러오는 중...")
 def _cached_load_internal(_mgr, max_no: int):
+    _force_cache_bust = "v14"  # 캐시 강제 무효화용 더미 변수
     del max_no  # 캐시 키 자동 갱신 트리거로만 사용
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
