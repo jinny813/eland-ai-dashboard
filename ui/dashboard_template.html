@@ -3183,8 +3183,8 @@
       // [v178] 가장 카테고리가 많은 지점(부천점, 신구로점 등)이 리스트 최상단에 오도록 정렬
       if (STORES.length) {
         STORES.sort((a, b) => {
-          const countA = (scoreData[a] || []).filter(v => v > 0).length;
-          const countB = (scoreData[b] || []).filter(v => v > 0).length;
+          const countA = Object.values(scoreData[a] || {}).filter(v => v > 0).length;
+          const countB = Object.values(scoreData[b] || {}).filter(v => v > 0).length;
           if (countA !== countB) {
             return countB - countA; // 내림차순
           }
