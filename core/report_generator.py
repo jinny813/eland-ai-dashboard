@@ -29,10 +29,10 @@ class _ExcelStyles:
         self.fill_yellow = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
         self.fill_red = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
         self.fill_amt = self.fill_green
-        self.font_bold = Font(bold=True)
-        self.font_title = Font(bold=True, size=12)
-        self.font_white_bold = Font(bold=True, color="FFFFFF")
-        self.font_black = Font(color="000000")
+        self.font_bold = Font(name='맑은 고딕', bold=True, size=9)
+        self.font_title = Font(name='맑은 고딕', bold=True, size=10)
+        self.font_white_bold = Font(name='맑은 고딕', bold=True, color="FFFFFF", size=9)
+        self.font_black = Font(name='맑은 고딕', color="000000", size=9)
 
     def fill_for_score(self, actual_score, target_score):
         if target_score <= 0:
@@ -87,11 +87,15 @@ def _round1(n):
 
 
 def _fmt_num(n):
-    return f"{_round1(n):.1f}"
+    val = _round1(n)
+    if val == 0: return "0"
+    return f"{val:.1f}"
 
 
 def _fmt_score(n):
-    return f"{_round1(n):.1f}점"
+    val = _round1(n)
+    if val == 0: return "0점"
+    return f"{val:.1f}점"
 
 
 def _normalize_metrics_filter(metrics_filter):
@@ -421,10 +425,10 @@ def _fill_exposure_sheet(
         for c in range(1, total_cols + 1):
             styles.apply_header_cell(ws.cell(row=r, column=c))
 
-    ws.row_dimensions[ROW_TITLE].height = 36
-    ws.row_dimensions[ROW_H1].height = 36  # 2줄(지표명 + 점수) 표기
-    ws.row_dimensions[ROW_H2].height = 24
-    ws.row_dimensions[ROW_H3].height = 30  # 정상/상설 2줄 표기 위해 높이 증가
+    ws.row_dimensions[ROW_TITLE].height = 25
+    ws.row_dimensions[ROW_H1].height = 30  # 2줄(지표명 + 점수) 표기
+    ws.row_dimensions[ROW_H2].height = 20
+    ws.row_dimensions[ROW_H3].height = 25  # 정상/상설 2줄 표기 위해 높이 증가
 
     empty_txt = "-\n(-)"
     row_idx = ROW_DATA
@@ -669,7 +673,12 @@ def _fill_exposure_sheet(
                         styles.apply_yellow_cell(ws.cell(row=row_idx, column=col_offset), txt)
                     else:
                         cell = ws.cell(row=row_idx, column=col_offset)
-                        cell.value = f"{_fmt_num(valM)}\n({_fmt_score(earned_pt)})"
+                        valM_r = _round1(valM)
+                        earned_pt_r = _round1(earned_pt)
+                        if valM_r == 0 and earned_pt_r == 0:
+                            cell.value = "0점"
+                        else:
+                            cell.value = f"{_fmt_num(valM)}\n({_fmt_score(earned_pt)})"
                         cell.alignment = styles.align_center
                         cell.border = styles.border_thin
                         
@@ -719,6 +728,10 @@ def _fill_exposure_sheet(
         ws.row_dimensions[row_idx].height = 45
         row_idx += 1
 
+    # Data row heights
+    for r in range(ROW_DATA, row_idx):
+        ws.row_dimensions[r].height = 25
+        
     # [v177] 복사붙여넣기 시 PPT 슬라이드 비율에 맞춘 최적의 열너비 자동 분배
     for col_i in range(1, total_cols + 1):
         col_letter = get_column_letter(col_i)
@@ -726,20 +739,20 @@ def _fill_exposure_sheet(
         
         val_str = str(val_h1 or "").strip()
         if "랭크" in val_str:
-            ws.column_dimensions[col_letter].width = 6
+            ws.column_dimensions[col_letter].width = 4.5
         elif "복종" in val_str:
-            ws.column_dimensions[col_letter].width = 7
+            ws.column_dimensions[col_letter].width = 5.5
         elif "지점" in val_str:
-            ws.column_dimensions[col_letter].width = 15
+            ws.column_dimensions[col_letter].width = 7.0
         elif "브랜드" in val_str:
-            ws.column_dimensions[col_letter].width = 14
+            ws.column_dimensions[col_letter].width = 10.0
         elif "총" in val_str and "점수" in val_str:
-            ws.column_dimensions[col_letter].width = 11
+            ws.column_dimensions[col_letter].width = 8.0
         elif "총보유" in val_str or "재고액" in val_str:
-            ws.column_dimensions[col_letter].width = 13
+            ws.column_dimensions[col_letter].width = 10.0
         else:
             # 할인율, BEST상품, 신선도, 시즌, 아이템 세그먼트 셀들은 PPT 균형에 맞춰 균일 분배
-            ws.column_dimensions[col_letter].width = 11.5
+            ws.column_dimensions[col_letter].width = 7.5
 
 
 def export_all_in_one_excel_bytes(data: dict):
