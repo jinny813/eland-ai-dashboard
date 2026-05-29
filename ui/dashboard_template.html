@@ -3188,7 +3188,7 @@
           if (countA !== countB) {
             return countB - countA; // 내림차순
           }
-          return a.localeCompare(b, 'ko'); // 가나다순
+          return String(a).localeCompare(String(b), 'ko'); // 가나다순
         });
       }
       

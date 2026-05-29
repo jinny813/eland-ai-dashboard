@@ -224,10 +224,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             df.loc[mask, 'store_type'] = '정상'
             
         all_stores = [s for s in df['store_name'].unique()
-                      if s and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
-
-        all_stores = [s for s in df['store_name'].unique()
-                      if s and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
+                      if pd.notna(s) and str(s).strip() and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
 
         # [v162] 지점 정렬 로직 표준명 기준으로 전면 패치 + [v175] override 지점 강제 포함 (데이터 없어도 목표 노출)
         try:
