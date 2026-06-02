@@ -1654,6 +1654,24 @@
       <div class="topbar"><span>상품구색 시스템</span><span class="top-sep">></span><span class="top-active" id="top-title">상품
           구색 점수판</span></div>
       <div class="content">
+        <div id="js-error-overlay" style="display:none; background:#FEE2E2; border:1px solid #EF4444; color:#991B1B; padding:16px; margin-bottom:16px; border-radius:8px; font-weight:bold; white-space:pre-wrap;"></div>
+        <script>
+          window.onerror = function(msg, url, lineNo, columnNo, error) {
+            const el = document.getElementById('js-error-overlay');
+            if (el) {
+              el.style.display = 'block';
+              el.innerHTML += `JS Error: ${msg} (Line: ${lineNo}, Col: ${columnNo})<br>${error ? error.stack : ''}<br><br>`;
+            }
+            return false;
+          };
+          window.addEventListener('unhandledrejection', function(event) {
+            const el = document.getElementById('js-error-overlay');
+            if (el) {
+              el.style.display = 'block';
+              el.innerHTML += `Promise Error: ${event.reason}<br><br>`;
+            }
+          });
+        </script>
 
         <!-- P1: MAIN TABLE -->
         <div class="page active" id="p1">

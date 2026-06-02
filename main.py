@@ -167,12 +167,12 @@ def main():
     if 'overwrite_approval' not in st.session_state:
         st.session_state.overwrite_approval = {}
 
-    # [v17] 긴급 패치: 사용자 환경의 고착화된 세션 캐시(빈 화면/에러) 강제 해제
-    if 'v17_cache_cleared' not in st.session_state:
+    # [v18] 긴급 패치: 사용자 환경의 고착화된 세션 캐시(빈 화면/에러) 완벽 해제
+    if st.session_state.get("_v18_cleared") is None:
         st.cache_data.clear()
-        if 'last_valid_dashboard_data' in st.session_state:
-            del st.session_state['last_valid_dashboard_data']
-        st.session_state.v17_cache_cleared = True
+        if "last_valid_dashboard_data" in st.session_state:
+            del st.session_state["last_valid_dashboard_data"]
+        st.session_state["_v18_cleared"] = True
 
     # [v112.0] 브랜드 맵핑 데이터
     CATEGORY_BRAND_MAP = {
