@@ -1,7 +1,7 @@
 import io
 import math
 from pptx import Presentation
-from pptx.util import Inches, Pt
+from pptx.util import Inches, Pt, Mm
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.oxml.xmlchemy import OxmlElement
@@ -224,9 +224,9 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
     
     # ── PPT 객체 생성 ──
     prs = Presentation()
-    # 와이드 스크린 해상도 세팅 (16:9 비율이 보기 좋음)
-    prs.slide_width = Inches(13.333)
-    prs.slide_height = Inches(7.5)
+    # A4 가로 규격 세팅 (297mm * 210mm)
+    prs.slide_width = Mm(297)
+    prs.slide_height = Mm(210)
     
     slide_layout = prs.slide_layouts[5] # Title only
     
@@ -278,8 +278,9 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
                 run.font.size = Pt(24)
                 
         rows = 3 + len(current_chunk)
-        x, y = Inches(0.2), Inches(1.0)
-        cx, cy = Inches(12.8), Inches(5.8)
+        # A4 기준 균등 여백 설정 (양 옆 5mm, 상단 28mm, 하단 15mm 여백)
+        x, y = Mm(5), Mm(28)
+        cx, cy = Mm(287), Mm(167)
         
         shape = slide.shapes.add_table(rows, total_cols, x, y, cx, cy)
         table = shape.table
