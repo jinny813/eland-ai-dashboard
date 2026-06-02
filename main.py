@@ -383,7 +383,13 @@ def main():
                                     key="tab_dl_p1_metrics"
                                 )
                                 
-                                if st.button("🚀 요약 엑셀 파일 생성", key="tab_dl_p1_gen", use_container_width=True):
+                                col_p1_btn1, col_p1_btn2 = st.columns(2)
+                                with col_p1_btn1:
+                                    dl_p1_excel = st.button("🚀 요약 엑셀 파일 생성", key="tab_dl_p1_gen_excel", use_container_width=True)
+                                with col_p1_btn2:
+                                    dl_p1_ppt = st.button("🚀 요약 PPT 파일 생성", key="tab_dl_p1_gen_ppt", use_container_width=True)
+                                
+                                if dl_p1_excel:
                                     with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                         import core.report_generator as rg
                                         excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1)
@@ -395,6 +401,23 @@ def main():
                                                 data=excel_data,
                                                 file_name=dl_filename,
                                                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                                use_container_width=True,
+                                            )
+                                        else:
+                                            st.warning("데이터가 없습니다.")
+                                            
+                                if dl_p1_ppt:
+                                    with st.spinner("지점별 카테고리 요약 PPT 생성 중..."):
+                                        import core.ppt_generator as ptg
+                                        ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1)
+                                        dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+                                        if ppt_data:
+                                            st.success(f"✅ {dl_filename} 생성 완료!")
+                                            st.download_button(
+                                                label="📄 요약 PPT 다운로드",
+                                                data=ppt_data,
+                                                file_name=dl_filename,
+                                                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
                                                 use_container_width=True,
                                             )
                                         else:
