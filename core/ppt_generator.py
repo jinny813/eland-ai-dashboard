@@ -4,6 +4,29 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
+from pptx.oxml.xmlchemy import OxmlElement
+
+def _set_cell_border(cell, color="000000", width="12700"):
+    """PPT 표 셀에 검정색 테두리를 적용하기 위해 XML을 직접 제어합니다."""
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    
+    for border_name in ['lnL', 'lnR', 'lnT', 'lnB']:
+        ln_existing = tcPr.find(f'{{http://schemas.openxmlformats.org/drawingml/2006/main}}{border_name}')
+        if ln_existing is not None:
+            tcPr.remove(ln_existing)
+            
+        ln = OxmlElement(f'a:{border_name}')
+        ln.set('w', width)
+        ln.set('cmpd', 'sng')
+        
+        solidFill = OxmlElement('a:solidFill')
+        srgbClr = OxmlElement('a:srgbClr')
+        srgbClr.set('val', color)
+        
+        solidFill.append(srgbClr)
+        ln.append(solidFill)
+        tcPr.append(ln)
 
 # PPTX에서 사용할 커스텀 색상 매핑
 COLOR_RED = RGBColor(255, 0, 0)
@@ -206,15 +229,7 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
     prs.slide_height = Inches(7.5)
     
     slide_layout = prs.slide_layouts[5] # Title only
-    slide = prs.slides.add_slide(slide_layout)
     
-    title_shape = slide.shapes.title
-    title_shape.text = f"[한국유통] 상품구색 노출/측정 (핵심 {len(sorted_brands)}개점 {cat_filter})"
-    for paragraph in title_shape.text_frame.paragraphs:
-        for run in paragraph.runs:
-            run.font.bold = True
-            run.font.size = Pt(24)
-            
     # 표 차원 계산을 위한 metrics_config 구성
     from core.report_generator import _extract_seg_keys_labels
     sample_b = sorted_brands[0] if sorted_brands else {}
@@ -233,133 +248,147 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
     if "시즌" in metrics_filter: metrics_config["season"] = {"title": "시즌", "keys": season_keys, "labels": season_labels}
     if "아이템" in metrics_filter: metrics_config["item"] = {"title": "아이템", "keys": item_seg_keys, "labels": item_labels}
     
-    # 1위 브랜드 기준 ref_seg_max_pt 연산 등은 간소화하여 균등 배분 가정(PPT 요약용)
     for m_id, m_info in metrics_config.items():
         w_key = "sea" if m_id == "season" else m_id
         g_weight = sample_b.get("scoring_guide", {}).get("score_weights", {}).get(w_key, 0.0)
         m_info["max_w"] = g_weight
         num_keys = len(m_info["keys"])
         m_info["seg_max_pts"] = {k: g_weight/num_keys for k in m_info["keys"]} if num_keys > 0 else {}
-
+ 
     common_headers = [("랭크", 1), ("복종", 1), ("지점", 1), ("총\n점수\n(100점)", 1), ("총보유\n재고액", 1)]
     total_cols = sum(span for _, span in common_headers) + sum(len(m_info["keys"]) + 1 for m_info in metrics_config.values())
     
-    rows = 3 + len(sorted_brands) # 3 header rows + data rows
+    # ── 10개 지점 단위 청킹(Paging) 생성 ──
+    chunk_size = 10
+    num_chunks = math.ceil(len(sorted_brands) / chunk_size) if sorted_brands else 1
     
-    x, y = Inches(0.2), Inches(1.0)
-    cx, cy = Inches(12.8), Inches(5.5)
-    
-    shape = slide.shapes.add_table(rows, total_cols, x, y, cx, cy)
-    table = shape.table
-    
-    # 열 너비 강제 배분 (단순화)
-    base_col_w = cx / total_cols
-    for i in range(total_cols):
-        table.columns[i].width = int(base_col_w)
+    for chunk_idx in range(num_chunks):
+        start_idx = chunk_idx * chunk_size
+        end_idx = min(start_idx + chunk_size, len(sorted_brands))
+        current_chunk = sorted_brands[start_idx:end_idx]
+        
+        slide = prs.slides.add_slide(slide_layout)
+        
+        # 타이틀
+        title_shape = slide.shapes.title
+        title_shape.text = f"[한국유통] 상품구색 노출/측정 (핵심 {len(sorted_brands)}개점 {cat_filter}) - {chunk_idx + 1}/{num_chunks}"
+        for paragraph in title_shape.text_frame.paragraphs:
+            for run in paragraph.runs:
+                run.font.bold = True
+                run.font.size = Pt(24)
+                
+        rows = 3 + len(current_chunk)
+        x, y = Inches(0.2), Inches(1.0)
+        cx, cy = Inches(12.8), Inches(5.8)
+        
+        shape = slide.shapes.add_table(rows, total_cols, x, y, cx, cy)
+        table = shape.table
+        
+        base_col_w = cx / total_cols
+        for i in range(total_cols):
+            table.columns[i].width = int(base_col_w)
 
-    # ── 헤더 작성 (수직 병합 구현) ──
-    # 파이썬 pptx의 cell.merge는 첫 번째 셀에 내용을 적고 인접한 셀을 병합하는 방식입니다.
-    col_idx = 0
-    for hdr_title, colspan in common_headers:
-        cell = table.cell(0, col_idx)
-        _set_cell_style(cell, hdr_title, bg_color=COLOR_HEADER_BG, bold=True)
-        # 3칸 아래로 수직 병합
-        cell.merge(table.cell(2, col_idx))
-        col_idx += 1
-        
-    for m_id, m_info in metrics_config.items():
-        colspan = len(m_info["keys"]) + 1
-        # H1 (0번째 행): 지표명(배점)
-        cell_h1 = table.cell(0, col_idx)
-        _set_cell_style(cell_h1, f"{m_info['title']}({int(m_info['max_w'])}점)", bg_color=COLOR_HEADER_BG, bold=True)
-        if colspan > 1:
-            cell_h1.merge(table.cell(0, col_idx + colspan - 1))
+        # 헤더 그리기
+        col_idx = 0
+        for hdr_title, colspan in common_headers:
+            cell = table.cell(0, col_idx)
+            _set_cell_style(cell, hdr_title, bg_color=COLOR_HEADER_BG, bold=True)
+            cell.merge(table.cell(2, col_idx))
+            col_idx += 1
             
-        # H2 (1번째 행): 합계 및 세그먼트명
-        cell_h2_sum = table.cell(1, col_idx)
-        _set_cell_style(cell_h2_sum, "합계", bg_color=COLOR_HEADER_BG, bold=True)
-        
-        for i, lbl in enumerate(m_info["labels"]):
-            cell_lbl = table.cell(1, col_idx + 1 + i)
-            _set_cell_style(cell_lbl, lbl.replace("\n", ""), bg_color=COLOR_HEADER_BG, bold=True, font_size=8)
-            
-        # H3 (2번째 행): 세그먼트별 만점 
-        cell_h3_sum = table.cell(2, col_idx)
-        _set_cell_style(cell_h3_sum, f"{int(m_info['max_w'])}점", bg_color=COLOR_HEADER_BG, bold=True)
-        for i, k in enumerate(m_info["keys"]):
-            seg_w = m_info["seg_max_pts"].get(k, 0)
-            cell_h3_seg = table.cell(2, col_idx + 1 + i)
-            _set_cell_style(cell_h3_seg, f"{int(seg_w)}점", bg_color=COLOR_HEADER_BG, bold=True)
-            
-        col_idx += colspan
-
-    # ── 데이터 행 작성 ──
-    for r_idx, b in enumerate(sorted_brands):
-        row_i = 3 + r_idx
-        store = b.get("store", "")
-        b_name = b.get("name", "")
-        b_type = b.get("type_label", "")
-        b_detail = agg_detail.get(store, {}).get(b_name, {}).get(b_type, {})
-        s_weights = b.get("scoring_guide", {}).get("score_weights", {})
-        
-        c_idx = 0
-        # 랭크
-        _set_cell_style(table.cell(row_i, c_idx), str(r_idx + 1))
-        c_idx += 1
-        # 복종
-        _set_cell_style(table.cell(row_i, c_idx), b.get("category", ""))
-        c_idx += 1
-        # 지점
-        _set_cell_style(table.cell(row_i, c_idx), store)
-        c_idx += 1
-        
-        # 총점수 (색상 지정)
-        tot_score = b.get("calculated_total", 0.0)
-        bg_col = _get_fill_color_for_score(tot_score, 100.0)
-        txt_col = COLOR_WHITE if bg_col == COLOR_RED else COLOR_BLACK
-        _set_cell_style(table.cell(row_i, c_idx), f"{int(round(tot_score))}점", bg_color=bg_col, text_color=txt_col, bold=True)
-        c_idx += 1
-        
-        # 총재고
-        s_val = float(b.get("sM", 0.0))
-        _set_cell_style(table.cell(row_i, c_idx), _fmt_num(s_val), bg_color=COLOR_YELLOW)
-        c_idx += 1
-        
-        # 지표별 데이터
         for m_id, m_info in metrics_config.items():
-            m_data = b_detail.get(m_id) or {}
-            segs_raw = m_data.get("segs", [])
-            seg_by_key = {s["key"]: s for s in segs_raw if isinstance(s, dict) and "key" in s}
+            colspan = len(m_info["keys"]) + 1
+            cell_h1 = table.cell(0, col_idx)
+            _set_cell_style(cell_h1, f"{m_info['title']}({int(m_info['max_w'])}점)", bg_color=COLOR_HEADER_BG, bold=True)
+            if colspan > 1:
+                cell_h1.merge(table.cell(0, col_idx + colspan - 1))
+                
+            cell_h2_sum = table.cell(1, col_idx)
+            _set_cell_style(cell_h2_sum, "합계", bg_color=COLOR_HEADER_BG, bold=True)
             
-            # 합계 점수
-            m_earned = float(b.get(m_id, 0.0))
-            g_weight = m_info["max_w"]
-            bg_col = _get_fill_color_for_score(m_earned, g_weight)
-            txt_col = COLOR_WHITE if bg_col == COLOR_RED else COLOR_BLACK
-            _set_cell_style(table.cell(row_i, c_idx), f"{_fmt_score(m_earned)}", bg_color=bg_col, text_color=txt_col, bold=True)
+            for i, lbl in enumerate(m_info["labels"]):
+                cell_lbl = table.cell(1, col_idx + 1 + i)
+                _set_cell_style(cell_lbl, lbl.replace("\n", ""), bg_color=COLOR_HEADER_BG, bold=True, font_size=8)
+                
+            cell_h3_sum = table.cell(2, col_idx)
+            _set_cell_style(cell_h3_sum, f"{int(m_info['max_w'])}점", bg_color=COLOR_HEADER_BG, bold=True)
+            for i, k in enumerate(m_info["keys"]):
+                seg_w = m_info["seg_max_pts"].get(k, 0)
+                cell_h3_seg = table.cell(2, col_idx + 1 + i)
+                _set_cell_style(cell_h3_seg, f"{int(seg_w)}점", bg_color=COLOR_HEADER_BG, bold=True)
+                
+            col_idx += colspan
+
+        # 데이터 그리기
+        for r_idx, b in enumerate(current_chunk):
+            row_i = 3 + r_idx
+            store = b.get("store", "")
+            b_name = b.get("name", "")
+            b_type = b.get("type_label", "")
+            b_detail = agg_detail.get(store, {}).get(b_name, {}).get(b_type, {})
+            
+            c_idx = 0
+            # 랭크
+            _set_cell_style(table.cell(row_i, c_idx), str(start_idx + r_idx + 1))
+            c_idx += 1
+            # 복종
+            _set_cell_style(table.cell(row_i, c_idx), b.get("category", ""))
+            c_idx += 1
+            # 지점
+            _set_cell_style(table.cell(row_i, c_idx), store)
             c_idx += 1
             
-            # 세그먼트별 점수
-            for k in m_info["keys"]:
-                seg = seg_by_key.get(k)
-                seg_max = m_info["seg_max_pts"].get(k, 0)
-                if seg:
-                    valM = float(seg.get("valM", 0.0))
-                    earned_pt = float(seg.get("earned_pt", 0.0))
-                    is_over = seg.get("is_over_120", False)
-                    
-                    bg_col = _get_fill_color_for_score(earned_pt, seg_max)
-                    txt_col = COLOR_WHITE if bg_col == COLOR_RED else COLOR_BLACK
-                    if is_over:
-                        bg_col = COLOR_YELLOW
-                        txt_col = COLOR_BLACK
-                        
-                    _set_cell_style(table.cell(row_i, c_idx), f"{_fmt_num(valM)}\n({_fmt_score(earned_pt)})", bg_color=bg_col, text_color=txt_col, font_size=8)
-                else:
-                    _set_cell_style(table.cell(row_i, c_idx), "-\n(-)", bg_color=COLOR_YELLOW, font_size=8)
+            # 총점수
+            tot_score = b.get("calculated_total", 0.0)
+            bg_col = _get_fill_color_for_score(tot_score, 100.0)
+            txt_col = COLOR_WHITE if bg_col == COLOR_RED else COLOR_BLACK
+            _set_cell_style(table.cell(row_i, c_idx), f"{int(round(tot_score))}점", bg_color=bg_col, text_color=txt_col, bold=True)
+            c_idx += 1
+            
+            # 총재고
+            s_val = float(b.get("sM", 0.0))
+            _set_cell_style(table.cell(row_i, c_idx), _fmt_num(s_val), bg_color=COLOR_YELLOW)
+            c_idx += 1
+            
+            # 지표별 데이터
+            for m_id, m_info in metrics_config.items():
+                m_data = b_detail.get(m_id) or {}
+                segs_raw = m_data.get("segs", [])
+                seg_by_key = {s["key"]: s for s in segs_raw if isinstance(s, dict) and "key" in s}
+                
+                m_earned = float(b.get(m_id, 0.0))
+                g_weight = m_info["max_w"]
+                bg_col = _get_fill_color_for_score(m_earned, g_weight)
+                txt_col = COLOR_WHITE if bg_col == COLOR_RED else COLOR_BLACK
+                _set_cell_style(table.cell(row_i, c_idx), f"{_fmt_score(m_earned)}", bg_color=bg_col, text_color=txt_col, bold=True)
                 c_idx += 1
+                
+                for k in m_info["keys"]:
+                    seg = seg_by_key.get(k)
+                    seg_max = m_info["seg_max_pts"].get(k, 0)
+                    if seg:
+                        valM = float(seg.get("valM", 0.0))
+                        earned_pt = float(seg.get("earned_pt", 0.0))
+                        is_over = seg.get("is_over_120", False)
+                        
+                        bg_col = _get_fill_color_for_score(earned_pt, seg_max)
+                        txt_col = COLOR_WHITE if bg_col == COLOR_RED else COLOR_BLACK
+                        if is_over:
+                            bg_col = COLOR_YELLOW
+                            txt_col = COLOR_BLACK
+                            
+                        _set_cell_style(table.cell(row_i, c_idx), f"{_fmt_num(valM)}\n({_fmt_score(earned_pt)})", bg_color=bg_col, text_color=txt_col, font_size=8)
+                    else:
+                        _set_cell_style(table.cell(row_i, c_idx), "-\n(-)", bg_color=COLOR_YELLOW, font_size=8)
+                    c_idx += 1
+
+        # 표 테두리 선 전체 검정색 적용
+        for row in table.rows:
+            for cell in row.cells:
+                _set_cell_border(cell, color="000000")
 
     buf = io.BytesIO()
     prs.save(buf)
     buf.seek(0)
     return buf.getvalue()
+
