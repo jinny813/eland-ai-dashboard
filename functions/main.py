@@ -86,7 +86,7 @@ def _cached_get_raw_records(_mgr, max_no: int):
 
 @st.cache_data(show_spinner="최신 데이터를 불러오는 중...")
 def _cached_load_all_months_internal(_mgr, max_no: int, available_months: tuple, raw_recs: list = None):
-    _force_cache_bust = "v20"
+    _force_cache_bust = "v22"
     del max_no
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
@@ -382,6 +382,8 @@ def main():
                             # 다운로드용 기준 월 분리 선택
                             dl_month = st.selectbox("📅 다운로드 기준 데이터 월", available_months, key="tab_dl_month_selector")
                             db_data = all_months_data.get(dl_month, {})
+                            data_fp = dashboard_fingerprint(db_data)
+                            dashboard_json = serialize_dashboard_json(db_data)
                             
                             st.markdown("---")
                             # [v172] 라디오 버튼 제거 및 공식 st.tabs 서브탭 레이아웃 적용
