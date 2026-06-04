@@ -9,7 +9,6 @@ Google Sheets → 대시보드 JSON 변환 파이프라인
 - 데이터 미업로드 브랜드에 대한 0점 자리표시자(Placeholder) 생성 로직 추가
 """
 
-import importlib
 import unicodedata
 import pandas as pd
 from datetime import datetime
@@ -20,9 +19,6 @@ from config.brand_targets import (
     get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES, MONTHLY_TM,
     PREV_YEAR_MONTHLY_SALES, CURR_MONTH_ACTUALS, normalize_brand_name,
 )
-import config.area_config as cfg_area
-import config.store_type_config as cfg_type
-import config.brand_targets as cfg_targets
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
 from config.store_type_config import get_store_type as _cfg_store_type, get_display_label as _cfg_display_label, BRAND_STORE_TYPES
@@ -83,7 +79,7 @@ def _score_df_product(target_df: pd.DataFrame, config: dict) -> int:
     return int(round(float(scored.iloc[0].get('product_score', 0))))
 
 
-def load_dashboard_data(mgr: GSheetManager = None) -> dict:
+def load_dashboard_data(mgr: GSheetManager = None, selected_month: str = None, raw_recs: list = None) -> dict:
     """
     Google Sheets → 대시보드 JSON 구조 생성. 
     마스터 브랜드 리스트를 통해 데이터가 없어도 특정 브랜드를 노출합니다.
@@ -95,20 +91,11 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         if not mgr.is_connected:
             return {"error": "구글 시트 연동 실패"}
 
-        # ── [v163] clean_store_name 로컬 유틸 정의
-        def clean_store_name(name: str) -> str:
-            if not name: return ""
-            name = str(name).strip()
-            for prefix in ["NC", "뉴코아", "동아", "2001"]:
-                if name.startswith(prefix):
-                    name = name[len(prefix):].strip()
-            return name
-
-        # [v165] storemaster dynamic update 지점명/목표 지능형 컬럼 분석을 위한 임시 래퍼 (diag_month 확정 뒤로 본 코드를 안전하게 이전합니다)
-        pass
-
-        sheet = mgr.spreadsheet.worksheet("Records")
-        all_recs = sheet.get_all_records()
+        if raw_recs is not None:
+            all_recs = raw_recs
+        else:
+            sheet = mgr.spreadsheet.worksheet("Records")
+            all_recs = sheet.get_all_records()
         
         # [NEW] brandmaster 데이터 로드 (조닝 매핑용)
         brand_master_df = mgr.load_brand_master()
@@ -133,69 +120,74 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                 "ACTION_PLAN": {}
             }
 
+        # ── storemaster_override.py 정적 오버라이드 적용 (parse_storemaster.py 생성분)
+        try:
+            import importlib
+            import config.storemaster_override as sm_ov
+            import config.brand_targets as _cfg_targets
+            import config.area_config as _cfg_area
+            import config.store_type_config as _cfg_type
+            importlib.reload(sm_ov)
+            if getattr(sm_ov, 'STORE_AREA', None):
+                for _s, _bmap in sm_ov.STORE_AREA.items():
+                    _cfg_area.AREA_CONFIG.setdefault(_s, {}).update(_bmap)
+            if getattr(sm_ov, 'STORE_BRAND_TYPE', None):
+                for _s, _bmap in sm_ov.STORE_BRAND_TYPE.items():
+                    _cfg_type.BRAND_STORE_TYPES.setdefault(_s, {}).update(_bmap)
+            if getattr(sm_ov, 'PREV_YEAR_MONTHLY_SALES_OVERRIDE', None):
+                for _ym, _store_map in sm_ov.PREV_YEAR_MONTHLY_SALES_OVERRIDE.items():
+                    for _s, _bmap in _store_map.items():
+                        _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+            if getattr(sm_ov, 'CURR_YEAR_MONTHLY_SALES_OVERRIDE', None):
+                for _ym, _store_map in sm_ov.CURR_YEAR_MONTHLY_SALES_OVERRIDE.items():
+                    for _s, _bmap in _store_map.items():
+                        _cfg_targets.CURR_MONTH_ACTUALS.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+            if getattr(sm_ov, 'MONTHLY_TARGET_OVERRIDE', None):
+                _cur_mo = f"{datetime.now().month:02d}"
+                _cur_yr = str(datetime.now().year)
+                for _ym, _store_map in sm_ov.MONTHLY_TARGET_OVERRIDE.items():
+                    _yr, _mo = _ym.split('_')
+                    for _s, _bmap in _store_map.items():
+                        _cfg_targets.MONTHLY_TM.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+                        if _yr == _cur_yr and _mo == _cur_mo:
+                            _cfg_targets.STORE_BRAND_TM.setdefault(_s, {}).update(_bmap)
+            logger.info("[storemaster_override] 정적 오버라이드 적용 완료")
+        except ImportError:
+            pass
+        except Exception as _soe:
+            logger.error(f"[storemaster_override] 적용 실패: {_soe}")
+
         df = pd.DataFrame(all_recs)
 
-        # [v150.1] 지프(Jeep) 캐주얼 유령 데이터 영구 필터링 (GAS 삭제 타임아웃 우회 이중 방어막)
-        if 'brand_name' in df.columns and 'category_group' in df.columns:
-            # 아동 브랜드인 '지프키즈'는 정상 유지하되, 캐주얼 카테고리의 유령 브랜드 '지프'만 필터링하여 드롭
-            df = df[~((df['brand_name'] == '지프') & (df['category_group'] == '캐주얼'))]
-
-        # [v150.0] 할인율 추정치(predicted_discount_rate) Fallback 로직 및 브랜드 플래그 설정
-        if 'discount_rate' in df.columns and 'predicted_discount_rate' in df.columns:
-            # discount_rate가 비어있거나 0인 행을 탐색
-            missing_mask = df['discount_rate'].isna() | (df['discount_rate'] == 0) | (df['discount_rate'] == "")
-            # 추정 가격 할인율이 실제 존재하는 행 탐색
-            predicted_mask = pd.to_numeric(df['predicted_discount_rate'], errors='coerce').fillna(0) > 0
-            
-            fallback_mask = missing_mask & predicted_mask
-            df.loc[fallback_mask, 'discount_rate'] = df.loc[fallback_mask, 'predicted_discount_rate']
-            
-            df['is_row_predicted'] = False
-            df.loc[fallback_mask, 'is_row_predicted'] = True
-        else:
-            df['is_row_predicted'] = False
-
         # [v74.1] 공격적 데이터 정규화: 모든 텍스트 컬럼의 앞뒤 공백 강제 제거
-        # (인합 및 분류 성공률을 극대화)
         str_cols = ['brand_name', 'store_name', 'style_code', 'freshness_type', 'season_code', 'store_type', 'data_month']
         for c in str_cols:
             if c in df.columns:
                 df[c] = df[c].astype(str).str.strip()
 
-        # ── [v162] clean_store_name 표준 유틸리티 정의
-        def clean_store_name(name: str) -> str:
-            if not name: return ""
+        # Unicode NFC 정규화: GAS 응답의 한글이 NFD(조합형 자모)로 오는 경우 완성형으로 통일
+        for c in ['store_name', 'brand_name', 'freshness_type', 'category_group', 'data_month']:
+            if c in df.columns:
+                df[c] = df[c].apply(lambda x: unicodedata.normalize('NFC', str(x)).strip())
+
+        # [v173] store_name 정규화: NC/뉴코아/동아/2001 수식어 제거 → 내부 키 통일
+        # DB에는 'NC불광점'으로 저장되어 있으나 scoring, storemaster 등 모든 로직은 '불광점' 기준
+        def _clean_store(name: str) -> str:
             name = str(name).strip()
-            for prefix in ["NC", "뉴코아", "동아", "2001"]:
+            for prefix in ['NC', '뉴코아', '동아', '2001']:
                 if name.startswith(prefix):
                     name = name[len(prefix):].strip()
+                    break
             return name
 
-        # ── [v162] officemaster 시트 동적 연동 및 지점명 전처리 매핑 구축
-        try:
-            df_office = mgr.load_office_master()
-            STORE_NAME_MAP = {str(k).strip(): clean_store_name(k) for k in df_office['지점명'].unique()}
-        except Exception as oe:
-            logger.warning(f"[GSheet] 'officemaster' 동적 연동 실패: {oe}. 로컬 기본값을 사용합니다.")
-            _fallback_stores = [
-                "NC신구로점", "NC강서점", "NC송파점", "NC야탑점", "NC평촌점", 
-                "2001중계점", "뉴코아부천점", "동아쇼핑점", "뉴코아강남점", "NC불광점", 
-                "NC인천점", "NC광명점", "NC산본점", "NC일산점", "NC고잔점", 
-                "NC부평점", "2001분당점", "뉴코아동수원점", "뉴코아수원터미널점", "NC평택점", 
-                "NC천호점"
-            ]
-            STORE_NAME_MAP = {k: clean_store_name(k) for k in _fallback_stores}
-
-        # Unicode NFC 정규화: GAS 응답의 한글이 NFD(조합형 자모)로 오는 경우 완성형으로 통일 (인식 오류 원천 차단)
-        for col in ['freshness_type', 'store_name', 'brand_name', 'category_group', 'data_month']:
-            if col in df.columns:
-                df[col] = df[col].astype(str).apply(lambda x: unicodedata.normalize('NFC', x).strip())
-
-        # [v162] officemaster 기반 지점명 전역 매칭 및 수식어 박멸
         if 'store_name' in df.columns:
-            df['store_name'] = df['store_name'].map(STORE_NAME_MAP).fillna(df['store_name'].apply(clean_store_name))
+            before_stores = df['store_name'].unique().tolist()
+            df['store_name'] = df['store_name'].apply(_clean_store)
+            after_stores = df['store_name'].unique().tolist()
+            print(f"DEBUG: store_name 정규화 전={before_stores[:5]}...")
+            print(f"DEBUG: store_name 정규화 후={after_stores[:5]}...")
 
-        # [v74.6] 수치형 컬럼 강제 변환 (정렬 및 계산 오류 방지)
+        # [v74.6] 수치형 컬럼 강제 변환
         num_cols = ['stock_amt', 'stock_qty', 'sales_qty', 'sales_amt', 'normal_price']
         for c in num_cols:
             if c in df.columns:
@@ -210,18 +202,22 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         if 'year' in df.columns and 'store_type' in df.columns and 'category_group' in df.columns:
             is_normal = ~df['store_type'].apply(_is_outlet_type)
             is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화'])
-            bad_year  = df['year'].astype(str).str.strip().eq("")
+            bad_year = df['year'].astype(str).str.strip().eq("")
             is_fresh_new = df['freshness_type'].astype(str).str.contains('신상', na=False) if 'freshness_type' in df.columns else pd.Series([False] * len(df))
-            
-            # [v162] 신규 유입 지점(강남점 등) 및 실적 데이터가 있는 정상 점포가 year 누락으로 유실되는 현상 방어
-            is_gangnam = df['store_name'].str.contains('강남', na=False) | df['store_name'].str.contains('쇼핑', na=False)
+            # 정규화 후 이름 기준 safe store (NC 제거된 이름)
+            _safe_stores = ['불광점', '강남점', '쇼핑점']
+            is_safe_store = df['store_name'].isin(_safe_stores)
             has_sales = (df['sales_qty'] > 0) | (df['sales_amt'] > 0)
-            df = df[~(is_normal & ~is_no_year_cat & bad_year & ~is_fresh_new & ~is_gangnam & ~has_sales)]
+            before = len(df)
+            df = df[~(is_normal & ~is_no_year_cat & bad_year & ~is_fresh_new & ~is_safe_store & ~has_sales)]
+            print(f"DEBUG: year 필터 후 {before} → {len(df)}행 (제거: {before - len(df)})")
+            print(f"DEBUG: 필터 후 지점 목록: {df['store_name'].unique().tolist()}")
         
         # [v125.0] 카테고리 통합 및 자동 매핑
         if 'category_group' in df.columns:
             df.loc[df['category_group'] == '골프웨어', 'category_group'] = '신사'
             df.loc[df['category_group'] == '아동의류(특정매입)', 'category_group'] = '아동'
+            # 스케쳐스 스포츠 카테고리 강제 매핑 (데이터 유실 방지)
             df.loc[df['brand_name'].str.contains('스케쳐스', na=False), 'category_group'] = '스포츠'
         
         # [v4.3] 이랜드월드 브랜드(스파오키즈, 뉴발란스키즈) 정상 매장 로직 적용 (사용자 요청)
@@ -231,7 +227,8 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             df.loc[mask, 'store_type'] = '정상'
             
         all_stores = [s for s in df['store_name'].unique()
-                      if s and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
+                      if pd.notna(s) and str(s).strip() and not str(s).lstrip('-').replace('.', '', 1).isdigit()]
+
         # [v162] 지점 정렬 로직 표준명 기준으로 전면 패치 + [v175] override 지점 강제 포함 (데이터 없어도 목표 노출)
         try:
             from config.storemaster_override import STORE_AREA
@@ -247,16 +244,20 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         bp_df = df[df['store_name'].isin(bp_stores)] if bp_stores else pd.DataFrame()
 
         cats = ['전체', '여성', '아동', '신사', '캐주얼', '스포츠', '잡화']
+        # [v4.0] 데이터가 있는 최신 월 자동 선택 (현재 월 데이터 부재 시 대응)
         available_months = df['data_month'].unique()
         current_month = f"{datetime.now().month}월"
         
+        # 월 이름에서 숫자 추출하여 정렬 (12월 > 1월 방지)
         def _get_m_num(m_str):
             try: return int(str(m_str).replace('월','').strip())
             except: return 0
             
         sorted_months = sorted([m for m in available_months if m], key=_get_m_num, reverse=True)
         
-        if current_month in available_months:
+        if selected_month and selected_month in available_months:
+            diag_month = selected_month
+        elif current_month in available_months:
             diag_month = current_month
         elif sorted_months:
             diag_month = sorted_months[0]
@@ -264,187 +265,12 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             diag_month = current_month
             
         print(f"DEBUG: Selected diag_month = {diag_month}")
-        print(f"DEBUG: Final GSheet unique stores = {df['store_name'].unique().tolist()}")
-        print(f"DEBUG: Final filtered stores in loader = {stores}")
 
-        # ── [v165] storemaster 구글 시트 데이터 실시간 지능형 연동 (헤더 타겟 고도화 및 분석월 동기화)
-        try:
-            df_sm = mgr.load_store_master()
-            if not df_sm.empty:
-                def find_col(keywords):
-                    for kw in keywords:
-                        for col in df_sm.columns:
-                            if kw.lower() in str(col).lower():
-                                return col
-                    return None
-                    
-                store_col = find_col(['지점', '점포', '매장', 'store', 'shop'])
-                brand_col = find_col(['브랜드', 'brand'])
-                area_col = find_col(['평수', '면적', 'area', 'size', '평'])
-                type_col = find_col(['유형', '구분', 'type'])
-                
-                m_num = str(diag_month).replace('월', '').strip() if diag_month else ""
-                
-                # 1. 목표매출 컬럼 지능형 타겟 (예: 26년 4월 목표 -> 4월 목표 -> 목표)
-                tm_keywords = []
-                if m_num:
-                    tm_keywords.extend([f"26년 {m_num}월 목표", f"26년 {m_num}월목표", f"{m_num}월 목표", f"{m_num}월목표", f"{m_num} 목표"])
-                tm_keywords.extend(['목표', 'tm', 'target'])
-                tm_col = find_col(tm_keywords)
-                
-                # 2. 당월 실적 매출 컬럼 지능형 타겟 (예: 26년 4월 매출 -> 4월 매출)
-                sales_keywords = []
-                if m_num:
-                    sales_keywords.extend([f"26년 {m_num}월 매출", f"26년 {m_num}월매출", f"{m_num}월 매출", f"{m_num}월매출"])
-                sales_keywords.extend(['매출', 'sales', 'actual'])
-                sales_col = find_col(sales_keywords)
-                
-                # 3. 전년동월 실적 매출 컬럼 지능형 타겟 (예: 25년 4월 매출)
-                prev_yr_sales_keywords = []
-                if m_num:
-                    prev_yr_sales_keywords.extend([f"25년 {m_num}월 매출", f"25년 {m_num}월매출"])
-                prev_yr_sales_col = find_col(prev_yr_sales_keywords)
-                
-                logger.info(f"[storemaster] 발굴된 컬럼 -> 지점:{store_col}, 브랜드:{brand_col}, 평수:{area_col}, 목표:{tm_col}, 당월실적:{sales_col}, 전년실적:{prev_yr_sales_col}, 유형:{type_col}")
-                
-                if store_col and brand_col:
-                    # 1. 평수 (AREA_CONFIG) 덮어쓰기
-                    if area_col:
-                        new_area = {}
-                        for _, row in df_sm.iterrows():
-                            s = clean_store_name(row[store_col])
-                            b = str(row[brand_col]).strip()
-                            val = _try_float(row[area_col])
-                            if s and b:
-                                if s not in new_area: new_area[s] = {}
-                                new_area[s][b] = val
-                        if new_area:
-                            cfg_area.AREA_CONFIG.update(new_area)
-                            logger.info("[storemaster] AREA_CONFIG 실시간 동적 덮어쓰기 성공!")
-                            
-                    # 2. 매장유형 (BRAND_STORE_TYPES) 덮어쓰기
-                    if type_col:
-                        new_types = {}
-                        for _, row in df_sm.iterrows():
-                            s = clean_store_name(row[store_col])
-                            b = str(row[brand_col]).strip()
-                            val = str(row[type_col]).strip()
-                            if s and b and val:
-                                normalized_val = "상설" if "상설" in val or "아울렛" in val or "복합" in val else "정상"
-                                if s not in new_types: new_types[s] = {}
-                                new_types[s][b] = normalized_val
-                        if new_types:
-                            cfg_type.BRAND_STORE_TYPES.update(new_types)
-                            logger.info("[storemaster] BRAND_STORE_TYPES 실시간 동적 덮어쓰기 성공!")
-                            
-                    # 3. 목표매출 (STORE_BRAND_TM 및 MONTHLY_TM) 덮어쓰기
-                    if tm_col:
-                        new_tms = {}
-                        for _, row in df_sm.iterrows():
-                            s = clean_store_name(row[store_col])
-                            b = str(row[brand_col]).strip()
-                            val = _try_float(row[tm_col])
-                            # 지능형 스케일 감지 (10만 이하는 M 단위로 간주하여 1,000,000 곱셈 보정)
-                            if 0 < val < 100000:
-                                val = val * 1_000_000
-                            if s and b:
-                                if s not in new_tms: new_tms[s] = {}
-                                new_tms[s][b] = val
-                        if new_tms:
-                            cfg_targets.STORE_BRAND_TM.update(new_tms)
-                            # MONTHLY_TM 에도 대시보드 로드 월 기준으로 dynamic 바인딩 주입
-                            current_yr_mo = f"{datetime.now().year}_{datetime.now().month:02d}"
-                            for s, b_map in new_tms.items():
-                                if s not in cfg_targets.MONTHLY_TM:
-                                    cfg_targets.MONTHLY_TM[s] = {}
-                                if current_yr_mo not in cfg_targets.MONTHLY_TM[s]:
-                                    cfg_targets.MONTHLY_TM[s][current_yr_mo] = {}
-                                cfg_targets.MONTHLY_TM[s][current_yr_mo].update(b_map)
-                            logger.info("[storemaster] brand_targets 실시간 동적 덮어쓰기 성공!")
-                            
-                    # 4. 실시간 당월 매출 실적 덮어쓰기
-                    if sales_col:
-                        new_curr_sales = {}
-                        for _, row in df_sm.iterrows():
-                            s = clean_store_name(row[store_col])
-                            b = str(row[brand_col]).strip()
-                            val = _try_float(row[sales_col])
-                            if s and b:
-                                if s not in new_curr_sales: new_curr_sales[s] = {}
-                                new_curr_sales[s][b] = val
-                        if new_curr_sales:
-                            for s, b_map in new_curr_sales.items():
-                                if s not in cfg_targets.CURR_MONTH_ACTUALS:
-                                    cfg_targets.CURR_MONTH_ACTUALS[s] = {}
-                                current_yr_mo = f"{datetime.now().year}_{int(m_num):02d}" if m_num.isdigit() else f"{datetime.now().year}_{datetime.now().month:02d}"
-                                if current_yr_mo not in cfg_targets.CURR_MONTH_ACTUALS[s]:
-                                    cfg_targets.CURR_MONTH_ACTUALS[s][current_yr_mo] = {}
-                                cfg_targets.CURR_MONTH_ACTUALS[s][current_yr_mo].update(b_map)
-                            logger.info("[storemaster] CURR_MONTH_ACTUALS 실시간 동적 덮어쓰기 성공!")
-                            
-                    # 5. 실시간 전년동월 매출 실적 덮어쓰기
-                    if prev_yr_sales_col:
-                        new_prev_sales = {}
-                        for _, row in df_sm.iterrows():
-                            s = clean_store_name(row[store_col])
-                            b = str(row[brand_col]).strip()
-                            val = _try_float(row[prev_yr_sales_col])
-                            if s and b:
-                                if s not in new_prev_sales: new_prev_sales[s] = {}
-                                new_prev_sales[s][b] = val
-                        if new_prev_sales:
-                            for s, b_map in new_prev_sales.items():
-                                if s not in cfg_targets.PREV_YEAR_MONTHLY_SALES:
-                                    cfg_targets.PREV_YEAR_MONTHLY_SALES[s] = {}
-                                prev_yr_mo = f"{datetime.now().year - 1}_{int(m_num):02d}" if m_num.isdigit() else f"{datetime.now().year - 1}_{datetime.now().month:02d}"
-                                if prev_yr_mo not in cfg_targets.PREV_YEAR_MONTHLY_SALES[s]:
-                                    cfg_targets.PREV_YEAR_MONTHLY_SALES[s][prev_yr_mo] = {}
-                                cfg_targets.PREV_YEAR_MONTHLY_SALES[s][prev_yr_mo].update(b_map)
-                            logger.info("[storemaster] PREV_YEAR_MONTHLY_SALES 실시간 동적 덮어쓰기 성공!")
-                            
-        except Exception as sm_err:
-            logger.error(f"[storemaster] dynamic 로드 실패 (백업 사전을 유지합니다): {sm_err}")
+        # [v176] 선택된 월(또는 자동 결정된 월)의 데이터만 남기도록 프레임 필터링
+        df = df[df['data_month'] == diag_month]
+        print(f"DEBUG: 월 필터 후 데이터 수 = {len(df)}")
 
-        # ── [v166] storemaster_override.py 정적 오버라이드 적용 (parse_storemaster.py 생성분)
-        try:
-            import config.storemaster_override as sm_ov
-            importlib.reload(sm_ov)
-
-            if getattr(sm_ov, 'STORE_AREA', None):
-                for _s, _bmap in sm_ov.STORE_AREA.items():
-                    cfg_area.AREA_CONFIG.setdefault(_s, {}).update(_bmap)
-
-            if getattr(sm_ov, 'STORE_BRAND_TYPE', None):
-                for _s, _bmap in sm_ov.STORE_BRAND_TYPE.items():
-                    cfg_type.BRAND_STORE_TYPES.setdefault(_s, {}).update(_bmap)
-
-            if getattr(sm_ov, 'PREV_YEAR_MONTHLY_SALES_OVERRIDE', None):
-                for _ym, _store_map in sm_ov.PREV_YEAR_MONTHLY_SALES_OVERRIDE.items():
-                    for _s, _bmap in _store_map.items():
-                        cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
-
-            if getattr(sm_ov, 'CURR_YEAR_MONTHLY_SALES_OVERRIDE', None):
-                for _ym, _store_map in sm_ov.CURR_YEAR_MONTHLY_SALES_OVERRIDE.items():
-                    for _s, _bmap in _store_map.items():
-                        cfg_targets.CURR_MONTH_ACTUALS.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
-
-            if getattr(sm_ov, 'MONTHLY_TARGET_OVERRIDE', None):
-                cur_mo = f"{datetime.now().month:02d}"
-                cur_yr = str(datetime.now().year)
-                for _ym, _store_map in sm_ov.MONTHLY_TARGET_OVERRIDE.items():
-                    _yr, _mo = _ym.split('_')
-                    for _s, _bmap in _store_map.items():
-                        cfg_targets.MONTHLY_TM.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
-                        if _yr == cur_yr and _mo == cur_mo:
-                            cfg_targets.STORE_BRAND_TM.setdefault(_s, {}).update(_bmap)
-
-            logger.info("[storemaster_override] 정적 오버라이드 적용 완료")
-        except ImportError:
-            pass
-        except Exception as _soe:
-            logger.error(f"[storemaster_override] 적용 실패: {_soe}")
-
-
+        # [v68.4] 마스터 브랜드 리스트 (데이터 유무와 상관없이 노출할 브랜드 명시)
         MASTER_CATEGORY_BRANDS = {
             "신구로점": {
                 "여성": [
@@ -458,27 +284,19 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             "송파점": { "여성": ["쉬즈미스"] },
             "쇼핑점": { "여성": ["로엠"] },
             "야탑점": { "여성": ["베네통", "시슬리"] },
-            "강서점": {
-                "여성": ["JJ지고트", "쉬즈미스", "리스트", "시슬리", "나이스클랍", "베네통", "플라스틱아일랜드", "로엠", "미쏘"]
-            },
+            "강서점": { "여성": ["JJ지고트"] },
             "평촌점": { "여성": ["바바팩토리"] },
             "부천점": {
                 "아동": [
                     "컬리수", "페리미츠", "베네통키즈", "아가방", "모이몰른", "뉴발란스키즈",
                     "탑텐키즈", "스파오키즈", "행텐틴즈", "NBA키즈", "폴햄키즈", "MLB키즈",
                     "앙팡스(압소바)", "블랙야크키즈", "휠라키즈", "아디다스키즈", "지프키즈", "에어워크주니어"
-                ],
-                "여성": ["리스트", "쉬즈미스", "로엠", "미쏘", "나이스클랍", "플라스틱아일랜드"],
-                "신사": ["인디안", "레노마신사", "지오지아", "바쏘옴므", "웰메이드", "PAT", "닥스셔츠", "피에르가르뎅", "크로커다일", "TNGT"],
-                "잡화": ["엘칸토", "금강", "랜드로바", "에스콰이아"]
+                ]
             },
-            "강남점": {
-                "여성": ["로엠", "미쏘", "리스트", "쉬즈미스", "클라비스", "나이스클랍", "플라스틱아일랜드"]
-            }
         }
 
         # 관리 대상 매장(신구로, 부천 등 store_type_config에 정의된 매장)
-        _MANAGED_STORES = set(clean_store_name(k) for k in BRAND_STORE_TYPES.keys())
+        _MANAGED_STORES = set(BRAND_STORE_TYPES.keys())
         _normal_stores = [s for s in stores if not s.startswith("__BP__")]
         # 벤치마크 매장: 관리 대상 아닌 매장 (중계, 강서, 동아 등 1등 매장)
         _benchmark_stores = [s for s in _normal_stores if s not in _MANAGED_STORES]
@@ -616,14 +434,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
                 cfg = _get_config(b_cat, b_type, b_name)
                 
-                # [v150.2] 다이나믹 월 맵핑: 전역 분석 월(diag_month)에 데이터가 없을 시 브랜드 고유 최신 데이터월로 자동 폴백
-                b_available_months = b_df['data_month'].unique() if 'data_month' in b_df.columns else []
-                b_month = diag_month
-                if diag_month not in b_available_months and len(b_available_months) > 0:
-                    # 월 텍스트 정렬 함수를 활용해 가장 최신 월 인출
-                    b_month = sorted([m for m in b_available_months if m], key=_get_m_num, reverse=True)[0]
-
-                tM_won = get_tm(brand_name=b_name, store_name=store, month=b_month)
+                tM_won = get_tm(brand_name=b_name, store_name=store, month=diag_month)
                 b_df['tM'] = tM_won
                 
                 # [v74.5] 중복 제거 로직 완화 (상설 매장은 inv_uid가 없으면 모든 행 합산)
@@ -650,27 +461,32 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
 
                 b_data_month = str(b_df.iloc[0].get('data_month', '')).strip()
                 b_df['area'] = get_area(store, b_name)
-                prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(b_name, 0.0)
+                _b_norm = normalize_brand_name(b_name)
+                prev_benchmark_sales = PREV_MONTH_SALES.get(store, {}).get(_b_norm, 0.0)
 
                 # 브랜드 월 매출: CURR_MONTH_ACTUALS 최근 가용 월 → PREV_MONTH_SALES(3월) → 합산
                 # _active_mk: 실제로 사용 중인 실적 월 키 (성장률 비교 기준 결정에 사용)
                 _active_mk = None
                 _active_sales = 0
                 if _cur_mk:
-                    for _try_mk in sorted(CURR_MONTH_ACTUALS.get(store, {}).keys(), reverse=True):
-                        if _try_mk <= _cur_mk:
-                            v = CURR_MONTH_ACTUALS[store][_try_mk].get(b_name, 0)
+                    _store_actuals = CURR_MONTH_ACTUALS.get(store, {})
+                    for _try_mk in sorted(_store_actuals.keys(), reverse=True):
+                        if _try_mk <= _cur_mk and isinstance(_store_actuals[_try_mk], dict):
+                            v = _store_actuals[_try_mk].get(_b_norm, 0)
                             if v > 0:
                                 _active_mk = _try_mk
                                 _active_sales = v
                                 break
+                    if _active_sales == 0 and not isinstance(_store_actuals.get(_b_norm), dict):
+                        _fallback_val = _store_actuals.get(_b_norm, 0)
+                        if _fallback_val > 0:
+                            _active_sales = _fallback_val
+                            _active_mk = _cur_mk
 
                 if _active_sales > 0:
                     b_df['brand_month_sales'] = _active_sales
                 elif prev_benchmark_sales > 0:
                     b_df['brand_month_sales'] = prev_benchmark_sales
-                    b_df['data_month'] = "3월"
-                    b_data_month = "3월"
                     try:
                         _active_mk = f"{datetime.now().year}_03"
                     except Exception:
@@ -694,9 +510,9 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                     if _active_mk and '_' in _active_mk:
                         _act_yr, _act_mo = _active_mk.split('_')
                         _prev_yr_mk = f"{int(_act_yr)-1}_{_act_mo}"
-                        _prev_yr_sales = PREV_YEAR_MONTHLY_SALES.get(store, {}).get(_prev_yr_mk, {}).get(b_name)
+                        _prev_yr_sales = PREV_YEAR_MONTHLY_SALES.get(store, {}).get(_prev_yr_mk, {}).get(_b_norm)
                     if not _prev_yr_sales:
-                        _prev_yr_sales = PREV_YEAR_SALES.get(store, {}).get(b_name)
+                        _prev_yr_sales = PREV_YEAR_SALES.get(store, {}).get(_b_norm)
 
                     if _prev_yr_sales and _prev_yr_sales > 0:
                         g_pct = (cur_sales_sum - _prev_yr_sales) / _prev_yr_sales * 100
@@ -712,9 +528,6 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         mom_base = prev_benchmark_sales
                         g_pct = ((mom_cur - mom_base) / mom_base * 100) if (mom_cur > 0 and mom_base > 0) else 0.0
 
-                    # 해당 브랜드의 데이터 중 추정 가격/할인율을 사용한 행이 하나라도 있는지 확인
-                    is_predicted_dis = bool(b_df['is_row_predicted'].any()) if 'is_row_predicted' in b_df.columns else False
-
                     brands_list.append({
                         "name": b_name, "store": store, "category": b_cat,
                         "type": "outlet" if _is_outlet_type(b_type) else "normal",
@@ -725,7 +538,6 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "item": int(round(float(row.get('item_score', 0)))),
                         "zoning": brand_zoning_map.get(b_name) or cfg.get('zoning', '미분류'),
                         "dis": int(round(float(row.get('discount_score', 0)))),
-                        "is_predicted_dis": is_predicted_dis,  # 추정 배지 표기용 플래그
                         "fresh": int(round(float(row.get('freshness_score', 0)))),
                         "best": int(round(float(row.get('best_score', 0)))),
                         "season": int(round(float(row.get('season_score', 0)))),
@@ -734,6 +546,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "sQ": int(stock_qty),
                         "sales_amt": cur_sales_sum / 1_000_000,
                         "prev_sales": prev_benchmark_sales / 1_000_000,
+                        "prev_yr_sales_amt": (_prev_yr_sales / 1_000_000) if _prev_yr_sales else 0.0,
                         "growth_pct": float(g_pct),
                         "area": get_area(store, b_name),
                         "month": diag_month, "data_month": b_data_month,
@@ -824,6 +637,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             score_data[store] = new_scores
 
         return {
+            "AVAILABLE_MONTHS": sorted_months,
             "CATS": cats, "STORES": stores, "scoreData": score_data, "BRANDS": brands_list,
             "DETAIL": detail_data, "BP_DETAIL": bp_detail, "BEST_ITEMS": best_items,
             "ACTION_PLAN": action_plan,

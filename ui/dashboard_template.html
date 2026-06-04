@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E·LAND AI Assortment Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
 
@@ -1651,8 +1652,16 @@
     </aside>
 
     <div class="main">
-      <div class="topbar"><span>상품구색 시스템</span><span class="top-sep">></span><span class="top-active" id="top-title">상품
-          구색 점수판</span></div>
+      <div class="topbar" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span>상품구색 시스템</span><span class="top-sep">></span><span class="top-active" id="top-title">상품 구색 점수판</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-right:16px;">
+          <span style="font-size:12px; font-weight:800; color:#64748B;">📅 데이터 월:</span>
+          <select id="globalMonthSelector" style="padding:6px 12px; border-radius:8px; border:1px solid #E2E8F0; background:#fff; font-size:14px; font-weight:700; color:#0F172A; cursor:pointer; outline:none;" onchange="changeGlobalMonth(this.value)">
+          </select>
+        </div>
+      </div>
       <div class="content">
         <div id="js-error-overlay" style="display:none; background:#FEE2E2; border:1px solid #EF4444; color:#991B1B; padding:16px; margin-bottom:16px; border-radius:8px; font-weight:bold; white-space:pre-wrap;"></div>
         <script>
@@ -1819,6 +1828,49 @@
               </div>
             </div>
           </div>
+
+          <!-- YoY Chart (전년대비 변화) -->
+          <!-- [v185] 전월 대비 점수 상세 비교 차트 (MoM) -->
+          <div style="margin-top:24px; margin-bottom:40px; display:none;" id="momScoreChartContainer">
+            <div style="display: grid; grid-template-columns: 3fr 7fr; gap: 20px; width: 100%;">
+              <!-- 좌측: 총점수 비교 카드 -->
+              <div class="card" style="padding:24px; border: 1.5px solid #EEF2FF; background: #F8FAFF; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="font-size:16px; font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                     <span style="font-size:20px;">🏆</span> 총점수 MoM 트렌드
+                  </div>
+                  <div id="momTotalScoreLabel" style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:10px;">전월 대비 총점수 변동</div>
+                  
+                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">
+                    <div id="momTotalScoreCur" style="font-size: 48px; font-weight: 950; color: #1E293B; line-height: 1;">0</div>
+                    <span style="font-size: 18px; font-weight: 800; color: #64748B;">점</span>
+                    <span id="momTotalScoreDelta" style="font-size: 18px; font-weight: 900; margin-left: 10px;">-</span>
+                  </div>
+                  <div id="momTotalScorePrev" style="font-size: 13px; font-weight: 700; color: #64748B; margin-bottom: 20px;">전월 점수: -</div>
+                </div>
+                
+                <!-- 전월대비 변화 요약 텍스트 추가 영역 -->
+                <div id="momScoreSummary" style="background:#fff; border:1px solid #E2E8F0; padding:14px 16px; border-radius:12px; font-size:13px; color:#1E293B; line-height:1.5; font-weight:500;">
+                </div>
+              </div>
+
+              <!-- 우측: 5대 지표 비교 차트 -->
+              <div class="card" style="padding:24px; border: 1.5px solid #EEF2FF;">
+                <div style="font-size:16px; font-weight:800; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                   <div style="display:flex; align-items:center; gap:8px;">
+                     <span style="font-size:20px;">📊</span> 5대 지표별 점수 변화 (MoM)
+                   </div>
+                   <span style="font-size:11px; font-weight:800; color:#3B82F6; background:#EFF6FF; padding:3px 10px; border-radius:12px; border:1px solid #BFDBFE;">💡 지표 클릭 시 세부 구간 비교</span>
+                </div>
+                <div style="font-size: 12px; color: #94A3B8; font-weight: 700; margin-bottom: 20px;">차트의 막대를 클릭하시면 상세 세그먼트 분석을 보실 수 있습니다.</div>
+                
+                <div style="position: relative; height: 260px; width: 100%;">
+                  <canvas id="momScoreChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- P3: UPLOAD (사진 100% 매칭) -->
@@ -2032,6 +2084,56 @@
           </thead>
           <tbody id="modalTbody"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 세부 구간 변동 추이 모달 -->
+  <div class="overlay" id="segmentDetailModal" onclick="if(event.target===this)closeSegmentDetailModal()">
+    <div class="modal" style="max-width: 1200px;">
+      <div class="modal-hdr" style="background: #1E293B;">
+        <div>
+          <div class="modal-title" id="segModalTitle">지표별 세부 구간 변동 분석 (MoM)</div>
+          <div class="modal-sub" id="segModalSub">전월 대비 각 세그먼트별 재고 구성 및 지표 변동 분석</div>
+        </div>
+        <button class="modal-close" onclick="closeSegmentDetailModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 24px; background: #F8FAFC;">
+        
+        <!-- 분석 요약 -->
+        <div id="segModalSummary" style="background:#FFF; border:1px solid #E2E8F0; padding:16px 20px; border-radius:12px; font-size:14px; color:#1E293B; line-height:1.6; margin-bottom:24px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+          <!-- 좌측: 구간별 전월 대비 비교 표 -->
+          <div class="card" style="padding: 20px; background: #FFF;">
+            <div style="font-size: 15px; font-weight: 800; margin-bottom: 14px; color: #1E293B;">📊 세부 구간별 보유 재고 및 변동</div>
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #E2E8F0; color: #475569; font-weight: 800;">
+                    <th style="text-align: left; padding: 10px;">구간명</th>
+                    <th style="text-align: right; padding: 10px;">전월 보유액</th>
+                    <th style="text-align: right; padding: 10px;">당월 보유액</th>
+                    <th style="text-align: right; padding: 10px;">목표 재고액</th>
+                    <th style="text-align: right; padding: 10px; width: 85px;">보유액 변동</th>
+                  </tr>
+                </thead>
+                <tbody id="segModalTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 우측: Chart.js 차트 -->
+          <div class="card" style="padding: 20px; background: #FFF; height: 100%;">
+            <div style="font-size: 15px; font-weight: 800; margin-bottom: 14px; color: #1E293B;">📈 세그먼트별 재고 변화 시각화 (백만원)</div>
+            <div style="position: relative; height: 320px; width: 100%;">
+              <canvas id="segDetailChart"></canvas>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2862,8 +2964,9 @@
         return `
       <div class="m-card" style="display:flex; flex-direction:column;">
         <div class="m-head" style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span class="m-title">${m.l}</span>
+          <div style="display:flex; align-items:center; gap:6px; cursor:pointer;" onclick="showSegmentDetailMoM('${m.id}')" title="클릭하여 세부 구간 변동 추이 보기">
+            <span class="m-title" style="text-decoration: underline; text-underline-offset: 3px;">${m.l}</span>
+            <span style="font-size:12px; color:${baseColor}; font-weight:800;">🔍</span>
             ${m.zoning ? `<span style="font-size:11px; font-weight:800; color:#64748B; background:#F1F5F9; padding:2px 6px; border-radius:4px;">${m.zoning}</span>` : ''}
           </div>
           <div style="text-align:right;">
@@ -2899,6 +3002,9 @@
   
       // [ACTION GUIDE] 패널 렌더링 호출
       renderActionPanel();
+
+      // [YoY Chart] 렌더링 호출
+      renderMoMScoreChart(b);
     }
 
     // ─── [ACTION GUIDE] 층장 액션 가이드 패널 렌더링 함수 ───
@@ -3036,6 +3142,335 @@
       e.stopPropagation();
       const b = document.getElementById('scoreBubble');
       b.style.display = (b.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function getPrevMonthData(currentMonthStr, storeName, brandName) {
+         if (!window.__ALL_DATA__) return null;
+         const available = Object.keys(window.__ALL_DATA__);
+         const idx = available.indexOf(currentMonthStr);
+         if (idx === -1 || idx >= available.length - 1) return null;
+         const prevMonth = available[idx + 1];
+         const prevData = window.__ALL_DATA__[prevMonth];
+         if (!prevData || !prevData.BRANDS) return null;
+         return prevData.BRANDS.find(b => b.store === storeName && b.name === brandName);
+    }
+
+    let momScoreChartInstance = null;
+    function renderMoMScoreChart(b) {
+      const container = document.getElementById('momScoreChartContainer');
+      const summaryDiv = document.getElementById('momScoreSummary');
+      if (!b) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'block';
+      const ctx = document.getElementById('momScoreChart').getContext('2d');
+      if (momScoreChartInstance) {
+        momScoreChartInstance.destroy();
+      }
+
+      const currentMonth = b.data_month || b.month || currentGlobalMonth;
+      const prevB = getPrevMonthData(currentMonth, b.store, b.name);
+
+      const curTotal = b.product_score || b.total || 0;
+      const prevTotal = prevB ? (prevB.product_score || prevB.total || 0) : 0;
+      const totalDiff = curTotal - prevTotal;
+
+      // 총점수 정보 업데이트
+      document.getElementById('momTotalScoreCur').textContent = curTotal;
+      document.getElementById('momTotalScorePrev').textContent = `전월 점수: ${prevB ? prevTotal + '점' : '데이터 없음'}`;
+      document.getElementById('momTotalScoreLabel').textContent = `${prevB ? (prevB.data_month || prevB.month) : '전월'} 대비 총점수 변동`;
+
+      const deltaEl = document.getElementById('momTotalScoreDelta');
+      if (!prevB) {
+        deltaEl.textContent = '-';
+        deltaEl.style.color = '#64748B';
+      } else if (totalDiff === 0) {
+        deltaEl.textContent = '동일';
+        deltaEl.style.color = '#64748B';
+      } else if (totalDiff > 0) {
+        deltaEl.textContent = `▲${totalDiff}점`;
+        deltaEl.style.color = '#DC2626';
+      } else {
+        deltaEl.textContent = `▼${Math.abs(totalDiff)}점`;
+        deltaEl.style.color = '#2563EB';
+      }
+
+      // 5개 지표로 변경 (총점수 제외)
+      const labels = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
+      const curData = [
+          b.dis || 0,
+          b.best || 0,
+          b.fresh || 0,
+          b.season || 0,
+          b.item || 0
+      ];
+      
+      const prevData = prevB ? [
+          prevB.dis || 0,
+          prevB.best || 0,
+          prevB.fresh || 0,
+          prevB.season || 0,
+          prevB.item || 0
+      ] : [0,0,0,0,0];
+      
+      const prevMonthLabel = prevB ? (prevB.data_month || prevB.month) : '전월 (데이터 없음)';
+
+      // 요약 텍스트 생성
+      if (!prevB) {
+         summaryDiv.innerHTML = `<span style="color:#64748B;">이전 달 데이터가 없어 전월대비 점수 비교 분석이 불가능합니다.</span>`;
+      } else {
+         const diffs = [
+            {name: '할인율', diff: curData[0] - prevData[0]},
+            {name: 'BEST상품', diff: curData[1] - prevData[1]},
+            {name: '신선도', diff: curData[2] - prevData[2]},
+            {name: '시즌', diff: curData[3] - prevData[3]},
+            {name: '아이템', diff: curData[4] - prevData[4]}
+         ];
+         
+         const totalStr = totalDiff === 0 ? "동일" : (totalDiff > 0 ? `<strong style="color:#DC2626; font-size:15px;">▲${totalDiff}점 상승</strong>` : `<strong style="color:#2563EB; font-size:15px;">▼${Math.abs(totalDiff)}점 하락</strong>`);
+         
+         const increased = diffs.filter(m => m.diff > 0).sort((a,b) => b.diff - a.diff);
+         const decreased = diffs.filter(m => m.diff < 0).sort((a,b) => a.diff - b.diff);
+         
+         let reasonHtml = "";
+         if (totalDiff === 0 && increased.length === 0 && decreased.length === 0) {
+            reasonHtml = "세부 지표 점수가 모두 전월과 완전히 동일합니다.";
+         } else {
+            let reasons = [];
+            if (increased.length > 0) reasons.push(`상승 견인 지표: ` + increased.map(m => `<b>${m.name}(+${m.diff})</b>`).join(', '));
+            if (decreased.length > 0) reasons.push(`하락 원인 지표: ` + decreased.map(m => `<b>${m.name}(${m.diff})</b>`).join(', '));
+            reasonHtml = reasons.join('<br>');
+         }
+         
+         summaryDiv.innerHTML = `총점수는 전월대비 ${totalStr}했습니다.<br><span style="font-size:12px; color:#475569; margin-top:6px; display:inline-block; line-height:1.4;">💡 ${reasonHtml}</span>`;
+      }
+
+      momScoreChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: prevMonthLabel,
+              data: prevData,
+              backgroundColor: 'rgba(148, 163, 184, 0.7)',
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.6
+            },
+            {
+              label: currentMonth,
+              data: curData,
+              backgroundColor: 'rgba(239, 68, 68, 0.9)',
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          onClick: (event, activeElements) => {
+            if (activeElements.length > 0) {
+              const idx = activeElements[0].index;
+              const ids = ['dis', 'best', 'fresh', 'season', 'item'];
+              showSegmentDetailMoM(ids[idx]);
+            }
+          },
+          onHover: (event, chartElement) => {
+            event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default';
+          },
+          plugins: {
+            legend: { 
+               display: true, 
+               position: 'top',
+               labels: { font: { family: "'Outfit', 'Noto Sans KR', sans-serif", weight: '600' }, color: '#334155' }
+            },
+            tooltip: {
+              backgroundColor: '#1E293B',
+              titleFont: { size: 14, family: "'Outfit', 'Noto Sans KR', sans-serif" },
+              bodyFont: { size: 14, family: "'Outfit', 'Noto Sans KR', sans-serif" },
+              padding: 12,
+              callbacks: {
+                 afterBody: function(context) {
+                    if (context[0].datasetIndex === 1 && prevB) {
+                       const idx = context[0].dataIndex;
+                       const diff = curData[idx] - prevData[idx];
+                       const sign = diff > 0 ? '▲' : (diff < 0 ? '▼' : '-');
+                       const txtColor = diff > 0 ? '증가' : (diff < 0 ? '감소' : '동일');
+                       return `\n전월대비 변화: ${sign} ${Math.abs(diff)}점 (${txtColor})`;
+                    }
+                 }
+              }
+            }
+          },
+          scales: {
+             y: {
+               beginAtZero: true,
+               grid: { color: '#F1F5F9', drawBorder: false },
+               ticks: { font: { family: "'Outfit', sans-serif", weight: '600' }, color: '#64748B' }
+             },
+             x: {
+               grid: { display: false },
+               ticks: { font: { family: "'Noto Sans KR', sans-serif", weight: '800' }, color: '#1E293B', padding: 8 }
+             }
+          }
+        }
+      });
+    };
+
+    function getSegmentMoMData(indicatorId) {
+      if (!currentBrand) return null;
+      const b = currentBrand;
+      const st = b.store;
+      const typeLabel = b.type_label || (b.type === 'normal' ? '정상' : '상설');
+      
+      const dStore = DETAIL[st] || {};
+      const dBrand = dStore[b.name] || {};
+      const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
+      const curIndicator = d[indicatorId] || {};
+      const curSegs = curIndicator.segs || [];
+      
+      const currentMonth = b.data_month || b.month || currentGlobalMonth;
+      const prevB = getPrevMonthData(currentMonth, b.store, b.name);
+      let prevSegs = [];
+      if (prevB) {
+        const prevMonth = prevB.data_month || prevB.month;
+        const prevDStore = window.__ALL_DATA__[prevMonth]?.DETAIL?.[st] || {};
+        const prevDBrand = prevDStore[b.name] || {};
+        const prevD = prevDBrand[typeLabel] || Object.values(prevDBrand)[0] || {};
+        const prevIndicator = prevD[indicatorId] || {};
+        prevSegs = prevIndicator.segs || [];
+      }
+      
+      return {
+        curSegs,
+        prevSegs,
+        currentMonth,
+        prevMonthLabel: prevB ? (prevB.data_month || prevB.month) : '전월'
+      };
+    }
+
+    function closeSegmentDetailModal() {
+      document.getElementById('segmentDetailModal').classList.remove('show');
+    }
+
+    let segDetailChartInstance = null;
+    function showSegmentDetailMoM(indicatorId) {
+      const data = getSegmentMoMData(indicatorId);
+      if (!data) return;
+      
+      const { curSegs, prevSegs, currentMonth, prevMonthLabel } = data;
+      const names = { dis: '할인율', best: 'BEST상품', fresh: '신선도', season: '시즌', item: '아이템' };
+      
+      document.getElementById('segModalTitle').textContent = `[${names[indicatorId] || indicatorId}] 세부 구간 변동 분석 (MoM)`;
+      document.getElementById('segModalSub').textContent = `${prevMonthLabel} 대비 ${currentMonth} 세부 구간별 보유 재고 및 변동 추이`;
+      
+      const tb = document.getElementById('segModalTableBody');
+      tb.innerHTML = '';
+      
+      const matchedData = curSegs.map(cur => {
+        const prev = prevSegs.find(p => p.key === cur.key || p.l === cur.l);
+        return {
+          key: cur.key,
+          label: cur.l,
+          curVal: cur.valM || 0,
+          curTarget: cur.targetM || 0,
+          curQty: cur.qty || 0,
+          curPct: cur.pct || 0,
+          prevVal: prev ? (prev.valM || 0) : 0,
+          prevTarget: prev ? (prev.targetM || 0) : 0,
+          prevQty: prev ? (prev.qty || 0) : 0,
+          prevPct: prev ? (prev.pct || 0) : 0
+        };
+      });
+
+      let increasedSegs = [];
+      let decreasedSegs = [];
+      
+      matchedData.forEach(d => {
+        const valDiff = d.curVal - d.prevVal;
+        const qtyDiff = d.curQty - d.prevQty;
+        const valDiffStr = valDiff === 0 ? '0.0M' : (valDiff > 0 ? `<span style="color:#DC2626; font-weight:800;">+${valDiff.toFixed(1)}M</span>` : `<span style="color:#2563EB; font-weight:800;">${valDiff.toFixed(1)}M</span>`);
+        const qtyDiffStr = qtyDiff === 0 ? '' : (qtyDiff > 0 ? ` (+${qtyDiff}EA)` : ` (${qtyDiff}EA)`);
+        
+        if (valDiff > 0.1) increasedSegs.push({ name: d.label, diff: valDiff });
+        if (valDiff < -0.1) decreasedSegs.push({ name: d.label, diff: valDiff });
+
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #F1F5F9';
+        tr.innerHTML = `
+          <td style="padding:12px 10px; font-weight:700; color:#1E293B;">${d.label}</td>
+          <td style="padding:12px 10px; text-align:right; color:#64748B;">${d.prevVal.toFixed(1)}M <span style="font-size:10px;">(${d.prevQty}EA)</span></td>
+          <td style="padding:12px 10px; text-align:right; color:#0F172A; font-weight:700;">${d.curVal.toFixed(1)}M <span style="font-size:10px;">(${d.curQty}EA)</span></td>
+          <td style="padding:12px 10px; text-align:right; color:#94A3B8;">${d.curTarget.toFixed(1)}M</td>
+          <td style="padding:12px 10px; text-align:right;">${valDiffStr}<span style="font-size:10px; color:#94A3B8;">${qtyDiffStr}</span></td>
+        `;
+        tb.appendChild(tr);
+      });
+
+      const incStr = increasedSegs.map(s => `<b>${s.name}</b> 구간 재고 <b>+${s.diff.toFixed(1)}M</b> 증가`).join(', ');
+      const decStr = decreasedSegs.map(s => `<b>${s.name}</b> 구간 재고 <b>${s.diff.toFixed(1)}M</b> 감소`).join(', ');
+      
+      let analysisSummary = `💡 <b>전월비 세부 분석</b>: `;
+      if (increasedSegs.length === 0 && decreasedSegs.length === 0) {
+        analysisSummary += `전체 세부 구간의 재고 수준이 전월과 거의 동일하게 유지되고 있습니다.`;
+      } else {
+        const parts = [];
+        if (increasedSegs.length > 0) parts.push(`재고 증가 구간: ${incStr}`);
+        if (decreasedSegs.length > 0) parts.push(`재고 감소 구간: ${decStr}`);
+        analysisSummary += parts.join(' / ') + `. 이로 인한 구성 비중의 변화가 지표 점수 변동의 주요 원인입니다.`;
+      }
+      document.getElementById('segModalSummary').innerHTML = analysisSummary;
+
+      const chartCtx = document.getElementById('segDetailChart').getContext('2d');
+      if (segDetailChartInstance) {
+        segDetailChartInstance.destroy();
+      }
+
+      segDetailChartInstance = new Chart(chartCtx, {
+        type: 'bar',
+        data: {
+          labels: matchedData.map(d => d.label),
+          datasets: [
+            {
+              label: `${prevMonthLabel} 보유액 (M)`,
+              data: matchedData.map(d => d.prevVal),
+              backgroundColor: 'rgba(148, 163, 184, 0.6)',
+              borderRadius: 4
+            },
+            {
+              label: `${currentMonth} 보유액 (M)`,
+              data: matchedData.map(d => d.curVal),
+              backgroundColor: 'rgba(239, 68, 68, 0.8)',
+              borderRadius: 4
+            },
+            {
+              label: '목표액 (M)',
+              data: matchedData.map(d => d.curTarget),
+              backgroundColor: 'rgba(226, 232, 240, 0.9)',
+              borderColor: 'rgba(148, 163, 184, 0.8)',
+              borderWidth: 1,
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#F1F5F9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      document.getElementById('segmentDetailModal').classList.add('show');
     }
 
     // 말풍선 외부 클릭 시 닫기
@@ -3190,7 +3625,129 @@
       }
     }
 
+    let yoyChartInstance = null;
+    function renderYoYChart(b) {
+      const container = document.getElementById('yoyChartContainer');
+      if (!b || typeof b.growth_pct === 'undefined') {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'block';
+      const ctx = document.getElementById('yoyChart').getContext('2d');
+      if (yoyChartInstance) {
+        yoyChartInstance.destroy();
+      }
+
+      const curSales = b.sales_amt || 0;
+      const prevYrSales = b.prev_yr_sales_amt || 0;
+      const growth = b.growth_pct || 0;
+      
+      let growthColor = growth >= 0 ? 'rgba(220, 38, 38, 0.8)' : 'rgba(37, 99, 235, 0.8)';
+      
+      yoyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['전년 동월', '선택 월 (현재)'],
+          datasets: [{
+            label: '매출액 (백만원)',
+            data: [prevYrSales, curSales],
+            backgroundColor: [
+              'rgba(148, 163, 184, 0.8)', // Slate 400 for previous year
+              growthColor
+            ],
+            borderRadius: 8,
+            barThickness: 60
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1E293B',
+              titleFont: { size: 14, family: "'Outfit', 'Noto Sans KR', sans-serif" },
+              bodyFont: { size: 14, family: "'Outfit', 'Noto Sans KR', sans-serif" },
+              padding: 12,
+              displayColors: false,
+              callbacks: {
+                label: function(context) {
+                  return context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1}) + ' 백만원';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F1F5F9', drawBorder: false },
+              ticks: { font: { family: "'Outfit', sans-serif", weight: '600' }, color: '#64748B' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: "'Noto Sans KR', sans-serif", weight: '800' }, color: '#1E293B', padding: 8 }
+            }
+          },
+          animation: {
+            duration: 1000,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+    }
+
+    let currentGlobalMonth = null;
+    
+    function changeGlobalMonth(m) {
+      if (!m) return;
+      if (window.__ALL_DATA__ && window.__ALL_DATA__[m]) {
+        try {
+          const d = window.__ALL_DATA__[m];
+          // 데이터가 실질적으로 비어있는지 확인
+          if (!d.CATS || d.CATS.length === 0 || !d.BRANDS || d.BRANDS.length === 0) {
+            alert("선택하신 월(데이터)에 해당하는 정보가 없습니다. (데이터 없음)");
+            const sel = document.getElementById('globalMonthSelector');
+            if (sel && currentGlobalMonth) {
+              sel.value = currentGlobalMonth;
+            }
+            return;
+          }
+          
+          currentGlobalMonth = m;
+          // SPA 전환: 브라우저 새로고침 없이 즉각 데이터 렌더링
+          _loadData(d);
+          updateP1MonthIndicator();
+          buildMainTable();
+          initP2Selectors();
+          renderBrandDetail();
+          
+          // 브라우저 URL 쿼리 업데이트 (공유 목적, 새로고침 안 됨)
+          const url = new URL(window.location.href);
+          url.searchParams.set('month', m);
+          window.history.replaceState(null, '', url.toString());
+          
+          if (window.parent && window.parent !== window) {
+            const parentUrl = new URL(window.parent.location.href);
+            parentUrl.searchParams.set('month', m);
+            window.parent.history.replaceState(null, '', parentUrl.toString());
+          }
+        } catch(e) {
+          console.error("SPA Month change failed:", e);
+        }
+      }
+    }
+
     function _loadData(d) {
+      // [v182] SELECTED_MONTH를 통해 완벽히 일치하는 월 옵션 선택
+      const monthSel = document.getElementById('globalMonthSelector');
+      if (monthSel && d.AVAILABLE_MONTHS) {
+        const currentMonth = d.SELECTED_MONTH ? String(d.SELECTED_MONTH).trim() : null;
+        monthSel.innerHTML = d.AVAILABLE_MONTHS.map(m => {
+          const trimmedM = String(m).trim();
+          return `<option value="${trimmedM}" ${trimmedM === currentMonth ? 'selected' : ''}>${trimmedM}</option>`;
+        }).join('');
+      }
+
       CATS = d.CATS || CATS; scoreData = d.scoreData || {};
       STORES = d.STORES || [];
       BRANDS = d.BRANDS || []; DETAIL = d.DETAIL || {};
@@ -3198,8 +3755,12 @@
       ACTION_PLAN = d.ACTION_PLAN || {};
       SCORING_GUIDE = d.SCORING_GUIDE || {};
       
-      // [v178] 가장 카테고리가 많은 지점(부천점, 신구로점 등)이 리스트 최상단에 오도록 정렬
+      // [v181] 카테고리별로 단 1개 브랜드의 데이터도 없는 지점(점수가 모두 0)은 노출 완전 제외
       if (STORES.length) {
+        STORES = STORES.filter(st => {
+          return Object.values(scoreData[st] || {}).some(v => v > 0);
+        });
+        
         STORES.sort((a, b) => {
           const countA = Object.values(scoreData[a] || {}).filter(v => v > 0).length;
           const countB = Object.values(scoreData[b] || {}).filter(v => v > 0).length;
@@ -3286,7 +3847,27 @@
     }
 
     async function init() {
-      if (window.__INITIAL_DATA__) {
+      if (window.__ALL_DATA__) {
+        // [v184] SPA: 모든 월 데이터를 로드하고, URL 파라미터 또는 가장 최신 월을 기본으로 사용
+        const urlParams = new URLSearchParams(window.location.search);
+        let defaultMonth = urlParams.get('month');
+        const available = Object.keys(window.__ALL_DATA__);
+        
+        if (!defaultMonth || !window.__ALL_DATA__[defaultMonth]) {
+           defaultMonth = available.length > 0 ? available[0] : null; // Python 딕셔너리 순서 보존 (최신 월이 먼저)
+        }
+        
+        if (defaultMonth) {
+            currentGlobalMonth = defaultMonth;
+            const d = window.__ALL_DATA__[defaultMonth];
+            if (d.error) { _showError(`데이터 로드 실패 — ${d.error}`); return; }
+            _loadData(d);
+            _initDownloadModal();
+            updateP1MonthIndicator();
+            buildMainTable(); renderBrandDetail();
+        }
+        return;
+      } else if (window.__INITIAL_DATA__) {
         const d = window.__INITIAL_DATA__;
         if (d.error) { _showError(`데이터 로드 실패 — ${d.error}`); return; }
         _loadData(d);

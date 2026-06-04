@@ -79,7 +79,7 @@ def _score_df_product(target_df: pd.DataFrame, config: dict) -> int:
     return int(round(float(scored.iloc[0].get('product_score', 0))))
 
 
-def load_dashboard_data(mgr: GSheetManager = None) -> dict:
+def load_dashboard_data(mgr: GSheetManager = None, selected_month: str = None, raw_recs: list = None) -> dict:
     """
     Google Sheets → 대시보드 JSON 구조 생성. 
     마스터 브랜드 리스트를 통해 데이터가 없어도 특정 브랜드를 노출합니다.
@@ -91,8 +91,11 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
         if not mgr.is_connected:
             return {"error": "구글 시트 연동 실패"}
 
-        sheet = mgr.spreadsheet.worksheet("Records")
-        all_recs = sheet.get_all_records()
+        if raw_recs is not None:
+            all_recs = raw_recs
+        else:
+            sheet = mgr.spreadsheet.worksheet("Records")
+            all_recs = sheet.get_all_records()
         
         # [NEW] brandmaster 데이터 로드 (조닝 매핑용)
         brand_master_df = mgr.load_brand_master()
@@ -252,7 +255,9 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             
         sorted_months = sorted([m for m in available_months if m], key=_get_m_num, reverse=True)
         
-        if current_month in available_months:
+        if selected_month and selected_month in available_months:
+            diag_month = selected_month
+        elif current_month in available_months:
             diag_month = current_month
         elif sorted_months:
             diag_month = sorted_months[0]
@@ -260,6 +265,10 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             diag_month = current_month
             
         print(f"DEBUG: Selected diag_month = {diag_month}")
+
+        # [v176] 선택된 월(또는 자동 결정된 월)의 데이터만 남기도록 프레임 필터링
+        df = df[df['data_month'] == diag_month]
+        print(f"DEBUG: 월 필터 후 데이터 수 = {len(df)}")
 
         # [v68.4] 마스터 브랜드 리스트 (데이터 유무와 상관없이 노출할 브랜드 명시)
         MASTER_CATEGORY_BRANDS = {
@@ -478,8 +487,6 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                     b_df['brand_month_sales'] = _active_sales
                 elif prev_benchmark_sales > 0:
                     b_df['brand_month_sales'] = prev_benchmark_sales
-                    b_df['data_month'] = "3월"
-                    b_data_month = "3월"
                     try:
                         _active_mk = f"{datetime.now().year}_03"
                     except Exception:
@@ -539,6 +546,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
                         "sQ": int(stock_qty),
                         "sales_amt": cur_sales_sum / 1_000_000,
                         "prev_sales": prev_benchmark_sales / 1_000_000,
+                        "prev_yr_sales_amt": (_prev_yr_sales / 1_000_000) if _prev_yr_sales else 0.0,
                         "growth_pct": float(g_pct),
                         "area": get_area(store, b_name),
                         "month": diag_month, "data_month": b_data_month,
@@ -629,6 +637,7 @@ def load_dashboard_data(mgr: GSheetManager = None) -> dict:
             score_data[store] = new_scores
 
         return {
+            "AVAILABLE_MONTHS": sorted_months,
             "CATS": cats, "STORES": stores, "scoreData": score_data, "BRANDS": brands_list,
             "DETAIL": detail_data, "BP_DETAIL": bp_detail, "BEST_ITEMS": best_items,
             "ACTION_PLAN": action_plan,
