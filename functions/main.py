@@ -46,7 +46,8 @@ def _json_default(o):
 
 
 def serialize_dashboard_json(db_data: dict) -> str:
-    return json.dumps(db_data, ensure_ascii=False, default=_json_default)
+    serialized = json.dumps(db_data, ensure_ascii=False, default=_json_default)
+    return serialized.replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
 
 
 @st.cache_data(show_spinner="노출판 엑셀 생성 중...")
