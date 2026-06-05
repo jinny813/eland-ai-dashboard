@@ -87,7 +87,7 @@ def _cached_get_raw_records(_mgr, max_no: int):
 
 @st.cache_data(show_spinner="최신 데이터를 불러오는 중...")
 def _cached_load_all_months_internal(_mgr, max_no: int, available_months: tuple, raw_recs: list = None):
-    _force_cache_bust = "v22"
+    _force_cache_bust = "v23"
     del max_no
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
