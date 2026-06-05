@@ -85,25 +85,37 @@ def _cached_get_raw_records(_mgr, max_no: int):
         logger.error(f"[Records] Fetch failed: {e}")
         return []
 
-@st.cache_data(ttl=600, max_entries=2, show_spinner="최신 데이터를 불러오는 중...")
-def _cached_load_all_months_internal(_mgr, max_no: int, available_months: tuple, raw_recs: list = None):
-    _force_cache_bust = "v24"
-    del max_no
+
+@st.cache_data(ttl=600, max_entries=2, show_spinner="데이터 전처리 중 (1회)...")
+def _cached_preprocess(_mgr, max_no: int, raw_recs_tuple: tuple):
+    """
+    [Stage 1 캐시] 137K rows 전처리 + brandmaster + storemaster를 단 1회만 실행.
+    raw_recs_tuple: list를 tuple로 변환하여 @st.cache_data 해시 안정화.
+    """
+    del max_no  # 캐시 키 버스팅용
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
         if _m in sys.modules:
             importlib.reload(sys.modules[_m])
+    from core.data_loader import preprocess_raw_records
+    raw_recs = list(raw_recs_tuple)
+    return preprocess_raw_records(_mgr, raw_recs)
+
+
+@st.cache_data(ttl=600, max_entries=3, show_spinner="월별 점수 산출 중...")
+def _cached_build_month(_mgr, max_no: int, month: str, raw_recs_tuple: tuple):
+    """
+    [Stage 2 캐시] 전처리된 DataFrame으로 특정 월 대시보드 JSON 빌드.
+    월별로 별도 캐시 엔트리 → 한 월 캐시 무효화 시 다른 월은 유지.
+    """
     from core.data_loader import load_dashboard_data
-    
-    all_data = {}
-    for m in available_months:
-        res = load_dashboard_data(mgr=_mgr, selected_month=m, raw_recs=raw_recs)
-        if res and "error" not in res:
-            all_data[m] = res
-            
-    if not all_data:
-        raise ValueError("No valid dashboard data found for any month")
-    return all_data
+    preprocessed = _cached_preprocess(_mgr, max_no, raw_recs_tuple)
+    return load_dashboard_data(
+        mgr=_mgr,
+        selected_month=month,
+        _preprocessed=preprocessed,
+    )
+
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner=False)
 def _cached_get_max_no(_mgr):
@@ -113,6 +125,7 @@ def _cached_get_max_no(_mgr):
     except Exception:
         return 1
 
+
 @st.cache_data(ttl=600, max_entries=2, show_spinner=False)
 def _cached_get_available_months(_mgr, max_no: int, raw_recs: list):
     try:
@@ -120,26 +133,47 @@ def _cached_get_available_months(_mgr, max_no: int, raw_recs: list):
         if raw_recs:
             for r in raw_recs:
                 m = str(r.get('data_month', '')).strip()
-                if m: months.add(m)
+                if m:
+                    months.add(m)
+
         def _get_m_num(m_str):
-            try: return int(str(m_str).replace('월','').strip())
-            except: return 0
+            try:
+                return int(str(m_str).replace('월', '').strip())
+            except Exception:
+                return 0
+
         return sorted(list(months), key=_get_m_num, reverse=True)
     except Exception as e:
         logger.error(f"[Months] Fetch failed: {e}")
         return []
 
+
 def cached_load_all_dashboard_data(mgr, available_months, raw_recs=None):
+    """모든 가용 월 데이터를 로드. Stage 1 전처리는 1회, Stage 2 채점은 월별 캐시."""
     max_no = _cached_get_max_no(mgr)
     cache_key = f"last_valid_all_dashboard_data_{len(available_months)}"
-    
+
     if cache_key in st.session_state and st.session_state[cache_key]:
         return st.session_state[cache_key]
-        
+
+    # raw_recs를 tuple로 변환 → @st.cache_data 해시 안정화 (이중 로드 버그 수정)
+    raw_recs_tuple = tuple(
+        tuple(sorted(r.items())) if isinstance(r, dict) else r
+        for r in (raw_recs or [])
+    )
+
     try:
-        res = _cached_load_all_months_internal(mgr, max_no, tuple(available_months), raw_recs)
-        st.session_state[cache_key] = res
-        return res
+        all_data = {}
+        for m in available_months:
+            res = _cached_build_month(mgr, max_no, m, raw_recs_tuple)
+            if res and "error" not in res:
+                all_data[m] = res
+
+        if not all_data:
+            raise ValueError("No valid dashboard data found for any month")
+
+        st.session_state[cache_key] = all_data
+        return all_data
     except Exception as e:
         logger.error(f"[Cache] 로드 실패: {e}.")
         return {"error": f"전체 데이터 로드 실패 (상세: {e})"}
@@ -340,8 +374,6 @@ def main():
             st.error("구글 시트 연동 오류입니다.")
         else:
             try:
-                import streamlit.components.v1 as components
-
                 # [v183] 대시보드 로딩 속도를 SPA 급으로 개선하기 위해 모든 월 데이터를 한 번에 로드
                 max_no = _cached_get_max_no(check_mgr)
                 raw_recs = _cached_get_raw_records(check_mgr, max_no)
@@ -370,7 +402,7 @@ def main():
                             f"<script>window.__ALL_DATA__ = {all_data_json}; </script>"
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
-                        components.html(final_html, height=2400, scrolling=True)
+                        st.html(final_html)
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
 
                     # ── 탭 2: 노출/측정판 다운로드 (가장자리 여백 2.5rem 추가 확보) ──
