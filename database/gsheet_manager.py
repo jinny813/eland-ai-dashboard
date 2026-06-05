@@ -83,11 +83,10 @@ class GSheetManager:
             logger.info(f"[GAS] GET request start (action={params.get('action')}, timeout={timeout}s)")
             if "sheetName" not in params:
                 params["sheetName"] = self.sheet_master_name
-            headers = {'Connection': 'close', 'User-Agent': 'AI-Assortment-Agent'}
             
-            # [v7.1] 세션 재사용 없이 직접 호출 (connect_timeout=10, read_timeout=120)
-            response = requests.get(self.gas_url, params=params,
-                                   headers=headers, timeout=(10, timeout), 
+            # [v7.1] 연결 유지 및 자동 재시도를 위해 세션(self.session) 사용
+            response = self.session.get(self.gas_url, params=params,
+                                   timeout=(15, timeout), 
                                    allow_redirects=True)
             return self._parse_response(response)
         except Exception as e:
