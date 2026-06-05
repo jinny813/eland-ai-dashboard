@@ -765,7 +765,13 @@ def main():
                             key="p4_tab_dl_p1_metrics"
                         )
                         
-                        if st.button("🚀 요약 엑셀 파일 생성", key="p4_gen_p1_tab", use_container_width=True):
+                        col_p4_btn1, col_p4_btn2 = st.columns(2)
+                        with col_p4_btn1:
+                            dl_p4_excel = st.button("🚀 요약 엑셀 파일 생성", key="p4_gen_p1_tab", use_container_width=True)
+                        with col_p4_btn2:
+                            dl_p4_ppt = st.button("🚀 요약 PPT 파일 생성", key="p4_gen_p1_ppt", use_container_width=True)
+
+                        if dl_p4_excel:
                             with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                 import core.report_generator as rg
                                 excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4, score_mode=score_mode_param_p4)
@@ -781,6 +787,23 @@ def main():
                                     )
                                 else:
                                     st.error("엑셀 파일 생성 실패")
+
+                        if dl_p4_ppt:
+                            with st.spinner("지점별 카테고리 요약 PPT 생성 중..."):
+                                import core.ppt_generator as ptg
+                                ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4, score_mode=score_mode_param_p4)
+                                dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+                                if ppt_data:
+                                    st.success(f"✅ {dl_filename} 생성 완료!")
+                                    st.download_button(
+                                        label="📄 요약 PPT 다운로드",
+                                        data=ppt_data,
+                                        file_name=dl_filename,
+                                        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                        use_container_width=True,
+                                    )
+                                else:
+                                    st.warning("데이터가 없습니다.")
                         st.markdown("</div>", unsafe_allow_html=True)
 
                     with subtab_p2:

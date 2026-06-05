@@ -1754,31 +1754,10 @@
                     <div style="display:flex; align-items:center; gap:20px;">
                       <div style="display:flex; align-items:center; gap:6px;">
                         <span class="score-box-label">SCORE</span>
-                        <div class="info-btn" onclick="toggleScoreBubble(event)" style="margin:0; width:16px; height:16px; font-size:10px; background:rgba(255,255,255,0.15);">i</div>
                       </div>
                       <div style="display:flex; align-items:baseline;">
                         <div id="h-score" style="font-size:48px; font-weight:950; color:#FFFFFF; line-height:1;">0</div>
                         <span class="score-unit" style="color:rgba(255,255,255,0.7); font-size:18px; margin-left:4px; font-weight:800;">점</span>
-                      </div>
-                      <!-- [v28.0] 정보 말풍선 HTML 추가 -->
-                      <div id="scoreBubble" class="info-bubble">
-                        <h4 id="bubble-title">카테고리 정밀 채점 로직</h4>
-                        <p style="margin-bottom:8px;"><b>1. 재고액 설정 및 배분 원칙</b></p>
-                        <p style="font-size:11px; margin-bottom:4px;">- <b>목표 총 재고</b>: 브랜드별 [목표 매출 × 200%]</p>
-                        <p style="font-size:11px; margin-bottom:12px;">- <b>세부 목표액</b>: [목표 총 재고 × 아래 세부 비중(%)]</p>
-
-                        <p style="margin-bottom:6px;"><b>2. 지표별 최종 반영 가중치 (총점 100점)</b></p>
-                        <div id="bubble-weights">
-                          <!-- JS에서 동적 생성 -->
-                        </div>
-                        <p id="bubble-order" style="font-size:10px; color:#94A3B8; margin-top:4px; margin-bottom:12px;">(할인율 / BEST / 시즌 / 신선도 / 아이템 순)</p>
-
-                        <p style="margin-bottom:6px;"><b>3. 지표 내 세부 항목 목표 비중 (%)</b></p>
-                        <p id="bubble-details">
-                          <!-- JS에서 동적 생성 -->
-                        </p>
-
-                        <div class="footer">※ 모든 지표는 목표 대비 실제 보유액의 달성률로 산출됩니다.</div>
                       </div>
                     </div>
                   </div>
@@ -1860,9 +1839,9 @@
                    <div style="display:flex; align-items:center; gap:8px;">
                      <span style="font-size:20px;">📊</span> 5대 지표별 점수 변화 (MoM)
                    </div>
-                   <span style="font-size:11px; font-weight:800; color:#3B82F6; background:#EFF6FF; padding:3px 10px; border-radius:12px; border:1px solid #BFDBFE;">💡 지표 클릭 시 세부 구간 비교</span>
+                   <span style="font-size:11px; font-weight:800; color:#7C3AED; background:#F5F3FF; padding:3px 10px; border-radius:12px; border:1px solid #DDD6FE;">💡 지표 클릭 시 채점 로직 확인</span>
                 </div>
-                <div style="font-size: 12px; color: #94A3B8; font-weight: 700; margin-bottom: 20px;">차트의 막대를 클릭하시면 상세 세그먼트 분석을 보실 수 있습니다.</div>
+                <div style="font-size: 12px; color: #94A3B8; font-weight: 700; margin-bottom: 20px;">막대를 클릭하면 해당 지표의 채점 로직 및 가중치 기준을 확인할 수 있습니다.</div>
                 
                 <div style="position: relative; height: 260px; width: 100%;">
                   <canvas id="momScoreChart"></canvas>
@@ -2134,6 +2113,38 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- 채점 로직 모달 (MoM 차트 막대 클릭 시 표시) -->
+  <div class="overlay" id="scoringLogicModal" onclick="if(event.target===this)closeScoringLogicModal()">
+    <div class="modal" style="max-width: 760px;">
+      <div class="modal-hdr" style="background: linear-gradient(135deg, #1E293B 0%, #334155 100%);">
+        <div>
+          <div class="modal-title" id="scoringModalTitle">카테고리 채점 로직</div>
+          <div class="modal-sub" id="scoringModalSub">지표별 가중치 및 세부 항목 목표 비중</div>
+        </div>
+        <button class="modal-close" onclick="closeScoringLogicModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding:28px; background:#F8FAFC;">
+        <div style="background:#fff; border:1px solid #E2E8F0; border-radius:14px; padding:20px 24px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="font-size:14px; font-weight:800; color:#1E293B; margin-bottom:10px;">📌 재고액 설정 및 배분 원칙</div>
+          <div style="font-size:13px; color:#475569; line-height:1.7;">
+            • <b>목표 총 재고</b>: 브랜드별 [목표 매출 × 200%]<br>
+            • <b>세부 목표액</b>: [목표 총 재고 × 아래 세부 비중(%)]
+          </div>
+        </div>
+        <div style="background:#fff; border:1px solid #E2E8F0; border-radius:14px; padding:20px 24px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="font-size:14px; font-weight:800; color:#1E293B; margin-bottom:12px;">⚖️ 지표별 최종 반영 가중치 (총점 100점)</div>
+          <div id="scoringModalWeights"></div>
+          <div style="font-size:11px; color:#94A3B8; margin-top:8px;">(할인율 / BEST / 시즌 / 신선도 / 아이템 순)</div>
+        </div>
+        <div style="background:#fff; border:1px solid #E2E8F0; border-radius:14px; padding:20px 24px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="font-size:14px; font-weight:800; color:#1E293B; margin-bottom:12px;">📋 지표 내 세부 항목 목표 비중 (%)</div>
+          <div id="scoringModalDetails" style="font-size:13px; color:#475569; line-height:1.8;"></div>
+        </div>
+        <div style="text-align:right; font-size:11px; color:#94A3B8; margin-top:16px;">※ 모든 지표는 목표 대비 실제 보유액의 달성률로 산출됩니다.</div>
       </div>
     </div>
   </div>
@@ -2777,8 +2788,7 @@
           .join(', ') || '—';
       }
 
-      // [v2.7] 로직 설명 팝업 동적 업데이트 (const 선언 후 호출)
-      updateScoreBubble(b);
+      // [v2.7] scoreBubble 제거 후 showScoringLogicModal 사용
 
       // [v3.4] 로직 설명 팝업 — SCORING_GUIDE 기반 카테고리별 동적 렌더링
       function updateScoreBubble(brand) {
@@ -3136,10 +3146,56 @@
       `;
     }
 
-    function toggleScoreBubble(e) {
-      e.stopPropagation();
-      const b = document.getElementById('scoreBubble');
-      b.style.display = (b.style.display === 'block') ? 'none' : 'block';
+    function showScoringLogicModal(clickedMetricLabel) {
+      const brand = currentBrand;
+      if (!brand) return;
+      const cat = brand.category || '여성';
+      const g = SCORING_GUIDE[cat] || SCORING_GUIDE['여성'] || {};
+      const norm = g.normal || {};
+      const outl = g.outlet || {};
+      const zonings = g.zonings || {};
+
+      document.getElementById('scoringModalTitle').textContent = `${cat} 카테고리 채점 로직`;
+      document.getElementById('scoringModalSub').textContent = `📊 클릭한 지표: ${clickedMetricLabel} — 지표별 가중치 및 세부 항목 목표 비중 안내`;
+
+      document.getElementById('scoringModalWeights').innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#EFF6FF; border-radius:10px; font-size:13px;">
+            <span style="font-weight:800; color:#1D4ED8; min-width:60px;">■ 정상매장</span>
+            <span style="color:#334155;">${_fmtSW(norm.score_weights||{})}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#FEF2F2; border-radius:10px; font-size:13px;">
+            <span style="font-weight:800; color:#DC2626; min-width:60px;">■ 상설매장</span>
+            <span style="color:#334155;">${_fmtSW(outl.score_weights||{})}</span>
+          </div>
+        </div>`;
+
+      const disNorm = _fmtW(DIS_LBL_NORMAL, norm.dis_w||{});
+      const disOutl = _fmtW(DIS_LBL_OUTLET, outl.dis_w||{});
+      const freshNorm = _fmtW(FRESH_LBL, norm.fresh_w||{});
+      const freshOutl = _fmtW(FRESH_LBL, outl.fresh_w||{});
+      const seaTxt = _fmtW(SEA_LBL, norm.sea_w||{});
+      const bestPct = norm.best_pct || 0;
+      const zoningRows = Object.entries(zonings)
+        .map(([zName, iw]) => `<div style="margin:2px 0 2px 12px;">· <b>${zName}</b>: ${_fmtItem(iw)}</div>`)
+        .join('');
+
+      document.getElementById('scoringModalDetails').innerHTML = `
+        <div style="margin-bottom:8px;"><b>• 할인율</b><br>
+          <span style="margin-left:12px; color:#1D4ED8;">[정상] ${disNorm}</span><br>
+          <span style="margin-left:12px; color:#DC2626;">[상설] ${disOutl}</span></div>
+        <div style="margin-bottom:8px;"><b>• 신선도</b><br>
+          <span style="margin-left:12px; color:#1D4ED8;">[정상] ${freshNorm}</span><br>
+          <span style="margin-left:12px; color:#DC2626;">[상설] ${freshOutl}</span></div>
+        <div style="margin-bottom:8px;"><b>• 시즌</b>: ${seaTxt}</div>
+        <div style="margin-bottom:8px;"><b>• BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</div>
+        <div><b>• 아이템 (조닝별 최적 비중)</b>${zoningRows}</div>`;
+
+      document.getElementById('scoringLogicModal').classList.add('show');
+    }
+
+    function closeScoringLogicModal() {
+      document.getElementById('scoringLogicModal').classList.remove('show');
     }
 
     function getPrevMonthData(currentMonthStr, storeName, brandName) {
@@ -3271,12 +3327,12 @@
           responsive: true,
           maintainAspectRatio: false,
           onClick: (event, activeElements, chart) => {
-            // 차트 영역의 막대 또는 빈 영역 클릭 시 클릭한 좌표의 가장 가까운 지표 항목 인덱스 매핑
+            // 차트 막대 클릭 시 해당 지표의 채점 로직 모달 표시
             const active = chart.getElementsAtEventForMode(event, 'index', { intersect: false }, true);
             if (active && active.length > 0) {
               const idx = active[0].index;
-              const ids = ['dis', 'best', 'fresh', 'season', 'item'];
-              showSegmentDetailMoM(ids[idx]);
+              const metricNames = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
+              showScoringLogicModal(metricNames[idx]);
             }
           },
           onHover: (event, chartElement) => {
@@ -3473,13 +3529,7 @@
       document.getElementById('segmentDetailModal').classList.add('show');
     }
 
-    // 말풍선 외부 클릭 시 닫기
-    document.addEventListener('click', function (e) {
-      const b = document.getElementById('scoreBubble');
-      if (b && b.style.display === 'block') {
-        if (!b.contains(e.target)) b.style.display = 'none';
-      }
-    });
+    // 채점 로직 모달 외부 클릭 닫기는 overlay onclick으로 처리됨
 
     async function runDiagnosis(indicatorId, btnElem) {
       if (!currentBrand) return;
