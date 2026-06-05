@@ -87,7 +87,7 @@ def _cached_get_raw_records(_mgr, max_no: int):
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner="최신 데이터를 불러오는 중...")
 def _cached_load_all_months_internal(_mgr, max_no: int, available_months: tuple, raw_recs: list = None):
-    _force_cache_bust = "v23"
+    _force_cache_bust = "v24"
     del max_no
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
@@ -400,6 +400,13 @@ def main():
                                 cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
                                 p1_cat = st.selectbox("👚 카테고리 선택 (P1)", cats, key="tab_dl_p1_cat")
                                 
+                                score_mode_sel = st.selectbox(
+                                    "⚖️ 환산 기준 선택",
+                                    ["지표별 가중치 반영", "지표별 100점 환산 기준"],
+                                    key="tab_dl_p1_score_mode"
+                                )
+                                score_mode_param = "100_percent" if score_mode_sel == "지표별 100점 환산 기준" else "weighted"
+
                                 sel_metrics_p1 = st.multiselect(
                                     "📊 포함할 지표 선택 (P1)",
                                     ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
@@ -416,7 +423,7 @@ def main():
                                 if dl_p1_excel:
                                     with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                         import core.report_generator as rg
-                                        excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1)
+                                        excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1, score_mode=score_mode_param)
                                         dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
                                         if excel_data:
                                             st.success(f"✅ {dl_filename} 생성 완료!")
@@ -433,7 +440,7 @@ def main():
                                 if dl_p1_ppt:
                                     with st.spinner("지점별 카테고리 요약 PPT 생성 중..."):
                                         import core.ppt_generator as ptg
-                                        ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1)
+                                        ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1, score_mode=score_mode_param)
                                         dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
                                         if ppt_data:
                                             st.success(f"✅ {dl_filename} 생성 완료!")
@@ -744,6 +751,13 @@ def main():
                         cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
                         p1_cat = st.selectbox("👚 카테고리 선택 (P1)", cats, key="p4_tab_dl_p1_cat")
                         
+                        score_mode_sel_p4 = st.selectbox(
+                            "⚖️ 환산 기준 선택",
+                            ["지표별 가중치 반영", "지표별 100점 환산 기준"],
+                            key="p4_tab_dl_p1_score_mode"
+                        )
+                        score_mode_param_p4 = "100_percent" if score_mode_sel_p4 == "지표별 100점 환산 기준" else "weighted"
+
                         sel_metrics_p1_p4 = st.multiselect(
                             "📊 포함할 지표 선택 (P1)",
                             ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
@@ -754,7 +768,7 @@ def main():
                         if st.button("🚀 요약 엑셀 파일 생성", key="p4_gen_p1_tab", use_container_width=True):
                             with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                 import core.report_generator as rg
-                                excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4)
+                                excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4, score_mode=score_mode_param_p4)
                                 dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
                                 if excel_data:
                                     st.success(f"✅ {dl_filename} 생성 완료!")

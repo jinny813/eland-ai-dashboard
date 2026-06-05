@@ -204,6 +204,7 @@ def _fill_exposure_sheet(
     metrics_filter,
     show_store_col: bool = False,
     hide_brand_col: bool = False,
+    score_mode: str = "weighted",
 ):
     styles = _STYLES
     if not filtered_brands:
@@ -267,11 +268,23 @@ def _fill_exposure_sheet(
                     # 세그먼트 만점을 초과하지 않도록 추가 켜핑
                     earned_pt = min(earned_pt, brand_seg_max_pt)
                     sum_earned_pt += earned_pt
-                b_earned_scores[m_id] = min(sum_earned_pt, m_weight)  # 지표 만점 켜핑
+                
+                raw_earned = min(sum_earned_pt, m_weight)
+                if score_mode == "100_percent" and m_weight > 0:
+                    b_earned_scores[m_id] = (raw_earned / m_weight) * 100.0
+                else:
+                    b_earned_scores[m_id] = raw_earned
             else:
                 raw_score_0_to_100 = float(b.get(m_id, 0.0))
-                b_earned_scores[m_id] = raw_score_0_to_100 * (m_weight / 100.0)
-            b_max_weights[m_id] = m_weight
+                if score_mode == "100_percent":
+                    b_earned_scores[m_id] = raw_score_0_to_100
+                else:
+                    b_earned_scores[m_id] = raw_score_0_to_100 * (m_weight / 100.0)
+            
+            if score_mode == "100_percent":
+                b_max_weights[m_id] = 100.0 if m_weight > 0 else 0.0
+            else:
+                b_max_weights[m_id] = m_weight
 
         metric_filter_map = {"dis": "할인율", "best": "BEST상품", "fresh": "신선도", "season": "시즌", "item": "아이템"}
         is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 5)
@@ -283,10 +296,18 @@ def _fill_exposure_sheet(
                 tot += b_earned_scores[m_id]
                 max_tot += b_max_weights.get(m_id, 0.0)
                 
-        if max_tot > 0 and max_tot < 100.0 and not is_all:
-            normalized_tot = (tot / max_tot) * 100.0
+        if score_mode == "100_percent":
+            # 100점 환산 기준인 경우 선택된 지표들의 단순 평균 점수가 100점 만점이 됨
+            selected_count = sum(1 for m_id in ("dis", "fresh", "best", "season", "item") if (is_all or metric_filter_map[m_id] in metrics_filter) and b_max_weights.get(m_id, 0.0) > 0)
+            if selected_count > 0:
+                normalized_tot = tot / selected_count
+            else:
+                normalized_tot = 0.0
         else:
-            normalized_tot = tot
+            if max_tot > 0 and max_tot < 100.0 and not is_all:
+                normalized_tot = (tot / max_tot) * 100.0
+            else:
+                normalized_tot = tot
 
         b["calculated_total"] = _round1(min(normalized_tot, 100.0))
 
@@ -626,25 +647,36 @@ def _fill_exposure_sheet(
                         r_max = ref_seg_max_pt_map.get(key, 0.0)
                         d_max = r_max if r_max > 0 else c["brand_seg_max_pt"]
                         capped_sum += min(c["earned_pt"], d_max) if d_max > 0 else c["earned_pt"]
-                earned_score = min(capped_sum, global_m_weight)
+                raw_earned = min(capped_sum, global_m_weight)
+                if score_mode == "100_percent" and global_m_weight > 0:
+                    earned_score = (raw_earned / global_m_weight) * 100.0
+                else:
+                    earned_score = raw_earned
             else:
                 raw_score_0_to_100 = float(b.get(m_id, 0.0))
-                earned_score = min(raw_score_0_to_100 * (global_m_weight / 100.0), global_m_weight)
+                if score_mode == "100_percent":
+                    earned_score = raw_score_0_to_100
+                else:
+                    earned_score = min(raw_score_0_to_100 * (global_m_weight / 100.0), global_m_weight)
 
             earned_score_rounded = _round1(earned_score)
+            display_max_weight = 100.0 if score_mode == "100_percent" else global_m_weight
             styles.apply_score_cell(
                 ws.cell(row=row_idx, column=col_offset),
-                _fmt_score(earned_score_rounded), earned_score_rounded, global_m_weight,
+                _fmt_score(earned_score_rounded), earned_score_rounded, display_max_weight,
             )
             if row_idx == ROW_DATA:
                 # 4행 합계 컬럼: 정상/상설 만점을 각각 표기
-                _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
-                if _nw != _ow and _nw > 0 and _ow > 0:
-                    _h3_total_val = f"정상{_nw}점\n상설{_ow}점"
-                elif global_m_weight > 0:
-                    _h3_total_val = f"{int(round(global_m_weight))}점"
+                if score_mode == "100_percent":
+                    _h3_total_val = "100점"
                 else:
-                    _h3_total_val = "-"
+                    _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
+                    if _nw != _ow and _nw > 0 and _ow > 0:
+                        _h3_total_val = f"정상{_nw}점\n상설{_ow}점"
+                    elif global_m_weight > 0:
+                        _h3_total_val = f"{int(round(global_m_weight))}점"
+                    else:
+                        _h3_total_val = "-"
                 styles.apply_header_cell(
                     ws.cell(row=ROW_H3, column=col_offset), _h3_total_val
                 )
@@ -654,15 +686,19 @@ def _fill_exposure_sheet(
                 for key in seg_keys:
                     styles.apply_yellow_cell(ws.cell(row=row_idx, column=col_offset), empty_txt)
                     if row_idx == ROW_DATA:
-                        ref_seg_max_pt = ref_seg_max_pt_map.get(key, 0.0)
-                        _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
-                        _num_segs = len(seg_keys) if seg_keys else 1
-                        if _nw != _ow and _nw > 0 and _ow > 0:
-                            _seg_n = round(_nw / _num_segs) if _num_segs > 0 else _nw
-                            _seg_o = round(_ow / _num_segs) if _num_segs > 0 else _ow
-                            _h3_seg_val = f"정상{_seg_n}점\n상설{_seg_o}점"
+                        if score_mode == "100_percent":
+                            _num_segs = len(seg_keys) if seg_keys else 1
+                            _h3_seg_val = f"{int(round(100.0 / _num_segs))}점"
                         else:
-                            _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
+                            ref_seg_max_pt = ref_seg_max_pt_map.get(key, 0.0)
+                            _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
+                            _num_segs = len(seg_keys) if seg_keys else 1
+                            if _nw != _ow and _nw > 0 and _ow > 0:
+                                _seg_n = round(_nw / _num_segs) if _num_segs > 0 else _nw
+                                _seg_o = round(_ow / _num_segs) if _num_segs > 0 else _ow
+                                _h3_seg_val = f"정상{_seg_n}점\n상설{_seg_o}점"
+                            else:
+                                _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
                         styles.apply_header_cell(
                             ws.cell(row=ROW_H3, column=col_offset), _h3_seg_val
                         )
@@ -682,6 +718,17 @@ def _fill_exposure_sheet(
                     # → 헤더에 15점이라고 표시되면 절대 15점을 초과할 수 없음
                     display_max = ref_seg_max_pt if ref_seg_max_pt > 0 else brand_seg_max_pt
                     earned_pt = min(c_info["earned_pt"], display_max) if display_max > 0 else c_info["earned_pt"]
+
+                    if score_mode == "100_percent":
+                        if global_m_weight > 0:
+                            # 100점 만점 모드에서의 세그먼트 환산 점수
+                            # 100점 스케일 하에서 세그먼트의 비중 = ref_seg_max_pt / global_m_weight * 100
+                            # 따라서 earned_pt 역시 (earned_pt / global_m_weight) * 100 으로 스케일링
+                            earned_pt = (earned_pt / global_m_weight) * 100.0
+                            display_max = (display_max / global_m_weight) * 100.0
+                        else:
+                            earned_pt = 0.0
+                            display_max = 0.0
 
                     if brand_seg_max_pt <= 0:
                         txt = f"{_fmt_num(valM)}\n(-)" if valM > 0 else empty_txt
@@ -708,16 +755,25 @@ def _fill_exposure_sheet(
 
                     if row_idx == ROW_DATA:
                         # 4행 세그먼트 컬럼: 정상/상설 비례 만점을 각각 표기
-                        _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
-                        _num_segs = len(seg_keys) if seg_keys else 1
-                        _ref_sum = sum(ref_seg_max_pt_map.get(k, 0.0) for k in seg_keys) if seg_keys else 0.0
-                        if _nw != _ow and _nw > 0 and _ow > 0 and _ref_sum > 0:
-                            _seg_ratio = ref_seg_max_pt / _ref_sum if _ref_sum > 0 else 0.0
-                            _seg_n = round(_nw * _seg_ratio)
-                            _seg_o = round(_ow * _seg_ratio)
-                            _h3_seg_val = f"상설{_seg_o}점\n정상{_seg_n}점"
+                        if score_mode == "100_percent":
+                            _num_segs = len(seg_keys) if seg_keys else 1
+                            _ref_sum = sum(ref_seg_max_pt_map.get(k, 0.0) for k in seg_keys) if seg_keys else 0.0
+                            if _ref_sum > 0:
+                                _seg_ratio = ref_seg_max_pt / _ref_sum
+                                _h3_seg_val = f"{int(round(_seg_ratio * 100.0))}점"
+                            else:
+                                _h3_seg_val = f"{int(round(100.0 / _num_segs))}점"
                         else:
-                            _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
+                            _nw, _ow = metric_norm_outl_w.get(m_id, (0, 0))
+                            _num_segs = len(seg_keys) if seg_keys else 1
+                            _ref_sum = sum(ref_seg_max_pt_map.get(k, 0.0) for k in seg_keys) if seg_keys else 0.0
+                            if _nw != _ow and _nw > 0 and _ow > 0 and _ref_sum > 0:
+                                _seg_ratio = ref_seg_max_pt / _ref_sum if _ref_sum > 0 else 0.0
+                                _seg_n = round(_nw * _seg_ratio)
+                                _seg_o = round(_ow * _seg_ratio)
+                                _h3_seg_val = f"상설{_seg_o}점\n정상{_seg_n}점"
+                            else:
+                                _h3_seg_val = f"{int(round(ref_seg_max_pt))}점" if ref_seg_max_pt > 0 else "-"
                         styles.apply_header_cell(
                             ws.cell(row=ROW_H3, column=col_offset), _h3_seg_val
                         )
@@ -808,6 +864,7 @@ def export_to_excel_bytes(
     store_filter="전체 지점",
     cat_filter="전체 카테고리",
     metrics_filter=None,
+    score_mode: str = "weighted",
 ):
     """하위 호환 — 단일 시트."""
     if metrics_filter is None:
@@ -833,6 +890,7 @@ def export_to_excel_bytes(
         title_store=store_filter, title_cat=cat_filter,
         metrics_filter=metrics_filter,
         show_store_col=(store_filter == "전체 지점"),
+        score_mode=score_mode,
     )
     buf = io.BytesIO()
     wb.save(buf)
@@ -840,7 +898,7 @@ def export_to_excel_bytes(
     return buf.getvalue()
 
 
-def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=None):
+def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=None, score_mode: str = "weighted"):
     """[v173] P1 대시보드 다운로드: 카테고리 필터 기반 지점별 상세 지표 집계"""
     if metrics_filter is None:
         metrics_filter = ALL_METRICS
@@ -993,10 +1051,17 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
                 agg_max_weights += avg_m_weight
         
         # 선택된 지표에 대해 100점 만점으로 환산 (정규화)
-        if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 5)):
-            normalized_calc = (agg_calc / agg_max_weights) * 100.0
+        if score_mode == "100_percent":
+            selected_count = sum(1 for m in metrics if (is_all or metric_filter_map[m] in metrics_filter) and avg_m_weight > 0)
+            if selected_count > 0:
+                normalized_calc = (agg_calc / agg_max_weights) * 100.0 if agg_max_weights > 0 else 0.0
+            else:
+                normalized_calc = 0.0
         else:
-            normalized_calc = agg_calc
+            if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 5)):
+                normalized_calc = (agg_calc / agg_max_weights) * 100.0
+            else:
+                normalized_calc = agg_calc
             
         agg_b["calculated_total"] = _round1(min(normalized_calc, 100.0))
         agg_brands.append(agg_b)
@@ -1014,6 +1079,7 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
         metrics_filter=metrics_filter,
         show_store_col=True,
         hide_brand_col=True,
+        score_mode=score_mode,
     )
     
     buf = io.BytesIO()

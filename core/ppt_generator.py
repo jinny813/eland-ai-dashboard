@@ -70,7 +70,7 @@ def _fmt_score(v):
 def _fmt_num(v):
     return f"{v:,.1f}"
 
-def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None):
+def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None, score_mode: str = "weighted"):
     """
     P1 대시보드의 지점 요약본을 PPT(python-pptx) 형태로 추출합니다.
     report_generator.py의 export_p1_summary_excel_bytes 구조를 참조하여
@@ -190,13 +190,19 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
                 agg_real_pct = (v["valM"] / v["targetM"] * 100.0) if v["targetM"] > 0 else 0.0
                 agg_is_over_120 = (agg_real_pct > 120.0)
                 m_total_earned += v["earned_pt"]
+                
+                # score_mode == "100_percent"인 경우 세그먼트 점수도 환산
+                scaled_earned_pt = v["earned_pt"]
+                if score_mode == "100_percent" and avg_m_weight > 0:
+                    scaled_earned_pt = (v["earned_pt"] / avg_m_weight) * 100.0
+                
                 store_det[m]["segs"].append({
                     "key": k,
                     "valM": v["valM"],
                     "targetM": v["targetM"],
                     "opt_pct": v["opt_pct"],
                     "pct": agg_real_pct,
-                    "earned_pt": v["earned_pt"],
+                    "earned_pt": scaled_earned_pt,
                     "is_over_120": agg_is_over_120,
                 })
             m_earned = min(m_total_earned, avg_m_weight)
@@ -208,12 +214,31 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
                 agg_calc += m_earned
                 agg_max_weights += avg_m_weight
         
-        if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 5)):
-            normalized_calc = (agg_calc / agg_max_weights) * 100.0
+        if score_mode == "100_percent":
+            selected_count = sum(1 for m in metrics if (is_all or metric_filter_map[m] in metrics_filter) and avg_m_weight > 0)
+            if selected_count > 0:
+                normalized_calc = (agg_calc / agg_max_weights) * 100.0 if agg_max_weights > 0 else 0.0
+            else:
+                normalized_calc = 0.0
         else:
-            normalized_calc = agg_calc
+            if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 5)):
+                normalized_calc = (agg_calc / agg_max_weights) * 100.0
+            else:
+                normalized_calc = agg_calc
             
         agg_b["calculated_total"] = round(min(normalized_calc, 100.0), 1)
+        
+        # P1 집계 브랜드의 개별 지표 100점 환산 값도 agg_b 에 직접 저장
+        for m in metrics:
+            if score_mode == "100_percent":
+                s_weights = rep_b.get("scoring_guide", {}).get("score_weights", {})
+                w_key = "sea" if m == "season" else m
+                m_weight = s_weights.get(w_key, 0.0)
+                if m_weight > 0:
+                    agg_b[m] = (agg_b[m] / m_weight) * 100.0
+                else:
+                    agg_b[m] = 0.0
+        
         agg_brands.append(agg_b)
 
     if not agg_brands:
@@ -251,9 +276,12 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
     for m_id, m_info in metrics_config.items():
         w_key = "sea" if m_id == "season" else m_id
         g_weight = sample_b.get("scoring_guide", {}).get("score_weights", {}).get(w_key, 0.0)
-        m_info["max_w"] = g_weight
+        if score_mode == "100_percent":
+            m_info["max_w"] = 100.0 if g_weight > 0 else 0.0
+        else:
+            m_info["max_w"] = g_weight
         num_keys = len(m_info["keys"])
-        m_info["seg_max_pts"] = {k: g_weight/num_keys for k in m_info["keys"]} if num_keys > 0 else {}
+        m_info["seg_max_pts"] = {k: m_info["max_w"]/num_keys for k in m_info["keys"]} if num_keys > 0 else {}
  
     common_headers = [("랭크", 1), ("복종", 1), ("지점", 1), ("총\n점수\n(100점)", 1), ("총보유\n재고액", 1)]
     total_cols = sum(span for _, span in common_headers) + sum(len(m_info["keys"]) + 1 for m_info in metrics_config.values())
