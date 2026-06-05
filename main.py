@@ -50,7 +50,7 @@ def serialize_dashboard_json(db_data: dict) -> str:
     return serialized.replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
 
 
-@st.cache_data(show_spinner="노출판 엑셀 생성 중...")
+@st.cache_data(ttl=600, max_entries=2, show_spinner="노출판 엑셀 생성 중...")
 def generate_optimized_excel(
     store_filter: str,
     cat_filter: str,
@@ -76,7 +76,7 @@ def generate_optimized_excel(
     )
 
 
-@st.cache_data(ttl=180, show_spinner=False)
+@st.cache_data(ttl=600, max_entries=2, show_spinner=False)
 def _cached_get_raw_records(_mgr, max_no: int):
     try:
         sheet = _mgr.spreadsheet.worksheet("Records")
@@ -85,7 +85,7 @@ def _cached_get_raw_records(_mgr, max_no: int):
         logger.error(f"[Records] Fetch failed: {e}")
         return []
 
-@st.cache_data(show_spinner="최신 데이터를 불러오는 중...")
+@st.cache_data(ttl=600, max_entries=2, show_spinner="최신 데이터를 불러오는 중...")
 def _cached_load_all_months_internal(_mgr, max_no: int, available_months: tuple, raw_recs: list = None):
     _force_cache_bust = "v23"
     del max_no
@@ -105,7 +105,7 @@ def _cached_load_all_months_internal(_mgr, max_no: int, available_months: tuple,
         raise ValueError("No valid dashboard data found for any month")
     return all_data
 
-@st.cache_data(ttl=180, show_spinner=False)
+@st.cache_data(ttl=600, max_entries=2, show_spinner=False)
 def _cached_get_max_no(_mgr):
     try:
         val = _mgr._get_max_no()
@@ -113,7 +113,7 @@ def _cached_get_max_no(_mgr):
     except Exception:
         return 1
 
-@st.cache_data(ttl=180, show_spinner=False)
+@st.cache_data(ttl=600, max_entries=2, show_spinner=False)
 def _cached_get_available_months(_mgr, max_no: int, raw_recs: list):
     try:
         months = set()
