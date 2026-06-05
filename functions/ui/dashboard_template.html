@@ -3272,8 +3272,8 @@
           responsive: true,
           maintainAspectRatio: false,
           onClick: (event, activeElements, chart) => {
-            // Chart.js v4+에서는 activeElements가 비어있을 수 있으므로 getElementsAtEventForMode를 명시적으로 사용해 보조합니다.
-            const active = activeElements.length > 0 ? activeElements : chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+            // 차트 영역의 막대 또는 빈 영역 클릭 시 클릭한 좌표의 가장 가까운 지표 항목 인덱스 매핑
+            const active = chart.getElementsAtEventForMode(event, 'index', { intersect: false }, true);
             if (active && active.length > 0) {
               const idx = active[0].index;
               const ids = ['dis', 'best', 'fresh', 'season', 'item'];
