@@ -3272,9 +3272,11 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          onClick: (event, activeElements) => {
-            if (activeElements.length > 0) {
-              const idx = activeElements[0].index;
+          onClick: (event, activeElements, chart) => {
+            // Chart.js v4+에서는 activeElements가 비어있을 수 있으므로 getElementsAtEventForMode를 명시적으로 사용해 보조합니다.
+            const active = activeElements.length > 0 ? activeElements : chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+            if (active && active.length > 0) {
+              const idx = active[0].index;
               const ids = ['dis', 'best', 'fresh', 'season', 'item'];
               showSegmentDetailMoM(ids[idx]);
             }
