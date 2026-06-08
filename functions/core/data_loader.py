@@ -443,29 +443,16 @@ def load_dashboard_data(mgr: GSheetManager = None, selected_month: str = None, r
                 tM_won = get_tm(brand_name=b_name, store_name=store, month=diag_month)
                 
                 # 평매출 기반 목표재고액 보정 (채점용만 적용, 목표매출 표시는 tM_won 원본 유지)
-                # cap  → 평매출 > 10만원/평: 목표재고 = 10만원 × 평수 × 2
-                # floor→ 평매출 <  5만원/평: 목표재고 =  5만원 × 평수 × 2
+                # [v175.0] 모든 브랜드의 목표재고액을 평당 일평매출 10만원 달성 기준(평수 * 10만원 * 30일 * 2배)으로 단일 통일
                 _tM_adjusted = None
                 _b_area_for_cap = get_area(store, b_name)
-                tM_for_score = tM_won  # 채점에 사용할 tM (보정 적용)
-                
-                # 목표재고액 산출용 기본값 (목표매출의 2배)
-                tM_inv_won = tM_won * 2
+                tM_for_score = tM_won  # 채점에 사용할 tM
+                tM_inv_won = tM_won * 2  # 목표재고액 기본값
                 
                 if _b_area_for_cap > 0:
-                    _raw_sales_sum = (
-                        b_df['sales_amt'].apply(lambda x: max(0.0, _try_float(x))).sum()
-                        if 'sales_amt' in b_df.columns else 0.0
-                    )
-                    _pyeong_sales_daily = (_raw_sales_sum / _b_area_for_cap) / 30.0
-                    if _pyeong_sales_daily > 100_000:
-                        tM_inv_won = _b_area_for_cap * 100_000.0 * 30.0 * 2.0
-                        tM_for_score = _b_area_for_cap * 100_000.0 * 30.0
-                        _tM_adjusted = 'cap'
-                    elif _pyeong_sales_daily < 50_000:
-                        tM_inv_won = _b_area_for_cap * 50_000.0 * 30.0 * 2.0
-                        tM_for_score = _b_area_for_cap * 50_000.0 * 30.0
-                        _tM_adjusted = 'floor'
+                    tM_inv_won = _b_area_for_cap * 100_000.0 * 30.0 * 2.0
+                    tM_for_score = tM_won  # 채점용 목표매출은 원래대로 원본(30% 성장) 유지
+                    _tM_adjusted = 'cap'
                 b_df['tM'] = tM_for_score  # 채점 로직은 보정된 값 사용
                 
                 # [v74.5] 중복 제거 로직 완화 (상설 매장은 inv_uid가 없으면 모든 행 합산)
