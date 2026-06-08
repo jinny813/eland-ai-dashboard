@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.1"
+REPORT_VERSION = "v17.2"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -88,7 +88,7 @@ def _cached_get_raw_records(_mgr, max_no: int):
         return []
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner="데이터 전처리 중 (1회)...")
-def _cached_preprocess(_mgr, max_no: int, raw_recs_tuple: tuple):
+def _cached_preprocess(_mgr, max_no: int, raw_recs_tuple: tuple, report_version: str = REPORT_VERSION):
     """[Stage 1 캐시] 137K rows 전처리 + brandmaster + storemaster를 단 1회만 실행."""
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
@@ -102,8 +102,12 @@ def _cached_preprocess(_mgr, max_no: int, raw_recs_tuple: tuple):
 @st.cache_data(ttl=600, max_entries=3, show_spinner="월별 점수 산출 중...")
 def _cached_build_month(_mgr, max_no: int, month: str, raw_recs_tuple: tuple, report_version: str = REPORT_VERSION):
     """[Stage 2 캐시] 전처리된 DataFrame으로 특정 월 대시보드 JSON 빌드."""
+    import importlib, sys
+    for _m in ['core.data_loader', 'config.storemaster_override']:
+        if _m in sys.modules:
+            importlib.reload(sys.modules[_m])
     from core.data_loader import load_dashboard_data
-    preprocessed = _cached_preprocess(_mgr, max_no, raw_recs_tuple)
+    preprocessed = _cached_preprocess(_mgr, max_no, raw_recs_tuple, report_version=report_version)
     return load_dashboard_data(
         mgr=_mgr,
         selected_month=month,
