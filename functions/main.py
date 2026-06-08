@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v13"
+REPORT_VERSION = "v15"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -46,8 +46,10 @@ def _json_default(o):
 
 
 def serialize_dashboard_json(db_data: dict) -> str:
-    serialized = json.dumps(db_data, ensure_ascii=False, default=_json_default)
-    return serialized.replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
+    """JSON 직렬화 — ensure_ascii=True로 비ASCII 문자를 유니코드 이스케이프 (atob 호환)"""
+    return json.dumps(db_data, ensure_ascii=True, default=_json_default)
+
+
 
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner="노출판 엑셀 생성 중...")
@@ -98,7 +100,7 @@ def _cached_preprocess(_mgr, max_no: int, raw_recs_tuple: tuple):
 
 
 @st.cache_data(ttl=600, max_entries=3, show_spinner="월별 점수 산출 중...")
-def _cached_build_month(_mgr, max_no: int, month: str, raw_recs_tuple: tuple):
+def _cached_build_month(_mgr, max_no: int, month: str, raw_recs_tuple: tuple, report_version: str = REPORT_VERSION):
     """[Stage 2 캐시] 전처리된 DataFrame으로 특정 월 대시보드 JSON 빌드."""
     from core.data_loader import load_dashboard_data
     preprocessed = _cached_preprocess(_mgr, max_no, raw_recs_tuple)
@@ -143,7 +145,7 @@ def _cached_get_available_months(_mgr, max_no: int, raw_recs: list):
 def cached_load_all_dashboard_data(mgr, available_months, raw_recs=None):
     """모든 가용 월 데이터를 로드. Stage 1 전처리는 1회, Stage 2 채점은 월별 캐시."""
     max_no = _cached_get_max_no(mgr)
-    cache_key = f"last_valid_all_dashboard_data_{len(available_months)}"
+    cache_key = f"last_valid_all_dashboard_data_{len(available_months)}_{REPORT_VERSION}"
 
     if cache_key in st.session_state and st.session_state[cache_key]:
         return st.session_state[cache_key]
@@ -157,7 +159,7 @@ def cached_load_all_dashboard_data(mgr, available_months, raw_recs=None):
     try:
         all_data = {}
         for m in available_months:
-            res = _cached_build_month(mgr, max_no, m, raw_recs_tuple)
+            res = _cached_build_month(mgr, max_no, m, raw_recs_tuple, report_version=REPORT_VERSION)
             if res and "error" not in res:
                 all_data[m] = res
 
@@ -391,11 +393,15 @@ def main():
                             html_template = f.read()
 
                         all_data_json = serialize_dashboard_json(all_months_data)
+                        # [v201] Base64로 HTML파서 </script> 오인식 완전 차단
+                        import base64
+                        b64 = base64.b64encode(all_data_json.encode('utf-8')).decode('ascii')
                         script_inject = (
-                            f"<script>window.__ALL_DATA__ = {all_data_json}; </script>"
+                            f'<script id="__b64" type="text/plain">{b64}</script>\n'
+                            f'<script>window.__ALL_DATA__ = JSON.parse(atob(document.getElementById("__b64").textContent));</script>\n'
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
-                        st.html(final_html)
+                        st.components.v1.html(final_html, height=1600, scrolling=True)
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
 
                     # ── 탭 2: 노출/측정판 다운로드 (가장자리 여백 2.5rem 추가 확보) ──

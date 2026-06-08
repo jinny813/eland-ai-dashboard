@@ -421,3 +421,230 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
     buf.seek(0)
     return buf.getvalue()
 
+
+def export_p1_dashboard_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None):
+    """100점 환산 기준 대시보드형 PPT: 세그먼트 없이 5개 지표를 각 100점 만점으로 표시."""
+    ALL_M = ["할인율", "BEST상품", "신선도", "시즌", "아이템"]
+    if metrics_filter is None:
+        metrics_filter = ALL_M
+    metrics_filter_norm = [m for m in ALL_M if m in metrics_filter]
+
+    stores = data.get("STORES", [])
+    brands = data.get("BRANDS", [])
+    if not stores or not brands:
+        return None
+
+    METRIC_KEYS = [
+        ("dis",    "할인율"),
+        ("best",   "BEST상품"),
+        ("fresh",  "신선도"),
+        ("season", "시즌"),
+        ("item",   "아이템"),
+    ]
+    active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter_norm]
+
+    agg_rows = []
+    for store in stores:
+        if cat_filter == "전체 카테고리":
+            sb = [b for b in brands if b.get("store") == store]
+        else:
+            sb = [b for b in brands if b.get("store") == store and b.get("category") == cat_filter]
+        if not sb:
+            continue
+
+        b_count = len(sb)
+        agg_tM = sum(float(b.get("tM", 0.0)) for b in sb)
+        cat_display = "전체" if cat_filter == "전체 카테고리" else cat_filter
+
+        row = {"store": store, "category": cat_display}
+        for m_key, _ in METRIC_KEYS:
+            if agg_tM > 0:
+                row[m_key] = min(100.0, sum(
+                    float(b.get(m_key, 0.0)) * (float(b.get("tM", 0.0)) / agg_tM) for b in sb
+                ))
+            else:
+                row[m_key] = min(100.0, sum(float(b.get(m_key, 0.0)) for b in sb) / b_count)
+
+        sel_scores = [row[mk] for mk, ml in METRIC_KEYS if ml in metrics_filter_norm]
+        row["total"] = sum(sel_scores) / len(sel_scores) if sel_scores else 0.0
+        agg_rows.append(row)
+
+    if not agg_rows:
+        return None
+
+    agg_rows.sort(key=lambda x: x["total"], reverse=True)
+
+    prs = Presentation()
+    prs.slide_width = Mm(297)
+    prs.slide_height = Mm(210)
+    slide_layout = prs.slide_layouts[5]
+
+    headers = ["랭크", "복종", "지점", "총점\n(100점)"] + [f"{l}\n(100점)" for _, l in active_metrics]
+    total_cols = len(headers)
+
+    chunk_size = 10
+    num_chunks = math.ceil(len(agg_rows) / chunk_size) if agg_rows else 1
+
+    for chunk_idx in range(num_chunks):
+        start_idx = chunk_idx * chunk_size
+        end_idx = min(start_idx + chunk_size, len(agg_rows))
+        current_chunk = agg_rows[start_idx:end_idx]
+
+        slide = prs.slides.add_slide(slide_layout)
+
+        title_shape = slide.shapes.title
+        title_shape.text = (
+            f"[한국유통] 상품구색 노출 100점 환산 대시보드 ({cat_filter})"
+            f" - {chunk_idx + 1}/{num_chunks}"
+        )
+        for para in title_shape.text_frame.paragraphs:
+            for run in para.runs:
+                run.font.bold = True
+                run.font.size = Pt(20)
+
+        n_rows = 2 + len(current_chunk)
+        x, y = Mm(5), Mm(28)
+        cx, cy = Mm(287), Mm(167)
+
+        shape = slide.shapes.add_table(n_rows, total_cols, x, y, cx, cy)
+        table = shape.table
+
+        base_col_w = cx / total_cols
+        for i in range(total_cols):
+            table.columns[i].width = int(base_col_w)
+
+        # Header row
+        for ci, hdr in enumerate(headers):
+            _set_cell_style(table.cell(0, ci), hdr, bg_color=COLOR_HEADER_BG, bold=True, font_size=9)
+
+        # Data rows
+        for ri, row in enumerate(current_chunk):
+            row_i = 1 + ri
+            _set_cell_style(table.cell(row_i, 0), str(start_idx + ri + 1))
+            _set_cell_style(table.cell(row_i, 1), row["category"])
+            _set_cell_style(table.cell(row_i, 2), row["store"])
+
+            tot = row["total"]
+            bg = _get_fill_color_for_score(tot, 100.0)
+            txt = COLOR_WHITE if bg == COLOR_RED else COLOR_BLACK
+            _set_cell_style(table.cell(row_i, 3), f"{int(round(tot))}점",
+                            bg_color=bg, text_color=txt, bold=True)
+
+            for ci_off, (m_key, _) in enumerate(active_metrics):
+                score = row[m_key]
+                bg = _get_fill_color_for_score(score, 100.0)
+                txt = COLOR_WHITE if bg == COLOR_RED else COLOR_BLACK
+                _set_cell_style(table.cell(row_i, 4 + ci_off), f"{int(round(score))}점",
+                                bg_color=bg, text_color=txt, bold=True)
+
+        for trow in table.rows:
+            for cell in trow.cells:
+                _set_cell_border(cell, color="000000")
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def export_p2_dashboard_ppt_bytes(data: dict, store_filter: str, cat_filter: str, metrics_filter=None):
+    """P2 브랜드 상세 - 100점 환산 대시보드 PPT: 브랜드별 5개 지표를 각 100점 만점으로 표시."""
+    ALL_M = ["할인율", "BEST상품", "신선도", "시즌", "아이템"]
+    if metrics_filter is None:
+        metrics_filter = ALL_M
+    metrics_filter_norm = [m for m in ALL_M if m in metrics_filter]
+
+    brands = data.get("BRANDS", [])
+    filtered = [
+        b for b in brands
+        if (store_filter == "전체 지점" or b.get("store") == store_filter)
+        and (cat_filter == "전체 카테고리" or b.get("category") == cat_filter)
+    ]
+    if not filtered:
+        return None
+
+    METRIC_KEYS = [
+        ("dis",    "할인율"),
+        ("best",   "BEST상품"),
+        ("fresh",  "신선도"),
+        ("season", "시즌"),
+        ("item",   "아이템"),
+    ]
+    active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter_norm]
+
+    def _row_total(b):
+        scores = [min(100.0, float(b.get(mk, 0.0))) for mk, ml in METRIC_KEYS if ml in metrics_filter_norm]
+        return sum(scores) / len(scores) if scores else 0.0
+
+    rows = sorted(filtered, key=_row_total, reverse=True)
+
+    prs = Presentation()
+    prs.slide_width = Mm(297)
+    prs.slide_height = Mm(210)
+    slide_layout = prs.slide_layouts[5]
+
+    headers = ["랭크", "복종", "지점", "브랜드", "총점\n(100점)"] + [f"{l}\n(100점)" for _, l in active_metrics]
+    total_cols = len(headers)
+
+    chunk_size = 10
+    num_chunks = math.ceil(len(rows) / chunk_size) if rows else 1
+
+    for chunk_idx in range(num_chunks):
+        start_idx = chunk_idx * chunk_size
+        end_idx = min(start_idx + chunk_size, len(rows))
+        current_chunk = rows[start_idx:end_idx]
+
+        slide = prs.slides.add_slide(slide_layout)
+
+        title_shape = slide.shapes.title
+        title_shape.text = (
+            f"[한국유통] 브랜드 100점 환산 대시보드 ({store_filter} / {cat_filter})"
+            f" - {chunk_idx + 1}/{num_chunks}"
+        )
+        for para in title_shape.text_frame.paragraphs:
+            for run in para.runs:
+                run.font.bold = True
+                run.font.size = Pt(20)
+
+        n_rows = 2 + len(current_chunk)
+        x, y = Mm(5), Mm(28)
+        cx, cy = Mm(287), Mm(167)
+
+        shape = slide.shapes.add_table(n_rows, total_cols, x, y, cx, cy)
+        table = shape.table
+
+        base_col_w = cx / total_cols
+        for i in range(total_cols):
+            table.columns[i].width = int(base_col_w)
+
+        for ci, hdr in enumerate(headers):
+            _set_cell_style(table.cell(0, ci), hdr, bg_color=COLOR_HEADER_BG, bold=True, font_size=9)
+
+        for ri, b in enumerate(current_chunk):
+            row_i = 1 + ri
+            _set_cell_style(table.cell(row_i, 0), str(start_idx + ri + 1))
+            _set_cell_style(table.cell(row_i, 1), b.get("category", ""))
+            _set_cell_style(table.cell(row_i, 2), b.get("store", ""))
+            _set_cell_style(table.cell(row_i, 3), b.get("name", ""))
+
+            tot = _row_total(b)
+            bg = _get_fill_color_for_score(tot, 100.0)
+            txt = COLOR_WHITE if bg == COLOR_RED else COLOR_BLACK
+            _set_cell_style(table.cell(row_i, 4), f"{int(round(tot))}점",
+                            bg_color=bg, text_color=txt, bold=True)
+
+            for ci_off, (m_key, _) in enumerate(active_metrics):
+                score = min(100.0, float(b.get(m_key, 0.0)))
+                bg = _get_fill_color_for_score(score, 100.0)
+                txt = COLOR_WHITE if bg == COLOR_RED else COLOR_BLACK
+                _set_cell_style(table.cell(row_i, 5 + ci_off), f"{int(round(score))}점",
+                                bg_color=bg, text_color=txt, bold=True)
+
+        for trow in table.rows:
+            for cell in trow.cells:
+                _set_cell_border(cell, color="000000")
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    return buf.getvalue()

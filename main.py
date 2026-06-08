@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v13"
+REPORT_VERSION = "v15"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -46,8 +46,10 @@ def _json_default(o):
 
 
 def serialize_dashboard_json(db_data: dict) -> str:
-    serialized = json.dumps(db_data, ensure_ascii=False, default=_json_default)
-    return serialized.replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
+    """JSON 직렬화 — ensure_ascii=True로 비ASCII 문자를 유니코드 이스케이프 (atob 호환)"""
+    return json.dumps(db_data, ensure_ascii=True, default=_json_default)
+
+
 
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner="노출판 엑셀 생성 중...")
@@ -76,7 +78,7 @@ def generate_optimized_excel(
     )
 
 
-@st.cache_data(ttl=600, max_entries=2, show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=2, persist="disk", show_spinner="구글 시트에서 데이터 로드 중...")
 def _cached_get_raw_records(_mgr, max_no: int):
     try:
         sheet = _mgr.spreadsheet.worksheet("Records")
@@ -87,29 +89,29 @@ def _cached_get_raw_records(_mgr, max_no: int):
 
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner="데이터 전처리 중 (1회)...")
-def _cached_preprocess(_mgr, max_no: int, raw_recs_tuple: tuple):
+def _cached_preprocess(_mgr, max_no: int, _raw_recs_tuple: tuple):
     """
-    [Stage 1 캐시] 137K rows 전처리 + brandmaster + storemaster를 단 1회만 실행.
-    raw_recs_tuple: list를 tuple로 변환하여 @st.cache_data 해시 안정화.
+    [Stage 1 캐시] 전처리. _raw_recs_tuple은 캐시 키 해시에서 제외 (대용량 방지).
+    캐시 키: max_no만 사용. TTL 만료 시 자동 재실행.
     """
-    del max_no  # 캐시 키 버스팅용
     import importlib, sys
     for _m in ['core.data_loader', 'config.storemaster_override']:
         if _m in sys.modules:
             importlib.reload(sys.modules[_m])
     from core.data_loader import preprocess_raw_records
-    raw_recs = list(raw_recs_tuple)
+    raw_recs = [dict(r) if isinstance(r, (tuple, list)) and r and isinstance(r[0], (tuple, list)) else r
+                for r in _raw_recs_tuple]
     return preprocess_raw_records(_mgr, raw_recs)
 
 
 @st.cache_data(ttl=600, max_entries=3, show_spinner="월별 점수 산출 중...")
-def _cached_build_month(_mgr, max_no: int, month: str, raw_recs_tuple: tuple):
+def _cached_build_month(_mgr, max_no: int, month: str, _raw_recs_tuple: tuple, report_version: str = REPORT_VERSION):
     """
-    [Stage 2 캐시] 전처리된 DataFrame으로 특정 월 대시보드 JSON 빌드.
-    월별로 별도 캐시 엔트리 → 한 월 캐시 무효화 시 다른 월은 유지.
+    [Stage 2 캐시] 월별 대시보드 빌드. _raw_recs_tuple은 캐시 키 해시에서 제외.
+    캐시 키: (max_no, month, report_version). 월별 독립 엔트리 유지.
     """
     from core.data_loader import load_dashboard_data
-    preprocessed = _cached_preprocess(_mgr, max_no, raw_recs_tuple)
+    preprocessed = _cached_preprocess(_mgr, max_no, _raw_recs_tuple)
     return load_dashboard_data(
         mgr=_mgr,
         selected_month=month,
@@ -127,14 +129,17 @@ def _cached_get_max_no(_mgr):
 
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner=False)
-def _cached_get_available_months(_mgr, max_no: int, raw_recs: list):
+def _cached_get_available_months(_mgr, max_no: int, _raw_recs: list):
+    """_raw_recs는 캐시 키 해시에서 제외. 캐시 키: max_no."""
     try:
+        import unicodedata
         months = set()
-        if raw_recs:
-            for r in raw_recs:
+        if _raw_recs:
+            for r in _raw_recs:
                 m = str(r.get('data_month', '')).strip()
                 if m:
-                    months.add(m)
+                    m_nfc = unicodedata.normalize('NFC', m)
+                    months.add(m_nfc)
 
         def _get_m_num(m_str):
             try:
@@ -151,7 +156,7 @@ def _cached_get_available_months(_mgr, max_no: int, raw_recs: list):
 def cached_load_all_dashboard_data(mgr, available_months, raw_recs=None):
     """모든 가용 월 데이터를 로드. Stage 1 전처리는 1회, Stage 2 채점은 월별 캐시."""
     max_no = _cached_get_max_no(mgr)
-    cache_key = f"last_valid_all_dashboard_data_{len(available_months)}"
+    cache_key = f"last_valid_all_dashboard_data_{len(available_months)}_{REPORT_VERSION}"
 
     if cache_key in st.session_state and st.session_state[cache_key]:
         return st.session_state[cache_key]
@@ -165,7 +170,7 @@ def cached_load_all_dashboard_data(mgr, available_months, raw_recs=None):
     try:
         all_data = {}
         for m in available_months:
-            res = _cached_build_month(mgr, max_no, m, raw_recs_tuple)
+            res = _cached_build_month(mgr, max_no, m, raw_recs_tuple, report_version=REPORT_VERSION)
             if res and "error" not in res:
                 all_data[m] = res
 
@@ -221,12 +226,8 @@ def main():
     if 'overwrite_approval' not in st.session_state:
         st.session_state.overwrite_approval = {}
 
-    # [v18] 긴급 패치: 사용자 환경의 고착화된 세션 캐시(빈 화면/에러) 완벽 해제
-    if st.session_state.get("_v18_cleared") is None:
-        st.cache_data.clear()
-        if "last_valid_dashboard_data" in st.session_state:
-            del st.session_state["last_valid_dashboard_data"]
-        st.session_state["_v18_cleared"] = True
+    if "last_valid_dashboard_data" in st.session_state and not st.session_state["last_valid_dashboard_data"]:
+        del st.session_state["last_valid_dashboard_data"]
 
     # [v112.0] 브랜드 맵핑 데이터
     CATEGORY_BRAND_MAP = {
@@ -398,11 +399,15 @@ def main():
                             html_template = f.read()
 
                         all_data_json = serialize_dashboard_json(all_months_data)
+                        # [v201] Base64 인코딩으로 HTML 파서 </script> 오인식 작동 완전 차단
+                        import base64
+                        b64_data = base64.b64encode(all_data_json.encode('utf-8')).decode('ascii')
                         script_inject = (
-                            f"<script>window.__ALL_DATA__ = {all_data_json}; </script>"
+                            f'<script id="__b64" type="text/plain">{b64_data}</script>\n'
+                            f'<script>window.__ALL_DATA__ = JSON.parse(atob(document.getElementById("__b64").textContent));</script>\n'
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
-                        st.html(final_html)
+                        st.components.v1.html(final_html, height=1600, scrolling=True)
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
 
                     # ── 탭 2: 노출/측정판 다운로드 (가장자리 여백 2.5rem 추가 확보) ──
@@ -455,8 +460,12 @@ def main():
                                 if dl_p1_excel:
                                     with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                         import core.report_generator as rg
-                                        excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1, score_mode=score_mode_param)
-                                        dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                                        if score_mode_param == "100_percent":
+                                            excel_data = rg.export_p1_dashboard_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1)
+                                            dl_filename = f"지점별_카테고리_100점대시보드_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                                        else:
+                                            excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1, score_mode=score_mode_param)
+                                            dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
                                         if excel_data:
                                             st.success(f"✅ {dl_filename} 생성 완료!")
                                             st.download_button(
@@ -468,12 +477,16 @@ def main():
                                             )
                                         else:
                                             st.warning("데이터가 없습니다.")
-                                            
+
                                 if dl_p1_ppt:
                                     with st.spinner("지점별 카테고리 요약 PPT 생성 중..."):
                                         import core.ppt_generator as ptg
-                                        ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1, score_mode=score_mode_param)
-                                        dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+                                        if score_mode_param == "100_percent":
+                                            ppt_data = ptg.export_p1_dashboard_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1)
+                                            dl_filename = f"지점별_카테고리_100점대시보드_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+                                        else:
+                                            ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1, score_mode=score_mode_param)
+                                            dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
                                         if ppt_data:
                                             st.success(f"✅ {dl_filename} 생성 완료!")
                                             st.download_button(
@@ -498,32 +511,83 @@ def main():
                                 with col2:
                                     sel_cat = st.selectbox("👚 카테고리 선택", cats, key="tab_dl_cat")
 
-                                sel_metrics = st.multiselect(
-                                    "📊 지표 선택",
-                                    ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                                    default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                                    key="tab_dl_metrics",
-                                )
+                                col_m, col_sc = st.columns([3, 2])
+                                with col_m:
+                                    sel_metrics = st.multiselect(
+                                        "📊 지표 선택",
+                                        ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                        default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                        key="tab_dl_metrics",
+                                    )
+                                with col_sc:
+                                    p2_score_mode_sel = st.selectbox(
+                                        "⚖️ 환산 기준",
+                                        ["지표별 가중치 반영", "지표별 100점 환산"],
+                                        key="tab_dl_p2_score_mode",
+                                    )
                                 metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
 
                                 st.markdown("---")
-                                if st.button("🚀 상세 엑셀 파일 생성", key="tab_dl_gen", use_container_width=True):
-                                    excel_data = generate_optimized_excel(
-                                        sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
-                                    )
-                                    if excel_data:
-                                        now_str = datetime.now().strftime("%Y%m%d_%H%M")
-                                        dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
-                                        st.success(f"✅ {dl_filename} 생성 완료!")
-                                        st.download_button(
-                                            label="📄 노출/측정판 엑셀 다운로드",
-                                            data=excel_data,
-                                            file_name=dl_filename,
-                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                            use_container_width=True,
+                                if p2_score_mode_sel == "지표별 100점 환산":
+                                    col_p2_e, col_p2_p = st.columns(2)
+                                    with col_p2_e:
+                                        dl_p2_excel = st.button("🚀 100점 엑셀 생성", key="tab_dl_p2_dash_excel", use_container_width=True)
+                                    with col_p2_p:
+                                        dl_p2_ppt = st.button("🚀 100점 PPT 생성", key="tab_dl_p2_dash_ppt", use_container_width=True)
+
+                                    if dl_p2_excel:
+                                        with st.spinner("브랜드 100점 대시보드 엑셀 생성 중..."):
+                                            import core.report_generator as rg
+                                            excel_data = rg.export_p2_dashboard_excel_bytes(db_data, sel_store, sel_cat, metrics_filter=sel_metrics)
+                                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                            dl_filename = f"브랜드_100점대시보드_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                            if excel_data:
+                                                st.success(f"✅ {dl_filename} 생성 완료!")
+                                                st.download_button(
+                                                    label="📄 100점 엑셀 다운로드",
+                                                    data=excel_data,
+                                                    file_name=dl_filename,
+                                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                                    use_container_width=True,
+                                                )
+                                            else:
+                                                st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+
+                                    if dl_p2_ppt:
+                                        with st.spinner("브랜드 100점 대시보드 PPT 생성 중..."):
+                                            import core.ppt_generator as ptg
+                                            ppt_data = ptg.export_p2_dashboard_ppt_bytes(db_data, sel_store, sel_cat, metrics_filter=sel_metrics)
+                                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                            dl_filename = f"브랜드_100점대시보드_{sel_store}_{sel_cat}_{now_str}.pptx"
+                                            if ppt_data:
+                                                st.success(f"✅ {dl_filename} 생성 완료!")
+                                                st.download_button(
+                                                    label="📄 100점 PPT 다운로드",
+                                                    data=ppt_data,
+                                                    file_name=dl_filename,
+                                                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                                    use_container_width=True,
+                                                )
+                                            else:
+                                                st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                                else:
+                                    if st.button("🚀 상세 엑셀 파일 생성", key="tab_dl_gen", use_container_width=True):
+                                        excel_data = generate_optimized_excel(
+                                            sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
                                         )
-                                    else:
-                                        st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                                        if excel_data:
+                                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                            dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                            st.success(f"✅ {dl_filename} 생성 완료!")
+                                            st.download_button(
+                                                label="📄 노출/측정판 엑셀 다운로드",
+                                                data=excel_data,
+                                                file_name=dl_filename,
+                                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                                use_container_width=True,
+                                            )
+                                        else:
+                                            st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
                                 st.markdown("</div>", unsafe_allow_html=True)
                             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -760,13 +824,18 @@ def main():
             st.error("구글 시트 연동 오류입니다.")
         else:
             try:
-                db_data = cached_load_dashboard_data(check_mgr)
+                max_no = _cached_get_max_no(check_mgr)
+                raw_recs = _cached_get_raw_records(check_mgr, max_no)
+                available_months = _cached_get_available_months(check_mgr, max_no, raw_recs)
+                all_months_data = cached_load_all_dashboard_data(check_mgr, available_months, raw_recs)
 
-                if "error" in db_data:
-                    st.error(f"데이터 로드 실패: {db_data['error']}")
-                elif not db_data.get("BRANDS"):
+                if "error" in all_months_data:
+                    st.error(f"데이터 로드 실패: {all_months_data['error']}")
+                elif not available_months:
                     st.info("현재 데이터가 없습니다. 데이터를 업로드해 주세요.")
                 else:
+                    dl_month = st.selectbox("📅 다운로드 기준 데이터 월", available_months, key="p4_dl_month_selector")
+                    db_data = all_months_data.get(dl_month, {})
                     data_fp = dashboard_fingerprint(db_data)
                     dashboard_json = serialize_dashboard_json(db_data)
 
@@ -806,8 +875,12 @@ def main():
                         if dl_p4_excel:
                             with st.spinner("지점별 카테고리 요약 엑셀 생성 중..."):
                                 import core.report_generator as rg
-                                excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4, score_mode=score_mode_param_p4)
-                                dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                                if score_mode_param_p4 == "100_percent":
+                                    excel_data = rg.export_p1_dashboard_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4)
+                                    dl_filename = f"지점별_카테고리_100점대시보드_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                                else:
+                                    excel_data = rg.export_p1_summary_excel_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4, score_mode=score_mode_param_p4)
+                                    dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
                                 if excel_data:
                                     st.success(f"✅ {dl_filename} 생성 완료!")
                                     st.download_button(
@@ -823,8 +896,12 @@ def main():
                         if dl_p4_ppt:
                             with st.spinner("지점별 카테고리 요약 PPT 생성 중..."):
                                 import core.ppt_generator as ptg
-                                ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4, score_mode=score_mode_param_p4)
-                                dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+                                if score_mode_param_p4 == "100_percent":
+                                    ppt_data = ptg.export_p1_dashboard_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4)
+                                    dl_filename = f"지점별_카테고리_100점대시보드_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
+                                else:
+                                    ppt_data = ptg.export_p1_summary_ppt_bytes(db_data, p1_cat, metrics_filter=sel_metrics_p1_p4, score_mode=score_mode_param_p4)
+                                    dl_filename = f"지점별_카테고리_요약점수_현황_{p1_cat}_{datetime.now().strftime('%Y%m%d_%H%M')}.pptx"
                                 if ppt_data:
                                     st.success(f"✅ {dl_filename} 생성 완료!")
                                     st.download_button(
@@ -849,33 +926,84 @@ def main():
                         with col2:
                             sel_cat = st.selectbox("👚 카테고리 선택", cats, key="p4_cat")
 
-                        sel_metrics = st.multiselect(
-                            "📊 지표 선택",
-                            ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                            default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                            key="p4_metrics",
-                        )
+                        col_m, col_sc = st.columns([3, 2])
+                        with col_m:
+                            sel_metrics = st.multiselect(
+                                "📊 지표 선택",
+                                ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                key="p4_metrics",
+                            )
+                        with col_sc:
+                            p4_score_mode_sel = st.selectbox(
+                                "⚖️ 환산 기준",
+                                ["지표별 가중치 반영", "지표별 100점 환산"],
+                                key="p4_p2_score_mode",
+                            )
                         metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
 
                         st.markdown("---")
-                        if st.button("🚀 상세 엑셀 파일 생성", key="p4_gen_detail_tab", use_container_width=True):
-                            with st.spinner("브랜드 상세 노출판 엑셀 생성 중..."):
-                                excel_data = generate_optimized_excel(
-                                    sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
-                                )
-                                now_str = datetime.now().strftime("%Y%m%d_%H%M")
-                                dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
-                                if excel_data:
-                                    st.success(f"✅ {dl_filename} 생성 완료!")
-                                    st.download_button(
-                                        label="📄 노출/측정판 엑셀 다운로드",
-                                        data=excel_data,
-                                        file_name=dl_filename,
-                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                        use_container_width=True,
+                        if p4_score_mode_sel == "지표별 100점 환산":
+                            col_p4_e, col_p4_p = st.columns(2)
+                            with col_p4_e:
+                                dl_p4_excel = st.button("🚀 100점 엑셀 생성", key="p4_dash_excel", use_container_width=True)
+                            with col_p4_p:
+                                dl_p4_ppt = st.button("🚀 100점 PPT 생성", key="p4_dash_ppt", use_container_width=True)
+
+                            if dl_p4_excel:
+                                with st.spinner("브랜드 100점 대시보드 엑셀 생성 중..."):
+                                    import core.report_generator as rg
+                                    excel_data = rg.export_p2_dashboard_excel_bytes(db_data, sel_store, sel_cat, metrics_filter=sel_metrics)
+                                    now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                    dl_filename = f"브랜드_100점대시보드_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                    if excel_data:
+                                        st.success(f"✅ {dl_filename} 생성 완료!")
+                                        st.download_button(
+                                            label="📄 100점 엑셀 다운로드",
+                                            data=excel_data,
+                                            file_name=dl_filename,
+                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                            use_container_width=True,
+                                        )
+                                    else:
+                                        st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+
+                            if dl_p4_ppt:
+                                with st.spinner("브랜드 100점 대시보드 PPT 생성 중..."):
+                                    import core.ppt_generator as ptg
+                                    ppt_data = ptg.export_p2_dashboard_ppt_bytes(db_data, sel_store, sel_cat, metrics_filter=sel_metrics)
+                                    now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                    dl_filename = f"브랜드_100점대시보드_{sel_store}_{sel_cat}_{now_str}.pptx"
+                                    if ppt_data:
+                                        st.success(f"✅ {dl_filename} 생성 완료!")
+                                        st.download_button(
+                                            label="📄 100점 PPT 다운로드",
+                                            data=ppt_data,
+                                            file_name=dl_filename,
+                                            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                            use_container_width=True,
+                                        )
+                                    else:
+                                        st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                        else:
+                            if st.button("🚀 상세 엑셀 파일 생성", key="p4_gen_detail_tab", use_container_width=True):
+                                with st.spinner("브랜드 상세 노출판 엑셀 생성 중..."):
+                                    excel_data = generate_optimized_excel(
+                                        sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
                                     )
-                                else:
-                                    st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                                    now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                    dl_filename = f"상품구색_노출판_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                    if excel_data:
+                                        st.success(f"✅ {dl_filename} 생성 완료!")
+                                        st.download_button(
+                                            label="📄 노출/측정판 엑셀 다운로드",
+                                            data=excel_data,
+                                            file_name=dl_filename,
+                                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                            use_container_width=True,
+                                        )
+                                    else:
+                                        st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
                         st.markdown("</div>", unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"보고서 생성 오류: {e}")

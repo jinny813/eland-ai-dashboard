@@ -55,43 +55,45 @@ class GSheetManager:
     def _parse_response(self, response):
         """GAS 응답 공통 파싱"""
         raw_text = response.text.strip()
-        logger.info(f"[GAS] status={response.status_code} preview={raw_text[:120]}")
 
         if response.status_code != 200:
-            self.error_msg = f"HTTP {response.status_code}: {raw_text[:100]}"
+            self.error_msg = f"HTTP {response.status_code}: {raw_text[:200]}"
+            logger.error(f"[GAS] HTTP 오류 {response.status_code}: {raw_text[:200]}")
             return None
         if not raw_text:
             self.error_msg = "GAS 응답이 비어 있습니다."
+            logger.error("[GAS] 응답이 비어 있습니다.")
             return None
         try:
             result = response.json()
         except Exception as je:
-            self.error_msg = f"JSON 파싱 실패 (응답: {raw_text[:100]})"
-            logger.error(f"GAS JSON parse error: {je} | body: {raw_text[:300]}")
+            self.error_msg = f"JSON 파싱 실패 (응답: {raw_text[:200]})"
+            logger.error(f"[GAS] JSON parse error: {je} | body: {raw_text[:300]}")
             return None
 
         if isinstance(result, dict):
             if result.get("status") == "error":
-                self.error_msg = result.get("message", "GAS 오류")
+                self.error_msg = result.get("message") or "GAS 오류 (message 없음)"
+                logger.warning(f"[GAS] error: {self.error_msg}")
                 return None
-            return result.get("data") or result
+            data = result.get("data")
+            if data is not None:
+                return data
+            return result
         return result
 
     def _get(self, params: dict, timeout: int = 120):
-        """데이터 GET 요청 (v7.1 - 대용량 DB 대응 timeout 120s)"""
+        """데이터 GET 요청"""
         try:
-            logger.info(f"[GAS] GET request start (action={params.get('action')}, timeout={timeout}s)")
             if "sheetName" not in params:
                 params["sheetName"] = self.sheet_master_name
-            
-            # [v7.1] 연결 유지 및 자동 재시도를 위해 세션(self.session) 사용
             response = self.session.get(self.gas_url, params=params,
-                                   timeout=(15, timeout), 
+                                   timeout=(15, timeout),
                                    allow_redirects=True)
             return self._parse_response(response)
         except Exception as e:
             self.error_msg = str(e)
-            logger.error(f"GAS GET Error: {e}")
+            logger.error(f"[GAS] GET 예외 action={params.get('action')}: {e}")
             return None
 
     def _post(self, form_data: dict, timeout: int = 180):
@@ -261,33 +263,57 @@ class GSheetManager:
 
     def load_office_master(self) -> pd.DataFrame:
         """구글 시트의 'officemaster' 탭 데이터 로드"""
-        params = {"action": "read_raw", "sheetName": "officemaster"}
+        params = {"action": "read_all", "sheetName": "officemaster"}
         res = self._get(params)
-        if not res or not isinstance(res, list) or len(res) < 2:
+        if not res or not isinstance(res, list) or len(res) == 0:
             logger.warning("[GSheet] 'officemaster' 데이터를 읽지 못했거나 비어있습니다. 기본값을 로드합니다.")
             return pd.DataFrame(
                 [["8242", "신구로점", "수도권"], ["8227", "강서점", "수도권"]],
                 columns=["지점코드", "지점명", "지역"]
             )
-        headers = res[0]
-        data = res[1:]
-        return pd.DataFrame(data, columns=headers)
+        return pd.DataFrame(res)
 
     def load_store_master(self) -> pd.DataFrame:
-        """[v169] 정적 오버라이드 시스템(parse_storemaster.py) 전담화에 따른 구글 시트 storemaster 로드 스킵 처리 (성능 100배 향상)"""
+        """scratch/storemaster_raw.txt 에서 매장 마스터 로드"""
+        import os
+        raw_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scratch", "storemaster_raw.txt")
+        if not os.path.exists(raw_path):
+            logger.warning("[GSheet] storemaster_raw.txt 없음 — 빈 DataFrame 반환")
+            return pd.DataFrame()
+        fixed_cols = [
+            '지점', '카테고리', '조닝', '브랜드', '매장유형', '평수',
+            '25_03', '25_04', 'x1', '25_05', 'x2', '25_06', 'x3',
+            '26_03', 'grow_03', '26_04', 'grow_04',
+            '목표_04', '목표_05', '목표_06',
+        ]
+        for enc in ('utf-8', 'cp949', 'utf-8-sig', 'euc-kr', 'utf-16'):
+            try:
+                with open(raw_path, 'r', encoding=enc, errors='ignore') as f:
+                    head = f.read(2048)
+                delim = ',' if ',' in head and '\t' not in head else '\t'
+                df = pd.read_csv(raw_path, sep=delim, encoding=enc, header=0,
+                                 dtype=str, on_bad_lines='skip')
+                actual = len(df.columns)
+                col_names = fixed_cols[:actual]
+                if actual > len(fixed_cols):
+                    col_names = list(fixed_cols) + [f'extra_{i}' for i in range(actual - len(fixed_cols))]
+                df.columns = col_names
+                logger.warning(f"[GSheet] storemaster_raw.txt 로드 완료: {len(df)}행 ({enc})")
+                return df
+            except Exception:
+                continue
+        logger.error("[GSheet] storemaster_raw.txt 읽기 실패 — 빈 DataFrame 반환")
         return pd.DataFrame()
 
 
     def load_brand_master(self) -> pd.DataFrame:
         """구글 시트의 'brandmaster' 탭 데이터 로드"""
-        params = {"action": "read_raw", "sheetName": "brandmaster"}
+        params = {"action": "read_all", "sheetName": "brandmaster"}
         res = self._get(params)
-        if not res or not isinstance(res, list) or len(res) < 2:
+        if not res or not isinstance(res, list) or len(res) == 0:
             logger.warning("[GSheet] 'brandmaster' 데이터를 읽지 못했거나 비어있습니다. 빈 마스터를 반환합니다.")
             return pd.DataFrame(columns=["브랜드코드", "브랜드명", "카테고리", "조닝", "회사"])
-        headers = res[0]
-        data = res[1:]
-        return pd.DataFrame(data, columns=headers)
+        return pd.DataFrame(res)
 
 
 # ── Mock Classes for backward compatibility ──
@@ -303,13 +329,28 @@ class GASWorksheetMock:
         self.manager = manager
         self.name = name
     def get_all_records(self):
-        """gspread.get_all_records() 호환성 유지 (v7.1 - 대용량 DB timeout=120s)"""
-        # [v7.1] read_all은 대용량 데이터(7만+ 행)를 가져오므로 충분한 timeout 보장
-        return self.manager._get({"action": "read_all", "sheetName": self.manager.sheet_master_name}, timeout=120) or []
+        """gspread.get_all_records() 호환성 유지 — GAS read_all 직접 사용"""
+        sheet_name = self.manager.sheet_master_name
+        logger.warning(f"[GSheet] read_all 요청 (sheetName={sheet_name})")
+        result = self.manager._get({"action": "read_all", "sheetName": sheet_name}, timeout=180)
+        if result is None:
+            logger.error(f"[GSheet] read_all 실패: {self.manager.error_msg!r}")
+            return []
+        if isinstance(result, list):
+            logger.warning(f"[GSheet] read_all 완료: {len(result)}행")
+            return result
+        logger.error(f"[GSheet] read_all 응답 형식 오류: {type(result).__name__} / {str(result)[:200]}")
+        return []
     
     def get_all_values(self):
-        """gspread.get_all_values() 호환성 유지 (헤더 포함)"""
-        return self.manager._get({"action": "read_all", "sheetName": self.manager.sheet_master_name}, timeout=120) or []
+        """gspread.get_all_values() 호환성 유지 (헤더 포함, 페이징 데이터 기반 재구성)"""
+        recs = self.get_all_records()
+        if not recs: return []
+        headers = list(recs[0].keys())
+        values = [headers]
+        for r in recs:
+            values.append([r.get(h, "") for h in headers])
+        return values
 
     def clear(self):
         pass

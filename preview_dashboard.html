@@ -2552,6 +2552,33 @@
       renderBrandDetail();
     }
 
+    // 아이템 코드 → 한글 레이블
+    const ITEM_KOR = {
+      'Outer':'아우터','Top':'상의','Dress':'원피스','Bottom':'하의','Skirt':'스커트',
+      'RunningShoes':'러닝화','CasualShoes':'워킹화','OtherShoes':'기타신발',
+      'Suits':'정장','Shirts':'셔츠','Casual':'캐주얼','Knit':'니트','Set':'상하세트'
+    };
+    const DIS_LBL_OUTLET  = {s70:'70%↑', s50:'50~70%', s30:'30~50%', s10:'~30%'};
+    const DIS_LBL_NORMAL  = {s0:'신상(0년차)', s10:'1년차', s30:'2년차', s50:'3년차', s70:'4년차↑'};
+    const FRESH_LBL = {new:'신상', plan:'기획'};
+    const SEA_LBL   = {spring:'봄', summer:'여름', autumn:'가을', winter:'겨울'};
+
+    function _fmtW(labelsMap, wObj) {
+      return Object.entries(labelsMap)
+        .filter(([k]) => (wObj[k] || 0) > 0)
+        .map(([k, lbl]) => `${lbl}(${wObj[k]}%)`)
+        .join(', ') || '—';
+    }
+    function _fmtSW(sw) {
+      return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%`;
+    }
+    function _fmtItem(itemW) {
+      return Object.entries(itemW)
+        .filter(([,v]) => v > 0)
+        .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
+        .join(', ') || '—';
+    }
+
     function renderBrandDetail() {
       if (!currentBrand) return;
       const b = currentBrand;
@@ -2750,32 +2777,6 @@
         return n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       }
 
-      // 아이템 코드 → 한글 레이블
-      const ITEM_KOR = {
-        'Outer':'아우터','Top':'상의','Dress':'원피스','Bottom':'하의','Skirt':'스커트',
-        'RunningShoes':'러닝화','CasualShoes':'워킹화','OtherShoes':'기타신발',
-        'Suits':'정장','Shirts':'셔츠','Casual':'캐주얼','Knit':'니트','Set':'상하세트'
-      };
-      const DIS_LBL_OUTLET  = {s70:'70%↑', s50:'50~70%', s30:'30~50%', s10:'~30%'};
-      const DIS_LBL_NORMAL  = {s0:'신상(0년차)', s10:'1년차', s30:'2년차', s50:'3년차', s70:'4년차↑'};
-      const FRESH_LBL = {new:'신상', plan:'기획'};
-      const SEA_LBL   = {spring:'봄', summer:'여름', autumn:'가을', winter:'겨울'};
-
-      function _fmtW(labelsMap, wObj) {
-        return Object.entries(labelsMap)
-          .filter(([k]) => (wObj[k] || 0) > 0)
-          .map(([k, lbl]) => `${lbl}(${wObj[k]}%)`)
-          .join(', ') || '—';
-      }
-      function _fmtSW(sw) {
-        return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%`;
-      }
-      function _fmtItem(itemW) {
-        return Object.entries(itemW)
-          .filter(([,v]) => v > 0)
-          .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
-          .join(', ') || '—';
-      }
 
       // [v2.7] 로직 설명 팝업 동적 업데이트 (const 선언 후 호출)
       updateScoreBubble(b);

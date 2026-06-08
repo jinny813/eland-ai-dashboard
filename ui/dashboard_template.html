@@ -951,28 +951,35 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0, 0, 0, 0);
       z-index: 1000;
-      align-items: flex-start; /* 상단 정렬로 변경 */
+      align-items: flex-start;
       justify-content: center;
-      backdrop-filter: blur(3px);
-      animation: fadeOverlay 0.2s ease;
-      padding-top: 5vh; /* 상단 여백 5% 추가 */
-      overflow-y: auto; /* 내용이 길어질 경우 오버레이 자체 스크롤 활성화 */
+      padding-top: 20px; /* JS에서 커서 위치 기준으로 동적 조정 */
+      overflow-y: auto;
+      transition: background 0.28s ease;
     }
 
     .overlay.show {
       display: flex;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      animation: fadeOverlay 0.28s ease forwards;
+    }
+
+    .overlay.closing {
+      animation: fadeOverlayOut 0.22s ease forwards;
+      pointer-events: none;
     }
 
     @keyframes fadeOverlay {
-      from {
-        opacity: 0
-      }
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
 
-      to {
-        opacity: 1
-      }
+    @keyframes fadeOverlayOut {
+      from { opacity: 1; }
+      to   { opacity: 0; }
     }
 
     .modal {
@@ -984,21 +991,24 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
-      animation: slideUp 0.25s ease;
-      transform-origin: top;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+      transform-origin: top center;
+      animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      will-change: transform, opacity;
     }
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(-20px)
-      }
+    .overlay.closing .modal {
+      animation: modalSlideOut 0.22s ease forwards;
+    }
 
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: scale(0.93) translateY(-24px); }
+      to   { opacity: 1; transform: scale(1)   translateY(0);      }
+    }
+
+    @keyframes modalSlideOut {
+      from { opacity: 1; transform: scale(1)    translateY(0);      }
+      to   { opacity: 0; transform: scale(0.95) translateY(12px);  }
     }
 
     .modal-hdr {
@@ -1022,10 +1032,10 @@
     }
 
     .modal-close {
-      width: 28px;
-      height: 28px;
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1.5px solid rgba(255,255,255,0.18);
       border-radius: 50%;
       color: #fff;
       font-size: 14px;
@@ -1033,11 +1043,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s;
+      transition: background 0.18s, transform 0.18s, border-color 0.18s;
+      flex-shrink: 0;
     }
 
     .modal-close:hover {
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.28);
+      border-color: rgba(255,255,255,0.45);
+      transform: scale(1.12) rotate(8deg);
+    }
+
+    .modal-close:active {
+      transform: scale(0.94);
     }
 
     .modal-body {
@@ -1754,6 +1771,13 @@
                     <div style="display:flex; align-items:center; gap:20px;">
                       <div style="display:flex; align-items:center; gap:6px;">
                         <span class="score-box-label">SCORE</span>
+                        <!-- [v200] ⓘ 채점로직 버튼 -->
+                        <button id="score-info-btn" onclick="showScoringLogicModal('전체')" title="채점 로직 보기"
+                          style="width:20px; height:20px; background:rgba(255,255,255,0.22); border:none; border-radius:50%; color:#fff;
+                                 font-size:11px; font-weight:900; cursor:pointer; display:inline-flex; align-items:center;
+                                 justify-content:center; transition:background 0.2s; flex-shrink:0; letter-spacing:0;"
+                          onmouseover="this.style.background='rgba(255,255,255,0.42)'"
+                          onmouseout="this.style.background='rgba(255,255,255,0.22)'">ⓘ</button>
                       </div>
                       <div style="display:flex; align-items:baseline;">
                         <div id="h-score" style="font-size:48px; font-weight:950; color:#FFFFFF; line-height:1;">0</div>
@@ -1808,45 +1832,41 @@
             </div>
           </div>
 
-          <!-- YoY Chart (전년대비 변화) -->
-          <!-- [v185] 전월 대비 점수 상세 비교 차트 (MoM) -->
+          <!-- [v200] 점수 변동 사항 카드 + 최근 3개월 차트 (2컬럼 복원) -->
           <div style="margin-top:24px; margin-bottom:40px; display:none;" id="momScoreChartContainer">
-            <div style="display: grid; grid-template-columns: 3fr 7fr; gap: 20px; width: 100%;">
-              <!-- 좌측: 총점수 비교 카드 -->
-              <div class="card" style="padding:24px; border: 1.5px solid #EEF2FF; background: #F8FAFF; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display:grid; grid-template-columns:3fr 7fr; gap:20px; width:100%;">
+
+              <!-- 좌측: 점수 변동 사항 카드 -->
+              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF; background:#F8FAFF; display:flex; flex-direction:column; justify-content:space-between;">
                 <div>
                   <div style="font-size:16px; font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-                     <span style="font-size:20px;">🏆</span> 점수 변동 사항
+                    <span style="font-size:20px;">🏆</span> 점수 변동 사항
                   </div>
                   <div id="momTotalScoreLabel" style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:10px;">전월 대비 총점수 변동</div>
-                  
-                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">
-                    <div id="momTotalScoreCur" style="font-size: 48px; font-weight: 950; color: #1E293B; line-height: 1;">0</div>
-                    <span style="font-size: 18px; font-weight: 800; color: #64748B;">점</span>
-                    <span id="momTotalScoreDelta" style="font-size: 18px; font-weight: 900; margin-left: 10px;">-</span>
+                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:12px;">
+                    <div id="momTotalScoreCur" style="font-size:48px; font-weight:950; color:#1E293B; line-height:1;">0</div>
+                    <span style="font-size:18px; font-weight:800; color:#64748B;">점</span>
+                    <span id="momTotalScoreDelta" style="font-size:18px; font-weight:900; margin-left:10px;">-</span>
                   </div>
-                  <div id="momTotalScorePrev" style="font-size: 13px; font-weight: 700; color: #64748B; margin-bottom: 20px;">전월 점수: -</div>
+                  <div id="momTotalScorePrev" style="font-size:13px; font-weight:700; color:#64748B; margin-bottom:20px;">전월 점수: -</div>
                 </div>
-                
-                <!-- 전월대비 변화 요약 텍스트 추가 영역 -->
-                <div id="momScoreSummary" style="background:#fff; border:1px solid #E2E8F0; padding:14px 16px; border-radius:12px; font-size:13px; color:#1E293B; line-height:1.5; font-weight:500;">
-                </div>
+                <div id="momScoreSummary" style="background:#fff; border:1px solid #E2E8F0; padding:14px 16px; border-radius:12px; font-size:13px; color:#1E293B; line-height:1.5; font-weight:500;"></div>
               </div>
 
-              <!-- 우측: 5대 지표 비교 차트 -->
-              <div class="card" style="padding:24px; border: 1.5px solid #EEF2FF;">
+              <!-- 우측: 최근 3개월 지표별 점수 변화 차트 -->
+              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF;">
                 <div style="font-size:16px; font-weight:800; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                   <div style="display:flex; align-items:center; gap:8px;">
-                     <span style="font-size:20px;">📊</span> 5대 지표별 점수 변화 (MoM)
-                   </div>
-                   <span style="font-size:11px; font-weight:800; color:#7C3AED; background:#F5F3FF; padding:3px 10px; border-radius:12px; border:1px solid #DDD6FE;">💡 지표 클릭 시 채점 로직 확인</span>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">📊</span> 5대 지표별 점수 변화 (최근 3개월)
+                  </div>
+                  <span style="font-size:11px; font-weight:800; color:#3B82F6; background:#EFF6FF; padding:3px 10px; border-radius:12px; border:1px solid #BFDBFE;">💡 지표 클릭 시 세부 구간 비교</span>
                 </div>
-                <div style="font-size: 12px; color: #94A3B8; font-weight: 700; margin-bottom: 20px;">막대를 클릭하면 해당 지표의 채점 로직 및 가중치 기준을 확인할 수 있습니다.</div>
-                
-                <div style="position: relative; height: 260px; width: 100%;">
+                <div style="font-size:12px; color:#94A3B8; font-weight:700; margin-bottom:20px;">막대를 클릭하시면 해당 지표의 구간별 재고 변화를 상세히 보실 수 있습니다.</div>
+                <div style="position:relative; height:260px; width:100%;">
                   <canvas id="momScoreChart"></canvas>
                 </div>
               </div>
+
             </div>
           </div>
 
@@ -2068,59 +2088,50 @@
   </div>
 
   <!-- 세부 구간 변동 추이 모달 -->
-  <div class="overlay" id="segmentDetailModal" onclick="if(event.target===this)closeSegmentDetailModal()">
-    <div class="modal" style="max-width: 1200px;">
-      <div class="modal-hdr" style="background: #1E293B;">
+  <div class="overlay" id="segmentDetailModal" onmousedown="_modalMouseDown(event,'segmentDetailModal')" onmouseup="_modalMouseUp(event,'segmentDetailModal',closeSegmentDetailModal)">
+    <div class="modal" style="max-width:1200px;" onmousedown="event.stopPropagation()" onmouseup="event.stopPropagation()">
+      <div class="modal-hdr" style="background:#1E293B;">
         <div>
           <div class="modal-title" id="segModalTitle">지표별 세부 구간 변동 분석 (MoM)</div>
           <div class="modal-sub" id="segModalSub">전월 대비 각 세그먼트별 재고 구성 및 지표 변동 분석</div>
         </div>
         <button class="modal-close" onclick="closeSegmentDetailModal()">✕</button>
       </div>
-      <div class="modal-body" style="padding: 24px; background: #F8FAFC;">
-        
-        <!-- 분석 요약 -->
-        <div id="segModalSummary" style="background:#FFF; border:1px solid #E2E8F0; padding:16px 20px; border-radius:12px; font-size:14px; color:#1E293B; line-height:1.6; margin-bottom:24px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
-          <!-- 좌측: 구간별 전월 대비 비교 표 -->
-          <div class="card" style="padding: 20px; background: #FFF;">
-            <div style="font-size: 15px; font-weight: 800; margin-bottom: 14px; color: #1E293B;">📊 세부 구간별 보유 재고 및 변동</div>
-            <div style="overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <div class="modal-body" style="padding:24px; background:#F8FAFC;">
+        <div id="segModalSummary" style="background:#FFF; border:1px solid #E2E8F0; padding:16px 20px; border-radius:12px; font-size:14px; color:#1E293B; line-height:1.6; margin-bottom:24px; box-shadow:0 2px 4px rgba(0,0,0,0.02);"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+          <div class="card" style="padding:20px; background:#FFF;">
+            <div style="font-size:15px; font-weight:800; margin-bottom:14px; color:#1E293B;">📊 세부 구간별 보유 재고 및 변동</div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:13px;">
                 <thead>
-                  <tr style="border-bottom: 2px solid #E2E8F0; color: #475569; font-weight: 800;">
-                    <th style="text-align: left; padding: 10px;">구간명</th>
-                    <th style="text-align: right; padding: 10px;">전월 보유액</th>
-                    <th style="text-align: right; padding: 10px;">당월 보유액</th>
-                    <th style="text-align: right; padding: 10px;">목표 재고액</th>
-                    <th style="text-align: right; padding: 10px; width: 85px;">보유액 변동</th>
+                  <tr style="border-bottom:2px solid #E2E8F0; color:#475569; font-weight:800;">
+                    <th style="text-align:left; padding:10px;">구간명</th>
+                    <th style="text-align:right; padding:10px;">전월 보유액</th>
+                    <th style="text-align:right; padding:10px;">당월 보유액</th>
+                    <th style="text-align:right; padding:10px;">목표 재고액</th>
+                    <th style="text-align:right; padding:10px; width:85px;">보유액 변동</th>
                   </tr>
                 </thead>
-                <tbody id="segModalTableBody">
-                </tbody>
+                <tbody id="segModalTableBody"></tbody>
               </table>
             </div>
           </div>
-
-          <!-- 우측: Chart.js 차트 -->
-          <div class="card" style="padding: 20px; background: #FFF; height: 100%;">
-            <div style="font-size: 15px; font-weight: 800; margin-bottom: 14px; color: #1E293B;">📈 세그먼트별 재고 변화 시각화 (백만원)</div>
-            <div style="position: relative; height: 320px; width: 100%;">
+          <div class="card" style="padding:20px; background:#FFF; height:100%;">
+            <div style="font-size:15px; font-weight:800; margin-bottom:14px; color:#1E293B;">📈 세그먼트별 재고 변화 시각화 (백만원)</div>
+            <div style="position:relative; height:320px; width:100%;">
               <canvas id="segDetailChart"></canvas>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 
-  <!-- 채점 로직 모달 (MoM 차트 막대 클릭 시 표시) -->
-  <div class="overlay" id="scoringLogicModal" onclick="if(event.target===this)closeScoringLogicModal()">
-    <div class="modal" style="max-width: 760px;">
-      <div class="modal-hdr" style="background: linear-gradient(135deg, #1E293B 0%, #334155 100%);">
+  <!-- 채점 로직 모달 (ⓘ 버튼 클릭 시 표시) -->
+  <div class="overlay" id="scoringLogicModal" onmousedown="_modalMouseDown(event,'scoringLogicModal')" onmouseup="_modalMouseUp(event,'scoringLogicModal',closeScoringLogicModal)">
+    <div class="modal" style="max-width:760px;" onmousedown="event.stopPropagation()" onmouseup="event.stopPropagation()">
+      <div class="modal-hdr" style="background:linear-gradient(135deg,#1E293B 0%,#334155 100%);">
         <div>
           <div class="modal-title" id="scoringModalTitle">카테고리 채점 로직</div>
           <div class="modal-sub" id="scoringModalSub">지표별 가중치 및 세부 항목 목표 비중</div>
@@ -2489,8 +2500,8 @@
         tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:#9CA3AF;">해당 카테고리에 할당된 브랜드 데이터가 없습니다.</td></tr>`;
       } else {
         storeBrands.forEach(b => {
-          const tM2 = +(b.tM * 2).toFixed(1);
-          const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
+          const tM2 = b.tM_inv !== undefined ? +b.tM_inv.toFixed(1) : +(b.tM * 2).toFixed(1);
+          const supply = tM2 > 0 ? Math.round(b.sM / tM2 * 100) : 0;
 
           // [v104.8] 과재고 컬러 최종 보정: 눈이 더욱 편안한 허니 골드(#E9C040) 반영
           const isOver = supply >= 100;
@@ -2547,7 +2558,7 @@
           tb.appendChild(tr);
         });
       }
-      document.getElementById('storeModal').classList.add('show');
+      _openModalAtCursor('storeModal');
     }
 
     function closeStoreModal() {
@@ -2561,6 +2572,32 @@
       currentBrand = BRANDS.find(b => b.name === name && b.store === store) || BRANDS[0];
       showPage('p2', document.querySelector('[data-page="p2"]'));
       renderBrandDetail();
+    }
+    // 아이템 코드 → 한글 레이블
+    const ITEM_KOR = {
+      'Outer':'아우터','Top':'상의','Dress':'원피스','Bottom':'하의','Skirt':'스커트',
+      'RunningShoes':'러닝화','CasualShoes':'워킹화','OtherShoes':'기타신발',
+      'Suits':'정장','Shirts':'셔츠','Casual':'캐주얼','Knit':'니트','Set':'상하세트'
+    };
+    const DIS_LBL_OUTLET  = {s70:'70%↑', s50:'50~70%', s30:'30~50%', s10:'~30%'};
+    const DIS_LBL_NORMAL  = {s0:'신상(0년차)', s10:'1년차', s30:'2년차', s50:'3년차', s70:'4년차↑'};
+    const FRESH_LBL = {new:'신상', plan:'기획'};
+    const SEA_LBL   = {spring:'봄', summer:'여름', autumn:'가을', winter:'겨울'};
+
+    function _fmtW(labelsMap, wObj) {
+      return Object.entries(labelsMap)
+        .filter(([k]) => (wObj[k] || 0) > 0)
+        .map(([k, lbl]) => `${lbl}(${wObj[k]}%)`)
+        .join(', ') || '—';
+    }
+    function _fmtSW(sw) {
+      return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%`;
+    }
+    function _fmtItem(itemW) {
+      return Object.entries(itemW)
+        .filter(([,v]) => v > 0)
+        .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
+        .join(', ') || '—';
     }
 
     function renderBrandDetail() {
@@ -2607,8 +2644,8 @@
         return `${Math.round(won / 10_000).toLocaleString()}만원`;
       }
 
-      const tM2 = +(b.tM * 2).toFixed(1);
-      const supply = b.tM > 0 ? Math.round(b.sM / tM2 * 100) : 0;
+      const tM2 = b.tM_inv !== undefined ? +b.tM_inv.toFixed(1) : +(b.tM * 2).toFixed(1);
+      const supply = tM2 > 0 ? Math.round(b.sM / tM2 * 100) : 0;
       const gap = Math.max(0, 100 - supply);
       // [v105.0] 과재고 표시 제거: 100% 이상은 모두 '재고 충족'으로 긍정 표시
       const supplyColor = supply >= 100 ? '#065F46' : supply >= 70 ? '#D97706' : '#B91C1C';
@@ -2716,7 +2753,7 @@
             <div style="font-size:22px; font-weight:950; color:#111; margin-bottom:14px;">
               ${formatM(b.sM)}<span style="font-size:14px; color:#475569;">M</span>
               <span style="font-size:14px; color:#94A3B8; margin:0 4px;">/</span>
-              <span style="font-size:13px; color:#94A3B8; font-weight:700;">목표 ${formatM(tM2)}M</span>
+              <span style="font-size:13px; color:#94A3B8; font-weight:700;">목표 ${formatM(tM2)}M</span>${b.tM_adjusted ? '<span style="background:#9CA3AF;color:#fff;font-size:9px;font-weight:900;padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:5px;letter-spacing:0.3px;">' + (b.tM_adjusted === 'cap' ? '평매출상한' : '평매출하한') + '</span>' : ''}
             </div>
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
               <div style="flex:1; height:10px; background:#F1F5F9; border-radius:5px; overflow:hidden;">
@@ -2761,32 +2798,6 @@
         return n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       }
 
-      // 아이템 코드 → 한글 레이블
-      const ITEM_KOR = {
-        'Outer':'아우터','Top':'상의','Dress':'원피스','Bottom':'하의','Skirt':'스커트',
-        'RunningShoes':'러닝화','CasualShoes':'워킹화','OtherShoes':'기타신발',
-        'Suits':'정장','Shirts':'셔츠','Casual':'캐주얼','Knit':'니트','Set':'상하세트'
-      };
-      const DIS_LBL_OUTLET  = {s70:'70%↑', s50:'50~70%', s30:'30~50%', s10:'~30%'};
-      const DIS_LBL_NORMAL  = {s0:'신상(0년차)', s10:'1년차', s30:'2년차', s50:'3년차', s70:'4년차↑'};
-      const FRESH_LBL = {new:'신상', plan:'기획'};
-      const SEA_LBL   = {spring:'봄', summer:'여름', autumn:'가을', winter:'겨울'};
-
-      function _fmtW(labelsMap, wObj) {
-        return Object.entries(labelsMap)
-          .filter(([k]) => (wObj[k] || 0) > 0)
-          .map(([k, lbl]) => `${lbl}(${wObj[k]}%)`)
-          .join(', ') || '—';
-      }
-      function _fmtSW(sw) {
-        return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%`;
-      }
-      function _fmtItem(itemW) {
-        return Object.entries(itemW)
-          .filter(([,v]) => v > 0)
-          .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
-          .join(', ') || '—';
-      }
 
       // [v2.7] scoreBubble 제거 후 showScoringLogicModal 사용
 
@@ -3191,11 +3202,47 @@
         <div style="margin-bottom:8px;"><b>• BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</div>
         <div><b>• 아이템 (조닝별 최적 비중)</b>${zoningRows}</div>`;
 
-      document.getElementById('scoringLogicModal').classList.add('show');
+      _openModalAtCursor('scoringLogicModal');
+    }
+
+    // ── 커서 위치 기반 모달 오픈 헬퍼 ──
+    let _lastClickClientY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    document.addEventListener('mousedown', function(e) {
+      _lastClickClientY = e.clientY;
+    }, true);
+
+    function _openModalAtCursor(modalId) {
+      const overlay = document.getElementById(modalId);
+      if (!overlay) return;
+      // 커서 Y 기준: 팝업 상단을 클릭 지점 100px 위에 배치, 뷰포트 50% 이하로 제한
+      const topPad = Math.max(20, Math.min(_lastClickClientY - 100, window.innerHeight * 0.5));
+      overlay.style.paddingTop = topPad + 'px';
+      overlay.classList.add('show');
+    }
+
+    // ── [v200] 모달 애니메이션 닫기 공통 함수
+    function _animatedClose(overlayId) {
+      const el = document.getElementById(overlayId);
+      if (!el || !el.classList.contains('show')) return;
+      el.classList.add('closing');
+      el.addEventListener('animationend', () => {
+        el.classList.remove('show', 'closing');
+      }, { once: true });
+    }
+
+    // 마운스다운 시점 기록 (overlay 바깥적 클릭 vs 드래그 구분)
+    let _mdTarget = null;
+    function _modalMouseDown(e, id) {
+      if (e.target.id === id) _mdTarget = id;
+      else _mdTarget = null;
+    }
+    function _modalMouseUp(e, id, closeFn) {
+      if (e.target.id === id && _mdTarget === id) closeFn();
+      _mdTarget = null;
     }
 
     function closeScoringLogicModal() {
-      document.getElementById('scoringLogicModal').classList.remove('show');
+      _animatedClose('scoringLogicModal');
     }
 
     function getPrevMonthData(currentMonthStr, storeName, brandName) {
@@ -3209,10 +3256,36 @@
          return prevData.BRANDS.find(b => b.store === storeName && b.name === brandName);
     }
 
+    // [v200] 최근 최대 3개월 데이터를 수집하는 헬퍼
+    function getRecentMonthsData(b, maxMonths = 3) {
+      if (!window.__ALL_DATA__) return [];
+      const available = Object.keys(window.__ALL_DATA__); // 최신 → 과거 순
+      const currentMonth = b.data_month || b.month || currentGlobalMonth;
+      const startIdx = available.indexOf(currentMonth);
+      if (startIdx === -1) return [{ month: currentMonth, brand: b }];
+      
+      const result = [];
+      for (let i = 0; i < maxMonths; i++) {
+        const idx = startIdx + i;
+        if (idx >= available.length) break;
+        const m = available[idx];
+        const mData = window.__ALL_DATA__[m];
+        if (!mData || !mData.BRANDS) break;
+        const mBrand = mData.BRANDS.find(bx => bx.store === b.store && bx.name === b.name);
+        if (i === 0) {
+          result.push({ month: currentMonth, brand: b }); // 현재 월은 항상 현재 객체 사용
+        } else if (mBrand) {
+          result.push({ month: m, brand: mBrand });
+        } else {
+          break; // 해당 월에 데이터 없으면 종료
+        }
+      }
+      return result; // 최신 → 과거 순
+    }
+
     let momScoreChartInstance = null;
     function renderMoMScoreChart(b) {
       const container = document.getElementById('momScoreChartContainer');
-      const summaryDiv = document.getElementById('momScoreSummary');
       if (!b) {
         container.style.display = 'none';
         return;
@@ -3223,155 +3296,127 @@
         momScoreChartInstance.destroy();
       }
 
+      // 최근 3개월 데이터 수집 (최신순)
+      const recentData = getRecentMonthsData(b, 3).reverse(); // 과거 → 현재 순으로 정렬
+      
       const currentMonth = b.data_month || b.month || currentGlobalMonth;
-      const prevB = getPrevMonthData(currentMonth, b.store, b.name);
+      const prevB = recentData.length >= 2 ? recentData[recentData.length - 2].brand : null;
 
       const curTotal = b.product_score || b.total || 0;
       const prevTotal = prevB ? (prevB.product_score || prevB.total || 0) : 0;
       const totalDiff = curTotal - prevTotal;
 
-      // 총점수 정보 업데이트
-      document.getElementById('momTotalScoreCur').textContent = curTotal;
-      document.getElementById('momTotalScorePrev').textContent = `전월 점수: ${prevB ? prevTotal + '점' : '데이터 없음'}`;
-      document.getElementById('momTotalScoreLabel').textContent = `${prevB ? (prevB.data_month || prevB.month) : '전월'} 대비 총점수 변동`;
-
+      // 총점수 정보 업데이트 (좌측 카드 - 레거시 UI가 있는 경우만)
+      const curEl = document.getElementById('momTotalScoreCur');
+      const prevEl = document.getElementById('momTotalScorePrev');
+      const labelEl = document.getElementById('momTotalScoreLabel');
       const deltaEl = document.getElementById('momTotalScoreDelta');
-      if (!prevB) {
-        deltaEl.textContent = '-';
-        deltaEl.style.color = '#64748B';
-      } else if (totalDiff === 0) {
-        deltaEl.textContent = '동일';
-        deltaEl.style.color = '#64748B';
-      } else if (totalDiff > 0) {
-        deltaEl.textContent = `▲${totalDiff}점`;
-        deltaEl.style.color = '#DC2626';
-      } else {
-        deltaEl.textContent = `▼${Math.abs(totalDiff)}점`;
-        deltaEl.style.color = '#2563EB';
+      const summaryDiv = document.getElementById('momScoreSummary');
+
+      if (curEl) curEl.textContent = curTotal;
+      if (prevEl) prevEl.textContent = `전월 점수: ${prevB ? prevTotal + '점' : '데이터 없음'}`;
+      if (labelEl) labelEl.textContent = `${prevB ? (prevB.data_month || prevB.month) : '전월'} 대비 총점수 변동`;
+
+      if (deltaEl) {
+        if (!prevB) { deltaEl.textContent = '-'; deltaEl.style.color = '#64748B'; }
+        else if (totalDiff === 0) { deltaEl.textContent = '동일'; deltaEl.style.color = '#64748B'; }
+        else if (totalDiff > 0) { deltaEl.textContent = `▲${totalDiff}점`; deltaEl.style.color = '#DC2626'; }
+        else { deltaEl.textContent = `▼${Math.abs(totalDiff)}점`; deltaEl.style.color = '#2563EB'; }
       }
 
-      // 5개 지표로 변경 (총점수 제외)
-      const labels = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
-      const curData = [
-          b.dis || 0,
-          b.best || 0,
-          b.fresh || 0,
-          b.season || 0,
-          b.item || 0
+      if (summaryDiv) {
+        if (!prevB) {
+          summaryDiv.innerHTML = `<span style="color:#64748B;">이전 달 데이터가 없어 전월대비 점수 비교 분석이 불가능합니다.</span>`;
+        } else {
+          const diffs = [
+            {name: '할인율', diff: (b.dis||0) - (prevB.dis||0)},
+            {name: 'BEST상품', diff: (b.best||0) - (prevB.best||0)},
+            {name: '신선도', diff: (b.fresh||0) - (prevB.fresh||0)},
+            {name: '시즌', diff: (b.season||0) - (prevB.season||0)},
+            {name: '아이템', diff: (b.item||0) - (prevB.item||0)}
+          ];
+          const totalStr = totalDiff === 0 ? "동일" : (totalDiff > 0
+            ? `<strong style="color:#DC2626; font-size:15px;">▲${totalDiff}점 상승</strong>`
+            : `<strong style="color:#2563EB; font-size:15px;">▼${Math.abs(totalDiff)}점 하락</strong>`);
+          const increased = diffs.filter(m => m.diff > 0).sort((a,b) => b.diff - a.diff);
+          const decreased = diffs.filter(m => m.diff < 0).sort((a,b) => a.diff - b.diff);
+          let reasons = [];
+          if (increased.length > 0) reasons.push(`상승 견인 지표: ` + increased.map(m => `<b>${m.name}(+${m.diff})</b>`).join(', '));
+          if (decreased.length > 0) reasons.push(`하락 원인 지표: ` + decreased.map(m => `<b>${m.name}(${m.diff})</b>`).join(', '));
+          summaryDiv.innerHTML = `총점수는 전월대비 ${totalStr}했습니다.<br><span style="font-size:12px; color:#475569; margin-top:6px; display:inline-block; line-height:1.4;">💡 ${reasons.join('<br>') || '세부 지표 점수가 모두 전월과 동일합니다.'}</span>`;
+        }
+      }
+
+      // 5대 지표 데이터셋 구성 (최근 3개월)
+      const METRIC_COLORS = [
+        'rgba(100, 116, 139, 0.65)',   // 가장 오래된 달 (슬레이트 회색)
+        'rgba(148, 163, 184, 0.75)',   // 중간 달
+        'rgba(239, 68, 68, 0.9)'       // 최신 달 (레드)
       ];
-      
-      const prevData = prevB ? [
-          prevB.dis || 0,
-          prevB.best || 0,
-          prevB.fresh || 0,
-          prevB.season || 0,
-          prevB.item || 0
-      ] : [0,0,0,0,0];
-      
-      const prevMonthLabel = prevB ? (prevB.data_month || prevB.month) : '전월 (데이터 없음)';
+      const labels = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
+      const metricKeys = ['dis', 'best', 'fresh', 'season', 'item'];
 
-      // 요약 텍스트 생성
-      if (!prevB) {
-         summaryDiv.innerHTML = `<span style="color:#64748B;">이전 달 데이터가 없어 전월대비 점수 비교 분석이 불가능합니다.</span>`;
-      } else {
-         const diffs = [
-            {name: '할인율', diff: curData[0] - prevData[0]},
-            {name: 'BEST상품', diff: curData[1] - prevData[1]},
-            {name: '신선도', diff: curData[2] - prevData[2]},
-            {name: '시즌', diff: curData[3] - prevData[3]},
-            {name: '아이템', diff: curData[4] - prevData[4]}
-         ];
-         
-         const totalStr = totalDiff === 0 ? "동일" : (totalDiff > 0 ? `<strong style="color:#DC2626; font-size:15px;">▲${totalDiff}점 상승</strong>` : `<strong style="color:#2563EB; font-size:15px;">▼${Math.abs(totalDiff)}점 하락</strong>`);
-         
-         const increased = diffs.filter(m => m.diff > 0).sort((a,b) => b.diff - a.diff);
-         const decreased = diffs.filter(m => m.diff < 0).sort((a,b) => a.diff - b.diff);
-         
-         let reasonHtml = "";
-         if (totalDiff === 0 && increased.length === 0 && decreased.length === 0) {
-            reasonHtml = "세부 지표 점수가 모두 전월과 완전히 동일합니다.";
-         } else {
-            let reasons = [];
-            if (increased.length > 0) reasons.push(`상승 견인 지표: ` + increased.map(m => `<b>${m.name}(+${m.diff})</b>`).join(', '));
-            if (decreased.length > 0) reasons.push(`하락 원인 지표: ` + decreased.map(m => `<b>${m.name}(${m.diff})</b>`).join(', '));
-            reasonHtml = reasons.join('<br>');
-         }
-         
-         summaryDiv.innerHTML = `총점수는 전월대비 ${totalStr}했습니다.<br><span style="font-size:12px; color:#475569; margin-top:6px; display:inline-block; line-height:1.4;">💡 ${reasonHtml}</span>`;
-      }
+      const datasets = recentData.map((item, i) => ({
+        label: item.month,
+        data: metricKeys.map(k => item.brand[k] || 0),
+        backgroundColor: METRIC_COLORS[Math.max(0, METRIC_COLORS.length - recentData.length + i)],
+        borderRadius: 6,
+        barPercentage: 0.75,
+        categoryPercentage: recentData.length >= 3 ? 0.85 : 0.65
+      }));
 
       momScoreChartInstance = new Chart(ctx, {
         type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: prevMonthLabel,
-              data: prevData,
-              backgroundColor: 'rgba(148, 163, 184, 0.7)',
-              borderRadius: 6,
-              barPercentage: 0.7,
-              categoryPercentage: 0.6
-            },
-            {
-              label: currentMonth,
-              data: curData,
-              backgroundColor: 'rgba(239, 68, 68, 0.9)',
-              borderRadius: 6,
-              barPercentage: 0.7,
-              categoryPercentage: 0.6
-            }
-          ]
-        },
+        data: { labels, datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           onClick: (event, activeElements, chart) => {
-            // 차트 막대 클릭 시 해당 지표의 채점 로직 모달 표시
+            // [v200] 차트 클릭 시 → 구간별 상세 팝업 (채점로직 팝업 아님)
             const active = chart.getElementsAtEventForMode(event, 'index', { intersect: false }, true);
             if (active && active.length > 0) {
-              const idx = active[0].index;
-              const metricNames = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
-              showScoringLogicModal(metricNames[idx]);
+              const metricIds = ['dis', 'best', 'fresh', 'season', 'item'];
+              showSegmentDetailMoM(metricIds[active[0].index]);
             }
           },
           onHover: (event, chartElement) => {
             event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default';
           },
           plugins: {
-            legend: { 
-               display: true, 
-               position: 'top',
-               labels: { font: { family: "'Outfit', 'Noto Sans KR', sans-serif", weight: '600' }, color: '#334155' }
+            legend: {
+              display: true, position: 'top',
+              labels: { font: { family: "'Outfit', 'Noto Sans KR', sans-serif", weight: '600' }, color: '#334155' }
             },
             tooltip: {
               backgroundColor: '#1E293B',
-              titleFont: { size: 14, family: "'Outfit', 'Noto Sans KR', sans-serif" },
-              bodyFont: { size: 14, family: "'Outfit', 'Noto Sans KR', sans-serif" },
+              titleFont: { size: 13, family: "'Outfit', 'Noto Sans KR', sans-serif" },
+              bodyFont: { size: 13, family: "'Outfit', 'Noto Sans KR', sans-serif" },
               padding: 12,
               callbacks: {
-                 afterBody: function(context) {
-                    if (context[0].datasetIndex === 1 && prevB) {
-                       const idx = context[0].dataIndex;
-                       const diff = curData[idx] - prevData[idx];
-                       const sign = diff > 0 ? '▲' : (diff < 0 ? '▼' : '-');
-                       const txtColor = diff > 0 ? '증가' : (diff < 0 ? '감소' : '동일');
-                       return `\n전월대비 변화: ${sign} ${Math.abs(diff)}점 (${txtColor})`;
-                    }
-                 }
+                afterBody: function(context) {
+                  // 최신 달 기준 전월 대비 변화량 표시
+                  if (context[0].datasetIndex === datasets.length - 1 && recentData.length >= 2) {
+                    const idx = context[0].dataIndex;
+                    const cur = recentData[recentData.length - 1].brand[metricKeys[idx]] || 0;
+                    const prv = recentData[recentData.length - 2].brand[metricKeys[idx]] || 0;
+                    const diff = cur - prv;
+                    const sign = diff > 0 ? '▲' : (diff < 0 ? '▼' : '-');
+                    return `\n전월대비: ${sign} ${Math.abs(diff)}점`;
+                  }
+                }
               }
             }
           },
           scales: {
-             y: {
-               beginAtZero: true,
-               grid: { color: '#F1F5F9', drawBorder: false },
-               ticks: { font: { family: "'Outfit', sans-serif", weight: '600' }, color: '#64748B' }
-             },
-             x: {
-               grid: { display: false },
-               ticks: { font: { family: "'Noto Sans KR', sans-serif", weight: '800' }, color: '#1E293B', padding: 8 }
-             }
+            y: {
+              beginAtZero: true, max: 100,
+              grid: { color: '#F1F5F9', drawBorder: false },
+              ticks: { font: { family: "'Outfit', sans-serif", weight: '600' }, color: '#64748B' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: "'Noto Sans KR', sans-serif", weight: '800' }, color: '#1E293B', padding: 8 }
+            }
           }
         }
       });
@@ -3410,7 +3455,7 @@
     }
 
     function closeSegmentDetailModal() {
-      document.getElementById('segmentDetailModal').classList.remove('show');
+      _animatedClose('segmentDetailModal');
     }
 
     let segDetailChartInstance = null;
@@ -3526,7 +3571,7 @@
         }
       });
 
-      document.getElementById('segmentDetailModal').classList.add('show');
+      _openModalAtCursor('segmentDetailModal');
     }
 
     // 채점 로직 모달 외부 클릭 닫기는 overlay onclick으로 처리됨
@@ -3943,6 +3988,21 @@
       } catch (e) { _showError('연결 실패.'); return; }
       buildMainTable(); renderBrandDetail();
     }
+    // [v200] Escape 키로 열린 모달 닫기
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const modals = ['segmentDetailModal', 'scoringLogicModal', 'p1Modal', 'downloadModal'];
+      for (const id of modals) {
+        const el = document.getElementById(id);
+        if (el && el.classList.contains('show')) {
+          _animatedClose(id);
+          break;
+        }
+      }
+    });
+
     window.onload = init;
   </script>
 </body>

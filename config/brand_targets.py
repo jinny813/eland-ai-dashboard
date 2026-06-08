@@ -1532,7 +1532,7 @@ def normalize_brand_name(name: str) -> str:
     """브랜드명 괄호 제거 정규화 (예: '보브(VOV)' -> '보브', '로엠(ROEM)' -> '로엠')"""
     if not name:
         return ""
-    return re.sub(r'\s*\([^)]*\)', '', str(name)).strip()
+    return str(name).split('(')[0].strip()
 
 def clean_store_name(name: str) -> str:
     """NC/뉴코아/동아/2001 수식어를 완벽하게 제거하는 표준 유틸리티"""

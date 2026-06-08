@@ -1081,9 +1081,201 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
         hide_brand_col=True,
         score_mode=score_mode,
     )
-    
+
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
     return buf.getvalue()
 
+
+def _apply_dashboard_score_cell(cell, score, styles):
+    """대시보드 100점 기준 셀: 80점↑ 녹색, 60점↑ 노란색, 미만 빨간색."""
+    cell.value = f"{int(round(score))}점"
+    if score >= 80:
+        cell.fill = styles.fill_green
+        cell.font = styles.font_white_bold
+    elif score >= 60:
+        cell.fill = styles.fill_yellow
+        cell.font = styles.font_black
+    else:
+        cell.fill = styles.fill_red
+        cell.font = styles.font_white_bold
+    cell.alignment = styles.align_center
+    cell.border = styles.border_thin
+
+
+def export_p1_dashboard_excel_bytes(data: dict, cat_filter: str, metrics_filter=None):
+    """100점 환산 기준 대시보드형 Excel: 세그먼트 없이 5개 지표를 각 100점 만점으로 표시."""
+    if metrics_filter is None:
+        metrics_filter = ALL_METRICS
+    metrics_filter = _normalize_metrics_filter(metrics_filter)
+
+    if not data or "error" in data:
+        return None
+
+    stores = data.get("STORES", [])
+    brands = data.get("BRANDS", [])
+    if not stores or not brands:
+        return None
+
+    METRIC_KEYS = [
+        ("dis",    "할인율"),
+        ("best",   "BEST상품"),
+        ("fresh",  "신선도"),
+        ("season", "시즌"),
+        ("item",   "아이템"),
+    ]
+    active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter]
+
+    agg_rows = []
+    for store in stores:
+        if cat_filter == "전체 카테고리":
+            sb = [b for b in brands if b.get("store") == store]
+        else:
+            sb = [b for b in brands if b.get("store") == store and b.get("category") == cat_filter]
+        if not sb:
+            continue
+
+        b_count = len(sb)
+        agg_tM = sum(float(b.get("tM", 0.0)) for b in sb)
+        cat_display = "전체" if cat_filter == "전체 카테고리" else cat_filter
+
+        row = {"store": store, "category": cat_display}
+        for m_key, _ in METRIC_KEYS:
+            if agg_tM > 0:
+                row[m_key] = min(100.0, sum(
+                    float(b.get(m_key, 0.0)) * (float(b.get("tM", 0.0)) / agg_tM) for b in sb
+                ))
+            else:
+                row[m_key] = min(100.0, sum(float(b.get(m_key, 0.0)) for b in sb) / b_count)
+
+        sel_scores = [row[mk] for mk, ml in METRIC_KEYS if ml in metrics_filter]
+        row["total"] = sum(sel_scores) / len(sel_scores) if sel_scores else 0.0
+        agg_rows.append(row)
+
+    if not agg_rows:
+        return None
+
+    agg_rows.sort(key=lambda x: x["total"], reverse=True)
+
+    styles = _STYLES
+    wb = Workbook()
+    ws = wb.active
+    ws.title = _sanitize_sheet_name(f"대시보드_{cat_filter}", set())
+
+    col_defs = [("랭크", 5), ("복종", 10), ("지점", 12), ("총점\n(100점)", 9)]
+    for _, m_label in active_metrics:
+        col_defs.append((f"{m_label}\n(100점)", 9))
+
+    for ci, (_, w) in enumerate(col_defs, 1):
+        ws.column_dimensions[get_column_letter(ci)].width = w
+
+    total_cols = len(col_defs)
+
+    title_cell = ws.cell(row=1, column=1,
+        value=f"[한국유통] 상품구색 노출 100점 환산 대시보드 ({cat_filter})")
+    title_cell.font = styles.font_title
+    title_cell.alignment = styles.align_center
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+    ws.row_dimensions[1].height = 25
+
+    for ci, (hdr, _) in enumerate(col_defs, 1):
+        styles.apply_header_cell(ws.cell(row=2, column=ci), value=hdr)
+    ws.row_dimensions[2].height = 32
+
+    for rank, row in enumerate(agg_rows, 1):
+        ri = 2 + rank
+        ws.row_dimensions[ri].height = 18
+        styles.apply_plain_cell(ws.cell(row=ri, column=1), rank)
+        styles.apply_plain_cell(ws.cell(row=ri, column=2), row["category"])
+        styles.apply_plain_cell(ws.cell(row=ri, column=3), row["store"])
+        col = 4
+        _apply_dashboard_score_cell(ws.cell(row=ri, column=col), row["total"], styles)
+        col += 1
+        for m_key, _ in active_metrics:
+            _apply_dashboard_score_cell(ws.cell(row=ri, column=col), row[m_key], styles)
+            col += 1
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def export_p2_dashboard_excel_bytes(data: dict, store_filter: str, cat_filter: str, metrics_filter=None):
+    """P2 브랜드 상세 - 100점 환산 대시보드 Excel: 브랜드별 5개 지표를 각 100점 만점으로 표시."""
+    if metrics_filter is None:
+        metrics_filter = ALL_METRICS
+    metrics_filter = _normalize_metrics_filter(metrics_filter)
+
+    if not data or "error" in data:
+        return None
+
+    brands = data.get("BRANDS", [])
+    filtered = [
+        b for b in brands
+        if (store_filter == "전체 지점" or b.get("store") == store_filter)
+        and (cat_filter == "전체 카테고리" or b.get("category") == cat_filter)
+    ]
+    if not filtered:
+        return None
+
+    METRIC_KEYS = [
+        ("dis",    "할인율"),
+        ("best",   "BEST상품"),
+        ("fresh",  "신선도"),
+        ("season", "시즌"),
+        ("item",   "아이템"),
+    ]
+    active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter]
+
+    def _row_total(b):
+        scores = [min(100.0, float(b.get(mk, 0.0))) for mk, ml in METRIC_KEYS if ml in metrics_filter]
+        return sum(scores) / len(scores) if scores else 0.0
+
+    rows = sorted(filtered, key=_row_total, reverse=True)
+
+    styles = _STYLES
+    wb = Workbook()
+    ws = wb.active
+    ws.title = _sanitize_sheet_name(f"브랜드대시보드_{store_filter}", set())
+
+    col_defs = [("랭크", 5), ("복종", 10), ("지점", 12), ("브랜드", 12), ("총점\n(100점)", 9)]
+    for _, m_label in active_metrics:
+        col_defs.append((f"{m_label}\n(100점)", 9))
+
+    for ci, (_, w) in enumerate(col_defs, 1):
+        ws.column_dimensions[get_column_letter(ci)].width = w
+
+    total_cols = len(col_defs)
+
+    title_cell = ws.cell(row=1, column=1,
+        value=f"[한국유통] 브랜드 100점 환산 대시보드 ({store_filter} / {cat_filter})")
+    title_cell.font = styles.font_title
+    title_cell.alignment = styles.align_center
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+    ws.row_dimensions[1].height = 25
+
+    for ci, (hdr, _) in enumerate(col_defs, 1):
+        styles.apply_header_cell(ws.cell(row=2, column=ci), value=hdr)
+    ws.row_dimensions[2].height = 32
+
+    for rank, b in enumerate(rows, 1):
+        ri = 2 + rank
+        ws.row_dimensions[ri].height = 18
+        styles.apply_plain_cell(ws.cell(row=ri, column=1), rank)
+        styles.apply_plain_cell(ws.cell(row=ri, column=2), b.get("category", ""))
+        styles.apply_plain_cell(ws.cell(row=ri, column=3), b.get("store", ""))
+        styles.apply_plain_cell(ws.cell(row=ri, column=4), b.get("name", ""))
+        col = 5
+        _apply_dashboard_score_cell(ws.cell(row=ri, column=col), _row_total(b), styles)
+        col += 1
+        for m_key, _ in active_metrics:
+            score = min(100.0, float(b.get(m_key, 0.0)))
+            _apply_dashboard_score_cell(ws.cell(row=ri, column=col), score, styles)
+            col += 1
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()

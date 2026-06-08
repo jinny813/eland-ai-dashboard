@@ -178,10 +178,11 @@ def preprocess_raw_records(
         logger.error("[storemaster_override] 적용 실패: %s", _soe)
 
     # ── 특수 브랜드 store_type 강제 설정 ──
-    _no_year_outlet_brands = ['압소바', '더레노마']
-    for _b in _no_year_outlet_brands:
-        _m = df['brand_name'].str.contains(_b, na=False)
-        df.loc[_m, 'store_type'] = '상설'
+    if 'brand_name' in df.columns:
+        _no_year_outlet_brands = ['압소바', '더레노마']
+        for _b in _no_year_outlet_brands:
+            _m = df['brand_name'].str.contains(_b, na=False)
+            df.loc[_m, 'store_type'] = '상설'
 
     # ── year 필터 ──
     if 'year' in df.columns and 'store_type' in df.columns and 'category_group' in df.columns:
@@ -205,12 +206,14 @@ def preprocess_raw_records(
     if 'category_group' in df.columns:
         df.loc[df['category_group'] == '골프웨어', 'category_group'] = '신사'
         df.loc[df['category_group'] == '아동의류(특정매입)', 'category_group'] = '아동'
-        df.loc[df['brand_name'].str.contains('스케쳐스', na=False), 'category_group'] = '스포츠'
+        if 'brand_name' in df.columns:
+            df.loc[df['brand_name'].str.contains('스케쳐스', na=False), 'category_group'] = '스포츠'
 
     # ── 이랜드월드 브랜드 정상 매장 강제 ──
-    for b in ['스파오키즈', '뉴발란스키즈']:
-        mask = df['brand_name'].str.contains(b, na=False)
-        df.loc[mask, 'store_type'] = '정상'
+    if 'brand_name' in df.columns:
+        for b in ['스파오키즈', '뉴발란스키즈']:
+            mask = df['brand_name'].str.contains(b, na=False)
+            df.loc[mask, 'store_type'] = '정상'
 
     # ── 가용 월 목록 ──
     def _get_m_num(m_str):
@@ -481,8 +484,32 @@ def load_dashboard_data(
                 cfg = _get_config(b_cat, b_type, b_name)
                 
                 tM_won = get_tm(brand_name=b_name, store_name=store, month=diag_month)
-                b_df['tM'] = tM_won
-                
+
+                # 평매출 기반 목표재고액 보정 (채점용만 적용, 목표매출 표시는 tM_won 원본 유지)
+                # cap  → 평매출 > 10만원/평: 목표재고 = 10만원 × 평수 × 2
+                # floor→ 평매출 <  5만원/평: 목표재고 =  5만원 × 평수 × 2
+                _tM_adjusted = None
+                _b_area_for_cap = get_area(store, b_name)
+                tM_for_score = tM_won  # 채점에 사용할 tM (보정 적용)
+                if _b_area_for_cap > 0:
+                    try:
+                        _m_num = int(str(diag_month).replace('월', '').strip())
+                        _days = {1:31, 2:28, 3:31, 4:30, 5:31, 6:30, 7:31, 8:31, 9:30, 10:31, 11:30, 12:31}.get(_m_num, 30)
+                    except Exception:
+                        _days = 30
+                    _raw_sales_sum = (
+                        b_df['sales_amt'].apply(lambda x: max(0.0, _try_float(x))).sum()
+                        if 'sales_amt' in b_df.columns else 0.0
+                    )
+                    _pyeong_sales_daily = (_raw_sales_sum / _b_area_for_cap) / _days
+                    if _pyeong_sales_daily > 100_000:
+                        tM_for_score = 100_000.0 * _b_area_for_cap * _days
+                        _tM_adjusted = 'cap'
+                    elif _pyeong_sales_daily < 50_000:
+                        tM_for_score = 50_000.0 * _b_area_for_cap * _days
+                        _tM_adjusted = 'floor'
+                b_df['tM'] = tM_for_score  # 채점 로직은 보정된 값 사용
+
                 # [v74.5] 중복 제거 로직 완화 (상설 매장은 inv_uid가 없으면 모든 행 합산)
                 is_outlet_b = _is_outlet_type(b_type)
                 if 'inv_uid' in b_df.columns and b_df['inv_uid'].notna().any():
@@ -588,6 +615,8 @@ def load_dashboard_data(
                         "best": int(round(float(row.get('best_score', 0)))),
                         "season": int(round(float(row.get('season_score', 0)))),
                         "tM": round(tM_won / 1_000_000, 1),
+                        "tM_inv": round(tM_for_score * 2 / 1_000_000, 1),
+                        "tM_adjusted": _tM_adjusted,
                         "sM": max(0.0, round(stock_amt / 1_000_000, 1)),
                         "sQ": int(stock_qty),
                         "sales_amt": cur_sales_sum / 1_000_000,
