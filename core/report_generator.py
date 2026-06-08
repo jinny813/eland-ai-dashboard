@@ -877,8 +877,8 @@ def export_to_excel_bytes(
     detail_data = data.get("DETAIL", {})
     filtered = [
         b for b in brands
-        if (store_filter == "전체 지점" or b.get("store") == store_filter)
-        and (cat_filter == "전체 카테고리" or b.get("category") == cat_filter)
+        if (store_filter in ("전체 지점", "전체") or b.get("store") == store_filter)
+        and (cat_filter in ("전체 카테고리", "전체") or b.get("category") == cat_filter)
     ]
     if not filtered:
         return None
@@ -918,7 +918,10 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
 
     for store in stores:
         # 해당 지점/카테고리의 브랜드 목록
-        store_brands = [b for b in brands if b.get("store") == store and b.get("category") == cat_filter]
+        if cat_filter in ("전체 카테고리", "전체"):
+            store_brands = [b for b in brands if b.get("store") == store]
+        else:
+            store_brands = [b for b in brands if b.get("store") == store and b.get("category") == cat_filter]
         if not store_brands:
             continue
 
@@ -1129,7 +1132,7 @@ def export_p1_dashboard_excel_bytes(data: dict, cat_filter: str, metrics_filter=
 
     agg_rows = []
     for store in stores:
-        if cat_filter == "전체 카테고리":
+        if cat_filter in ("전체 카테고리", "전체"):
             sb = [b for b in brands if b.get("store") == store]
         else:
             sb = [b for b in brands if b.get("store") == store and b.get("category") == cat_filter]
@@ -1214,8 +1217,8 @@ def export_p2_dashboard_excel_bytes(data: dict, store_filter: str, cat_filter: s
     brands = data.get("BRANDS", [])
     filtered = [
         b for b in brands
-        if (store_filter == "전체 지점" or b.get("store") == store_filter)
-        and (cat_filter == "전체 카테고리" or b.get("category") == cat_filter)
+        if (store_filter in ("전체 지점", "전체") or b.get("store") == store_filter)
+        and (cat_filter in ("전체 카테고리", "전체") or b.get("category") == cat_filter)
     ]
     if not filtered:
         return None
