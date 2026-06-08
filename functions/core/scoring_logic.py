@@ -406,14 +406,16 @@ class AssortmentScorer:
                 {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.00)}
             ]
 
-        fresh_earned, fresh_tgt_sum = 0.0, 0.0
-        for item in fresh_cfg:
-            act = _get_record_ref(item['m'])['_amt'].sum()
-            tgt = target_total * item['r']
-            if tgt > 0:
-                fresh_earned += min(act, tgt)
-                fresh_tgt_sum += tgt
-        freshness_score = (fresh_earned / fresh_tgt_sum * 100) if fresh_tgt_sum > 0 else 0.0
+        # 신선도 지표 내 명시적 구간별 가중 평균
+        sum_r = sum(item['r'] for item in fresh_cfg)
+        freshness_score = 0.0
+        if sum_r > 0:
+            for item in fresh_cfg:
+                if item['r'] > 0:
+                    act = _get_record_ref(item['m'])['_amt'].sum()
+                    tgt = target_total * item['r']
+                    segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
+                    freshness_score += segment_pct * (item['r'] / sum_r)
 
         # C. 시즌 — data_month 기준: 1~3월=봄시즌, 4~6월=여름시즌
         _raw_m = df['data_month'].iloc[0] if 'data_month' in df.columns and not df.empty else ''
@@ -447,16 +449,16 @@ class AssortmentScorer:
                 {'m': sc.isin(CO_WINTER), 'r': sea_inv.get('winter', 0.0)},
             ]
 
-        season_earned, season_tgt_sum = 0.0, 0.0
-        for item in season_cfg:
-            if item['r'] <= 0:
-                continue
-            act = _get_record_ref(item['m'])['_amt'].sum()
-            tgt = target_total * item['r']
-            if tgt > 0:
-                season_earned += min(act, tgt)
-                season_tgt_sum += tgt
-        season_score = (season_earned / season_tgt_sum * 100) if season_tgt_sum > 0 else 0.0
+        # 시즌 지표 내 명시적 구간별 가중 평균
+        sum_r = sum(item['r'] for item in season_cfg if item['r'] > 0)
+        season_score = 0.0
+        if sum_r > 0:
+            for item in season_cfg:
+                if item['r'] > 0:
+                    act = _get_record_ref(item['m'])['_amt'].sum()
+                    tgt = target_total * item['r']
+                    segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
+                    season_score += segment_pct * (item['r'] / sum_r)
 
         # D. 베스트10
         best_styles = []
@@ -479,16 +481,19 @@ class AssortmentScorer:
         else:
             act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
             tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
-            best_score = min(100.0, (act_best / tgt_best * 100)) if tgt_best > 0 else 0.0
+            best_score = (min(act_best, tgt_best) / tgt_best * 100.0) if tgt_best > 0 else 0.0
 
-        # E. 아이템
+        # 아이템 지표 내 명시적 구간별 가중 평균
         item_w = self._get_dynamic_item_weights(df)
-        item_atts = []
-        for g_name, r_val in item_w.items():
-            act = _get_record_ref(df['item_group'] == g_name)['_amt'].sum()
-            tgt = target_total * r_val
-            item_atts.append(min(100.0, (act / tgt * 100)) if tgt > 0 else 0.0)
-        item_score = (sum(item_atts) / len(item_atts)) if item_atts else 0.0
+        sum_r = sum(item_w.values())
+        item_score = 0.0
+        if sum_r > 0:
+            for g_name, r_val in item_w.items():
+                if r_val > 0:
+                    act = _get_record_ref(df['item_group'] == g_name)['_amt'].sum()
+                    tgt = target_total * r_val
+                    segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
+                    item_score += segment_pct * (r_val / sum_r)
 
         # ──────────────────────────────────────────
         # 최종 총점 산출 (v11.0 이중 채점 체계)
