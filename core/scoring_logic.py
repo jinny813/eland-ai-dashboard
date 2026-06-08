@@ -377,16 +377,16 @@ class AssortmentScorer:
                 {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
                 {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.10 if use_age_for_dis else 0.15)},
             ]
-        # 달성액 합산 / 목표액 합산 방식: sum(min(실제, 목표)) / sum(목표) × 100
-        # tgt=0 구간은 제외 (0% 할인 미목표 구간 등)
-        dis_earned, dis_tgt_sum = 0.0, 0.0
-        for item in dis_cfg:
-            act = _get_record_ref(item['m'])['_amt'].sum()
-            tgt = target_total * item['r']
-            if tgt > 0:
-                dis_earned += min(act, tgt)
-                dis_tgt_sum += tgt
-        discount_score = (dis_earned / dis_tgt_sum * 100) if dis_tgt_sum > 0 else 0.0
+        # [v17.4] 각각의 할인율 구간별 달성률에 구간 비중을 가중 평균하여 점수 계산
+        sum_r = sum(item['r'] for item in dis_cfg)
+        discount_score = 0.0
+        if sum_r > 0:
+            for item in dis_cfg:
+                if item['r'] > 0:
+                    act = _get_record_ref(item['m'])['_amt'].sum()
+                    tgt = target_total * item['r']
+                    segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
+                    discount_score += segment_pct * (item['r'] / sum_r)
 
         # B. 신선도 — freshness_type 기준으로 통일
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
