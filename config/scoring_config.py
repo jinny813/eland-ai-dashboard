@@ -47,11 +47,11 @@ _WOMEN_NORMAL_BASE = {
     },
 
     # 지표별 최종 가중치 (총점 산출용)
-    "weight_discount":  0.30,
-    "weight_freshness": 0.20,
-    "weight_season":    0.15,
-    "weight_best":      0.25,
-    "weight_item":      0.10,
+    "weight_discount":  0.33,
+    "weight_freshness": 0.22,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 # ──────────────────────────────────────────────────────
@@ -73,9 +73,9 @@ _WOMEN_OUTLET_BASE = {
     # 지표별 최종 가중치 (총점 산출용)
     "weight_discount":  0.40,
     "weight_freshness": 0.15,
-    "weight_season":    0.15,
-    "weight_best":      0.20,
-    "weight_item":      0.10,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 # ──────────────────────────────────────────────────────
@@ -91,11 +91,11 @@ _SPORTS_NORMAL_BASE = {
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
         "item":   {"RunningShoes": 0.45, "CasualShoes": 0.30, "OtherShoes": 0.10, "Top": 0.10, "Bottom": 0.05}
     },
-    "weight_discount":  0.25,
-    "weight_freshness": 0.25,
-    "weight_season":    0.15,
-    "weight_best":      0.25,
-    "weight_item":      0.10,
+    "weight_discount":  0.275,
+    "weight_freshness": 0.275,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 # ──────────────────────────────────────────────────────
@@ -113,9 +113,9 @@ _SPORTS_OUTLET_BASE = {
     },
     "weight_discount":  0.40,
     "weight_freshness": 0.15,
-    "weight_season":    0.15,
-    "weight_best":      0.20,
-    "weight_item":      0.10,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 # ──────────────────────────────────────────────────────
@@ -133,9 +133,9 @@ _OUTDOOR_OUTLET_BASE = {
     },
     "weight_discount":  0.40,
     "weight_freshness": 0.15,
-    "weight_season":    0.15,
-    "weight_best":      0.20,
-    "weight_item":      0.10,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 
@@ -154,9 +154,9 @@ _KIDS_OUTLET_BASE = {
     },
     "weight_discount":  0.40,
     "weight_freshness": 0.15,
-    "weight_season":    0.15,
-    "weight_best":      0.20,
-    "weight_item":      0.10,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 _KIDS_NORMAL_BASE = {
@@ -169,11 +169,11 @@ _KIDS_NORMAL_BASE = {
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
         "item":   _ITEM_KIDS
     },
-    "weight_discount":  0.25,
-    "weight_freshness": 0.25,
-    "weight_season":    0.15,
-    "weight_best":      0.25,
-    "weight_item":      0.10,
+    "weight_discount":  0.275,
+    "weight_freshness": 0.275,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 # ──────────────────────────────────────────────────────
@@ -190,11 +190,11 @@ _MENS_NORMAL_BASE = {
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
         "item":   _ITEM_MENS
     },
-    "weight_discount":  0.25,
-    "weight_freshness": 0.25,
-    "weight_season":    0.15,
-    "weight_best":      0.25,
-    "weight_item":      0.10,
+    "weight_discount":  0.275,
+    "weight_freshness": 0.275,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 # ──────────────────────────────────────────────────────
@@ -210,11 +210,11 @@ _MENS_OUTLET_BASE = {
         "season": {"spring": 0.55, "summer": 0.20, "autumn": 0.05, "winter": 0.05},
         "item":   _ITEM_MENS
     },
-    "weight_discount":  0.30,
-    "weight_freshness": 0.20,
-    "weight_season":    0.25,
-    "weight_best":      0.15,
-    "weight_item":      0.10,
+    "weight_discount":  0.33,
+    "weight_freshness": 0.22,
+    "weight_season":    0.05,
+    "weight_best":      0.40,
+    "weight_item":      0.00,
 }
 
 # ══════════════════════════════════════════════════════

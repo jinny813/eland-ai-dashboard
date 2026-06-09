@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.5"
+REPORT_VERSION = "v17.8"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -220,11 +220,11 @@ def main():
         st.session_state.overwrite_approval = {}
 
     # [v18.1] 긴급 패치: 사용자 환경의 고착화된 세션 캐시(빈 화면/에러) 완벽 해제
-    if st.session_state.get("_v18_cleared_v2") is None:
+    if st.session_state.get("_v18_cleared_v3") is None:
         st.cache_data.clear()
         if "last_valid_dashboard_data" in st.session_state:
             del st.session_state["last_valid_dashboard_data"]
-        st.session_state["_v18_cleared_v2"] = True
+        st.session_state["_v18_cleared_v3"] = True
 
     # [v112.0] 브랜드 맵핑 데이터
     CATEGORY_BRAND_MAP = {
@@ -444,8 +444,8 @@ def main():
 
                                 sel_metrics_p1 = st.multiselect(
                                     "📊 포함할 지표 선택 (P1)",
-                                    ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                                    default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                    ["할인율", "BEST상품", "신선도", "시즌"],
+                                    default=["할인율", "BEST상품", "신선도", "시즌"],
                                     key="tab_dl_p1_metrics"
                                 )
                                 
@@ -503,11 +503,11 @@ def main():
 
                                 sel_metrics = st.multiselect(
                                     "📊 지표 선택",
-                                    ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                                    default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                    ["할인율", "BEST상품", "신선도", "시즌"],
+                                    default=["할인율", "BEST상품", "신선도", "시즌"],
                                     key="tab_dl_metrics",
                                 )
-                                metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
+                                metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌"
 
                                 st.markdown("---")
                                 if st.button("🚀 상세 엑셀 파일 생성", key="tab_dl_gen", use_container_width=True):
@@ -795,8 +795,8 @@ def main():
 
                         sel_metrics_p1_p4 = st.multiselect(
                             "📊 포함할 지표 선택 (P1)",
-                            ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                            default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                            ["할인율", "BEST상품", "신선도", "시즌"],
+                            default=["할인율", "BEST상품", "신선도", "시즌"],
                             key="p4_tab_dl_p1_metrics"
                         )
                         
@@ -854,11 +854,11 @@ def main():
 
                         sel_metrics = st.multiselect(
                             "📊 지표 선택",
-                            ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                            default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                            ["할인율", "BEST상품", "신선도", "시즌"],
+                            default=["할인율", "BEST상품", "신선도", "시즌"],
                             key="p4_metrics",
                         )
-                        metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
+                        metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌"
 
                         st.markdown("---")
                         if st.button("🚀 상세 엑셀 파일 생성", key="p4_gen_detail_tab", use_container_width=True):

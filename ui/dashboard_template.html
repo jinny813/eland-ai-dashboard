@@ -1804,6 +1804,7 @@
           </div>
           <div class="metrics-4-grid" id="detailGrid"></div>
           <div id="actionPanel" style="margin-top:24px; margin-bottom:24px;"></div>
+          <div id="itemMonitoringPanel" style="margin-top:24px; margin-bottom:24px;"></div>
 
           <!-- BEST 10 품번 기반 판매 순위 -->
           <div style="margin-top:24px;">
@@ -2481,17 +2482,16 @@
       const tb = document.getElementById('modalTbody');
       const thRow = document.querySelector('#storeModal thead tr');
 
-      // 헤더 개편 (브랜드명, 월 매출(성장률), 종합 점수, 재고 비중 + 5대 지표 점수)
+      // 헤더 개편 (브랜드명, 월 매출(성장률), 종합 점수, 재고 비중 + 4대 지표 점수)
       thRow.innerHTML = `
     <th style="text-align:left;padding-left:24px;background:#1D1E1E;width:16%;">브랜드명</th>
     <th style="background:#1D1E1E; width:14%; font-size:13px; color:#FFFFFF;">월 매출(성장률)</th>
-    <th style="background:#1D1E1E; color:#FFFFFF; width:9%; font-size:14px; font-weight:900;">종합 점수</th>
-    <th style="background:#1D1E1E; width:16%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
-    <th style="background:#E30019; width:9%;">할인율</th>
-    <th style="background:#2563EB; width:9%;">신선도</th>
-    <th style="background:#F59E0B; width:9%;">시즌</th>
-    <th style="background:#16A34A; width:9%;">BEST</th>
-    <th style="background:#8B5CF6; width:9%;">아이템</th>
+    <th style="background:#1D1E1E; color:#FFFFFF; width:11%; font-size:14px; font-weight:900;">종합 점수</th>
+    <th style="background:#1D1E1E; width:19%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
+    <th style="background:#E30019; width:10%;">할인율</th>
+    <th style="background:#2563EB; width:10%;">신선도</th>
+    <th style="background:#F59E0B; width:10%;">시즌</th>
+    <th style="background:#16A34A; width:10%;">BEST</th>
   `;
 
       tb.innerHTML = '';
@@ -2553,7 +2553,6 @@
         <td><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
         <td><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
         <td><span class="score-cell" style="color:#16A34A">${b.best || 0}</span></td>
-        <td><span class="score-cell" style="color:#8B5CF6">${b.item || 0}</span></td>
       `;
           tb.appendChild(tr);
         });
@@ -2591,13 +2590,19 @@
         .join(', ') || '—';
     }
     function _fmtSW(sw) {
-      return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}% / 아이템${sw.item||0}%`;
+      return `할인${sw.dis||0}% / BEST${sw.best||0}% / 시즌${sw.sea||0}% / 신선${sw.fresh||0}%`;
     }
     function _fmtItem(itemW) {
       return Object.entries(itemW)
         .filter(([,v]) => v > 0)
         .map(([k,v]) => `${ITEM_KOR[k]||k}(${v}%)`)
         .join(', ') || '—';
+    }
+    function formatM(val) {
+      if (val === undefined || val === null || val === "") return "0.0";
+      const n = parseFloat(val);
+      if (isNaN(n)) return "0.0";
+      return n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
 
     function renderBrandDetail() {
@@ -2772,13 +2777,12 @@
     </div>
   `;
 
-      // 1. 5개 지표 카드 — 위에서 전역 선언된 dStore/dBrand/d/typeLabel 재사용
+      // 1. 4개 지표 카드 — 위에서 전역 선언된 dStore/dBrand/d/typeLabel 재사용
       const mList = [
         { id: 'dis', l: '할인율 점수', s: b.dis || 0, c: 'm-dis' },
         { id: 'fresh', l: '신선도 점수', s: b.fresh || 0, c: 'm-fresh' },
         { id: 'season', l: '시즌 점수', s: b.season || 0, c: 'm-season' },
-        { id: 'best', l: 'BEST 점수', s: b.best || 0, c: 'm-best' },
-        { id: 'item', l: '아이템 점수', s: b.item || 0, c: 'm-item', zoning: b.zoning }
+        { id: 'best', l: 'BEST 점수', s: b.best || 0, c: 'm-best' }
       ];
 
       function getRateColor(r) {
@@ -2789,14 +2793,6 @@
         return '#EF4444'; // Red 500
       }
 
-      // 재고액 백만원 단위 포맷 함수 (v49.1 / v51.0 강제 소수점 1자리)
-      function formatM(val) {
-        if (val === undefined || val === null || val === "") return "0.0";
-        const n = parseFloat(val);
-        if (isNaN(n)) return "0.0";
-        // [v51.0] 정수라도 반드시 소수점 1자리를 노출 (#.#백만원 통일)
-        return n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-      }
 
 
       // [v2.7] scoreBubble 제거 후 showScoringLogicModal 사용
@@ -2838,12 +2834,6 @@
         const seaTxt  = _fmtW(SEA_LBL, norm.sea_w||{});
         const bestPct = norm.best_pct || 0;
 
-        // ── 섹션 3-4: 아이템 — 모든 조닝 나열
-        const zoningRows = Object.entries(zonings)
-          .map(([zName, iw]) =>
-            `<p style="margin:1px 0 1px 8px;">· <b>${zName}</b>: ${_fmtItem(iw)}</p>`)
-          .join('');
-
         details.innerHTML = `
           <p style="font-size:11px; margin-bottom:2px;">- <b>할인율</b></p>
           <p style="font-size:11px; margin:0 0 1px 8px;">[정상] ${disNorm}</p>
@@ -2853,9 +2843,8 @@
           <p style="font-size:11px; margin:0 0 4px 8px;">[상설] ${freshOutl}</p>
           <p style="font-size:11px; margin-bottom:2px;">- <b>시즌</b>: ${seaTxt}</p>
           <p style="font-size:11px; margin-bottom:4px;">- <b>BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</p>
-          <p style="font-size:11px; margin-bottom:2px;">- <b>아이템 (조닝별 최적 비중)</b></p>
-          ${zoningRows}
-          <p style="font-size:10px; color:#94A3B8; margin-top:6px;">※ 위 수치는 코드 config에서 직접 로딩됩니다.</p>
+          <p style="font-size:10px; color:#7C3AED; background:#F5F3FF; padding:4px 8px; border-radius:4px; margin-top:6px;">※ 복종(아이템)별 목표 재고 비중은 총점 계산 제외 — 브랜드 상세 화면 하단 '복종별 모니터링'에서 확인</p>
+          <p style="font-size:10px; color:#94A3B8; margin-top:4px;">※ 위 수치는 코드 config에서 직접 로딩됩니다.</p>
         `;
       }
 
@@ -3024,6 +3013,9 @@
 
       // [YoY Chart] 렌더링 호출
       renderMoMScoreChart(b);
+
+      // [v18.1] 복종별 목표대비 재고 보유상태 모니터링 패널 렌더링
+      renderItemMonitoringPanel(b, d);
     }
 
     // ─── [ACTION GUIDE] 층장 액션 가이드 패널 렌더링 함수 ───
@@ -3157,6 +3149,121 @@
       `;
     }
 
+  // [v18.1] 복종별 목표대비 재고 보유상태 모니터링 패널 렌더링
+  function renderItemMonitoringPanel(b, d) {
+    const panel = document.getElementById('itemMonitoringPanel');
+    if (!panel) return;
+
+    const itemData = d.item || {};
+    const segs = itemData.segs || [];
+
+    if (!segs.length) {
+      panel.style.display = 'none';
+      return;
+    }
+    panel.style.display = 'block';
+
+    const maxOptPct = Math.max(...segs.map(s => s.opt_pct || 0), 1);
+
+    function getRateColor(r) {
+      if (r >= 100) return '#059669'; // Emerald 600
+      if (r >= 75) return '#10B981'; // Emerald 500
+      if (r >= 50) return '#3B82F6'; // Blue 500
+      if (r >= 25) return '#F59E0B'; // Amber 500
+      return '#EF4444'; // Red 500
+    }
+
+    const cardsHtml = segs.map(s => {
+      const rateVal = s.pct !== undefined ? Math.round(s.pct) : 0;
+      const baseColor = '#8B5CF6';
+      
+      let rateDisplay = `${rateVal}%`;
+      let statusTag = '';
+      if ((s.opt_pct || 0) === 0) {
+        rateDisplay = '-';
+      } else {
+        if (rateVal >= 140) {
+          statusTag = `<span style="background:#2563EB; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">초과</span>`;
+        } else if (rateVal <= 60) {
+          statusTag = `<span style="background:#DC2626; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">부족</span>`;
+        }
+      }
+
+      const targetW = ((s.opt_pct || 0) / maxOptPct) * 100;
+      const actualW = Math.min(100, targetW * (rateVal / 100));
+
+      const diff = (s.targetM || 0) - (s.valM || 0);
+      let diffHtml = '';
+      if (diff > 0) {
+        diffHtml = `
+          <div style="margin-top: 8px; font-size: 11px; font-weight: 700; color: #DC2626; display: flex; align-items: center; gap: 4px;">
+            <span>⚠ 목표 대비 부족액:</span>
+            <span style="font-size: 12px; font-weight: 850;">${formatM(diff)} 백만원</span>
+          </div>
+        `;
+      } else {
+        diffHtml = `
+          <div style="margin-top: 8px; font-size: 11px; font-weight: 700; color: #059669; display: flex; align-items: center; gap: 4px;">
+            <span>✓ 목표 달성 완료</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div style="background: #FAFAFA; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px 20px; transition: var(--transition); display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="background: ${baseColor}; width: 8px; height: 8px; border-radius: 50%;"></div>
+                <span style="font-size: 15px; font-weight: 800; color: #1e293b;">${s.l}</span>
+                <span style="font-size: 11px; font-weight: 700; color: #64748B; background: #E2E8F0; padding: 2px 6px; border-radius: 4px;">목표비중 ${(s.opt_pct * 100).toFixed(0)}%</span>
+              </div>
+              <div style="font-size: 17px; font-weight: 950; color: ${getRateColor(rateVal)};">${rateDisplay}${statusTag}</div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 8px; height: 16px;">
+                <div style="width: 54px; font-size: 10px; font-weight: 800; color: #94A3B8;">목표 재고액</div>
+                <div style="flex: 1; background: #E2E8F0; height: 10px; border-radius: 5px; overflow: hidden; position: relative;">
+                  <div style="width: ${targetW}%; height: 100%; background: #CBD5E1; border-radius: 5px;"></div>
+                </div>
+                <div style="width: 75px; text-align: right; font-size: 12px; font-weight: 800; color: #94A3B8;">
+                  ${formatM(s.targetM)}<span style="font-size: 9px; margin-left: 1px;">M</span>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 8px; height: 20px;">
+                <div style="width: 54px; font-size: 10px; font-weight: 800; color: #94A3B8;">보유 재고액</div>
+                <div style="flex: 1; background: #E2E8F0; height: 10px; border-radius: 5px; overflow: hidden; position: relative;">
+                  <div style="width: ${actualW}%; height: 100%; background: ${baseColor}; border-radius: 5px;"></div>
+                </div>
+                <div style="width: 75px; text-align: right; line-height: 1.1;">
+                  <span style="font-size: 14px; font-weight: 900; color: #1e293b;">${formatM(s.valM)}</span><span style="font-size: 9px; font-weight: 800; color: #64748B; margin-left: 1px;">M</span>
+                  <div style="font-size: 10px; font-weight: 700; color: #94A3B8;">(${(s.qty || 0).toLocaleString()}EA)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          ${diffHtml}
+        </div>
+      `;
+    }).join('');
+
+    panel.innerHTML = `
+      <div style="background:#fff; border-radius:16px; border:1px solid #E2E8F0; overflow:hidden; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); margin-top:24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+          <div style="display:flex; align-items:center;">
+            <div style="font-size:16px; font-weight:800; color:#1e293b;">👕 복종별 목표대비 재고 보유상태 모니터링</div>
+            <div style="margin-left:12px; background:#F5F3FF; color:#7C3AED; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:800;">총점 계산 제외 지표 (현황 모니터링 전용)</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 24px;">
+          ${cardsHtml}
+        </div>
+      </div>
+    `;
+  }
+
     function showScoringLogicModal(clickedMetricLabel) {
       const brand = currentBrand;
       if (!brand) return;
@@ -3187,9 +3294,6 @@
       const freshOutl = _fmtW(FRESH_LBL, outl.fresh_w||{});
       const seaTxt = _fmtW(SEA_LBL, norm.sea_w||{});
       const bestPct = norm.best_pct || 0;
-      const zoningRows = Object.entries(zonings)
-        .map(([zName, iw]) => `<div style="margin:2px 0 2px 12px;">· <b>${zName}</b>: ${_fmtItem(iw)}</div>`)
-        .join('');
 
       document.getElementById('scoringModalDetails').innerHTML = `
         <div style="margin-bottom:8px;"><b>• 할인율</b><br>
@@ -3200,7 +3304,7 @@
           <span style="margin-left:12px; color:#DC2626;">[상설] ${freshOutl}</span></div>
         <div style="margin-bottom:8px;"><b>• 시즌</b>: ${seaTxt}</div>
         <div style="margin-bottom:8px;"><b>• BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</div>
-        <div><b>• 아이템 (조닝별 최적 비중)</b>${zoningRows}</div>`;
+        <div style="font-size:11px; color:#7C3AED; background:#F5F3FF; padding:4px 8px; border-radius:4px; margin-top:4px;">※ 복종(아이템)별 목표 재고 비중은 총점 계산 제외 — 하단 '복종별 모니터링' 패널에서 확인</div>`;
 
       _openModalAtCursor('scoringLogicModal');
     }
@@ -3332,8 +3436,7 @@
             {name: '할인율', diff: (b.dis||0) - (prevB.dis||0)},
             {name: 'BEST상품', diff: (b.best||0) - (prevB.best||0)},
             {name: '신선도', diff: (b.fresh||0) - (prevB.fresh||0)},
-            {name: '시즌', diff: (b.season||0) - (prevB.season||0)},
-            {name: '아이템', diff: (b.item||0) - (prevB.item||0)}
+            {name: '시즌', diff: (b.season||0) - (prevB.season||0)}
           ];
           const totalStr = totalDiff === 0 ? "동일" : (totalDiff > 0
             ? `<strong style="color:#DC2626; font-size:15px;">▲${totalDiff}점 상승</strong>`
@@ -3353,8 +3456,8 @@
         'rgba(148, 163, 184, 0.75)',   // 중간 달
         'rgba(239, 68, 68, 0.9)'       // 최신 달 (레드)
       ];
-      const labels = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
-      const metricKeys = ['dis', 'best', 'fresh', 'season', 'item'];
+      const labels = ['할인율', 'BEST상품', '신선도', '시즌'];
+      const metricKeys = ['dis', 'best', 'fresh', 'season'];
 
       const datasets = recentData.map((item, i) => ({
         label: item.month,
@@ -3899,7 +4002,7 @@
         `<div class="alert-box"><div class="alert-icon">!</div><div class="alert-text">${msg}</div></div>`;
     }
 
-    const DL_METRICS = ['할인율', 'BEST상품', '신선도', '시즌', '아이템'];
+    const DL_METRICS = ['할인율', 'BEST상품', '신선도', '시즌'];
     let _dlModalReady = false;
 
     function _initDownloadModal() {
