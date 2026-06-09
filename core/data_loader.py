@@ -623,11 +623,11 @@ def load_dashboard_data(
                         "month": diag_month, "data_month": b_data_month,
                         "scoring_guide": {
                             "score_weights": {
-                                "dis":   round(cfg.get('weight_discount',  0.30) * 100),
-                                "fresh": round(cfg.get('weight_freshness', 0.20) * 100),
-                                "sea":   round(cfg.get('weight_season',    0.15) * 100),
-                                "best":  round(cfg.get('weight_best',      0.25) * 100),
-                                "item":  round(cfg.get('weight_item',      0.10) * 100),
+                                "dis":   round(cfg.get('weight_discount',  0.33) * 100),
+                                "fresh": round(cfg.get('weight_freshness', 0.22) * 100),
+                                "sea":   round(cfg.get('weight_season',    0.05) * 100),
+                                "best":  round(cfg.get('weight_best',      0.40) * 100),
+                                "item":  round(cfg.get('weight_item',      0.00) * 100),
                             },
                             "item_w":  {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('item',   {}).items() if v > 0},
                             "dis_w":   {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('dis',    {}).items() if v > 0},

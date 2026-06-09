@@ -316,11 +316,11 @@ class AssortmentScorer:
 
         # [v107.8] 가중치 설정 (동적 적용)
         final_weights = {
-            'dis':   self.config.get('weight_discount', 0.30),
-            'fresh': self.config.get('weight_freshness', 0.20),
-            'sea':   self.config.get('weight_season', 0.15),
-            'best':  self.config.get('weight_best', 0.25),
-            'item':  self.config.get('weight_item', 0.10)
+            'dis':   self.config.get('weight_discount', 0.33),
+            'fresh': self.config.get('weight_freshness', 0.22),
+            'sea':   self.config.get('weight_season', 0.05),
+            'best':  self.config.get('weight_best', 0.40),
+            'item':  self.config.get('weight_item', 0.00)
         }
 
         inv_weights = self.config.get('inv_weights', {})
