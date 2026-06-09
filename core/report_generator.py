@@ -12,7 +12,7 @@ from openpyxl.utils import get_column_letter
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.data_loader import load_dashboard_data
 
-ALL_METRICS = ["할인율", "BEST상품", "신선도", "시즌", "아이템"]
+ALL_METRICS = ["할인율", "BEST상품", "신선도", "시즌"]
 
 
 class _ExcelStyles:
@@ -287,15 +287,15 @@ def _fill_exposure_sheet(
                 b_max_weights[m_id] = m_weight
 
         metric_filter_map = {"dis": "할인율", "best": "BEST상품", "fresh": "신선도", "season": "시즌", "item": "아이템"}
-        is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 5)
-        
+        is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 4)
+
         tot = 0.0
         max_tot = 0.0
         for m_id in ("dis", "fresh", "best", "season", "item"):
             if is_all or metric_filter_map[m_id] in metrics_filter:
                 tot += b_earned_scores[m_id]
                 max_tot += b_max_weights.get(m_id, 0.0)
-                
+
         if score_mode == "100_percent":
             # 100점 환산 기준인 경우 선택된 지표들의 단순 평균 점수가 100점 만점이 됨
             selected_count = sum(1 for m_id in ("dis", "fresh", "best", "season", "item") if (is_all or metric_filter_map[m_id] in metrics_filter) and b_max_weights.get(m_id, 0.0) > 0)
@@ -1047,12 +1047,12 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
             m_earned = min(m_total_earned, avg_m_weight)
             
             metric_filter_map = {"dis": "할인율", "best": "BEST상품", "fresh": "신선도", "season": "시즌", "item": "아이템"}
-            is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 5)
-            
+            is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 4)
+
             if is_all or metric_filter_map[m] in metrics_filter:
                 agg_calc += m_earned
                 agg_max_weights += avg_m_weight
-        
+
         # 선택된 지표에 대해 100점 만점으로 환산 (정규화)
         if score_mode == "100_percent":
             selected_count = sum(1 for m in metrics if (is_all or metric_filter_map[m] in metrics_filter) and avg_m_weight > 0)
@@ -1061,7 +1061,7 @@ def export_p1_summary_excel_bytes(data: dict, cat_filter: str, metrics_filter=No
             else:
                 normalized_calc = 0.0
         else:
-            if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 5)):
+            if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 4)):
                 normalized_calc = (agg_calc / agg_max_weights) * 100.0
             else:
                 normalized_calc = agg_calc
@@ -1126,7 +1126,6 @@ def export_p1_dashboard_excel_bytes(data: dict, cat_filter: str, metrics_filter=
         ("best",   "BEST상품"),
         ("fresh",  "신선도"),
         ("season", "시즌"),
-        ("item",   "아이템"),
     ]
     active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter]
 
@@ -1228,7 +1227,6 @@ def export_p2_dashboard_excel_bytes(data: dict, store_filter: str, cat_filter: s
         ("best",   "BEST상품"),
         ("fresh",  "신선도"),
         ("season", "시즌"),
-        ("item",   "아이템"),
     ]
     active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter]
 

@@ -77,12 +77,12 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
     데이터를 집계한 뒤 PPT 표로 렌더링합니다.
     """
     if metrics_filter is None:
-        metrics_filter = ["할인율", "BEST상품", "신선도", "시즌", "아이템"]
-        
+        metrics_filter = ["할인율", "BEST상품", "신선도", "시즌"]
+
     stores = data.get("STORES", [])
     brands = data.get("BRANDS", [])
     detail = data.get("DETAIL", {})
-    
+
     if not stores or not brands:
         return None
 
@@ -208,12 +208,12 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
             m_earned = min(m_total_earned, avg_m_weight)
             
             metric_filter_map = {"dis": "할인율", "best": "BEST상품", "fresh": "신선도", "season": "시즌", "item": "아이템"}
-            is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 5)
-            
+            is_all = ("전체" in metrics_filter) or (len(metrics_filter) >= 4)
+
             if is_all or metric_filter_map[m] in metrics_filter:
                 agg_calc += m_earned
                 agg_max_weights += avg_m_weight
-        
+
         if score_mode == "100_percent":
             selected_count = sum(1 for m in metrics if (is_all or metric_filter_map[m] in metrics_filter) and avg_m_weight > 0)
             if selected_count > 0:
@@ -221,7 +221,7 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
             else:
                 normalized_calc = 0.0
         else:
-            if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 5)):
+            if agg_max_weights > 0 and agg_max_weights < 100.0 and not (("전체" in metrics_filter) or (len(metrics_filter) >= 4)):
                 normalized_calc = (agg_calc / agg_max_weights) * 100.0
             else:
                 normalized_calc = agg_calc
@@ -423,8 +423,8 @@ def export_p1_summary_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None
 
 
 def export_p1_dashboard_ppt_bytes(data: dict, cat_filter: str, metrics_filter=None):
-    """100점 환산 기준 대시보드형 PPT: 세그먼트 없이 5개 지표를 각 100점 만점으로 표시."""
-    ALL_M = ["할인율", "BEST상품", "신선도", "시즌", "아이템"]
+    """100점 환산 기준 대시보드형 PPT: 세그먼트 없이 4개 지표를 각 100점 만점으로 표시."""
+    ALL_M = ["할인율", "BEST상품", "신선도", "시즌"]
     if metrics_filter is None:
         metrics_filter = ALL_M
     metrics_filter_norm = [m for m in ALL_M if m in metrics_filter]
@@ -439,7 +439,6 @@ def export_p1_dashboard_ppt_bytes(data: dict, cat_filter: str, metrics_filter=No
         ("best",   "BEST상품"),
         ("fresh",  "신선도"),
         ("season", "시즌"),
-        ("item",   "아이템"),
     ]
     active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter_norm]
 
@@ -548,8 +547,8 @@ def export_p1_dashboard_ppt_bytes(data: dict, cat_filter: str, metrics_filter=No
 
 
 def export_p2_dashboard_ppt_bytes(data: dict, store_filter: str, cat_filter: str, metrics_filter=None):
-    """P2 브랜드 상세 - 100점 환산 대시보드 PPT: 브랜드별 5개 지표를 각 100점 만점으로 표시."""
-    ALL_M = ["할인율", "BEST상품", "신선도", "시즌", "아이템"]
+    """P2 브랜드 상세 - 100점 환산 대시보드 PPT: 브랜드별 4개 지표를 각 100점 만점으로 표시."""
+    ALL_M = ["할인율", "BEST상품", "신선도", "시즌"]
     if metrics_filter is None:
         metrics_filter = ALL_M
     metrics_filter_norm = [m for m in ALL_M if m in metrics_filter]
@@ -568,7 +567,6 @@ def export_p2_dashboard_ppt_bytes(data: dict, store_filter: str, cat_filter: str
         ("best",   "BEST상품"),
         ("fresh",  "신선도"),
         ("season", "시즌"),
-        ("item",   "아이템"),
     ]
     active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter_norm]
 
