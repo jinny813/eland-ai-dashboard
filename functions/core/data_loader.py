@@ -213,6 +213,8 @@ def load_dashboard_data(mgr: GSheetManager = None, selected_month: str = None, r
             # 정규화 후 이름 기준 safe store (NC 제거된 이름)
             _safe_stores = ['불광점', '강남점', '쇼핑점']
             is_safe_store = df['store_name'].isin(_safe_stores)
+            df['sales_qty'] = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
+            df['sales_amt'] = pd.to_numeric(df['sales_amt'], errors='coerce').fillna(0)
             has_sales = (df['sales_qty'] > 0) | (df['sales_amt'] > 0)
             before = len(df)
             df = df[~(is_normal & ~is_no_year_cat & bad_year & ~is_fresh_new & ~is_safe_store & ~has_sales)]
