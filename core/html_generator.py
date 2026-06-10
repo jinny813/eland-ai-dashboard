@@ -190,11 +190,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     dis_inv = inv_w.get('dis', {})
 
-    if (outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h):
+    _use_rate_dis_h = (outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h)
+    if _use_rate_dis_h:
         # 상설 또는 스포츠: 실시간 할인율 필드 활용
-        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)), 
+        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)),
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
-                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)), 
+                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)),
                    ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10)),
                    ('d0',  '0%', (df['_dis_rate']==0), dis_inv.get('s0', 0.00))]
     else:
@@ -204,15 +205,26 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
                    ('d30', '30~50%', (df['_age']==2), dis_inv.get('s30', 0.10)),
                    ('d10', '1~30%', (df['_age']==1), dis_inv.get('s10', 0.15)),
                    ('d0',  '정상가', (df['_age']==0), dis_inv.get('s0', 0.70))]
-    
+
+    # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
+    dis_scale = 1.0
+    if _use_rate_dis_h:
+        _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
+        _known_d_amt = _get_stock_ref_gen(df[df['_dis_rate'] >= 0], outlet)['_amt'].sum()
+        if 0 < _known_d_amt < _total_d_amt:
+            dis_scale = _total_d_amt / _known_d_amt
+
     dis_segs = []
     for key, lbl, mask, ratio in dis_cfg:
         ref = _get_stock_ref_gen(df[mask], outlet)
-        amt = ref['_amt'].sum()
+        raw_amt = ref['_amt'].sum()
+        raw_qty = ref['_qty'].sum()
+        amt = raw_amt * dis_scale
+        qty = round(raw_qty * dis_scale)
         tgt_amt = target_total * ratio
         pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 and amt <= 0 else 0)
         dis_segs.append({
-            "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+            "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(qty),
             "c": "#EF4444" if ratio > 0 else "#CBD5E1", "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
             "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
         })

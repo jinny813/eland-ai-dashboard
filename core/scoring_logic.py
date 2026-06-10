@@ -361,7 +361,8 @@ class AssortmentScorer:
         _brand_nm_s = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
         _age_only_brands = {'로엠', '로엠(ROEM)'}
 
-        if (is_outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_s not in _age_only_brands):
+        _use_rate_dis = (is_outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_s not in _age_only_brands)
+        if _use_rate_dis:
             dis_cfg = [
                 {'m': (df['_dis_rate'] >= 70), 'r': dis_inv.get('s70', 0.10)},
                 {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},
@@ -377,13 +378,20 @@ class AssortmentScorer:
                 {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
                 {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.10 if use_age_for_dis else 0.15)},
             ]
+        # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
+        dis_scale = 1.0
+        if _use_rate_dis:
+            _total_d_amt = _get_record_ref(pd.Series(True, index=df.index))['_amt'].sum()
+            _known_d_amt = _get_record_ref(df['_dis_rate'] >= 0)['_amt'].sum()
+            if 0 < _known_d_amt < _total_d_amt:
+                dis_scale = _total_d_amt / _known_d_amt
         # [v17.4] 각각의 할인율 구간별 달성률에 구간 비중을 가중 평균하여 점수 계산
         sum_r = sum(item['r'] for item in dis_cfg)
         discount_score = 0.0
         if sum_r > 0:
             for item in dis_cfg:
                 if item['r'] > 0:
-                    act = _get_record_ref(item['m'])['_amt'].sum()
+                    act = _get_record_ref(item['m'])['_amt'].sum() * dis_scale
                     tgt = target_total * item['r']
                     segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
                     discount_score += segment_pct * (item['r'] / sum_r)
@@ -547,15 +555,21 @@ class AssortmentScorer:
         
         is_sports = "스포츠" in str(df['category_group'].iloc[0]) if 'category_group' in df.columns else False
 
+        _dis_hint_scale = 1.0
         if is_outlet or is_sports:
             dis_cfg = [('70%이상', (df['_dis_rate'] >= 70), dis_inv.get('s70', 0.1)), ('50~70%', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.2)), ('30~50%', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.3)), ('30%미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.1))]
+            # [v17.11] 할인율 미변환 품번 보정
+            _sh_total = _get_ref_count(pd.Series(True, index=df.index))
+            _sh_known = _get_ref_count(df['_dis_rate'] >= 0)
+            if 0 < _sh_known < _sh_total:
+                _dis_hint_scale = _sh_total / _sh_known
         else:
             year_base = self.config.get('year_base', 2026)
             df['_age'] = df['year'].apply(lambda y: max(0, year_base-int(str(y).replace('년','')))) if 'year' in df.columns else 10
             dis_cfg = [('4년차+(70%)', (df['_age']>=4), dis_inv.get('s70', 0.0)), ('3년차(50%)', (df['_age']==3), dis_inv.get('s50', 0.05)), ('2년차(30%)', (df['_age']==2), dis_inv.get('s30', 0.1)), ('1년차(10%)', (df['_age']==1), dis_inv.get('s10', 0.15))]
-            
+
         for label, mask, r_val in dis_cfg:
-            if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["dis"].append(label)
+            if r_val > 0 and _get_ref_count(mask) * _dis_hint_scale < (target_total * r_val): res["dis"].append(label)
 
         # 신선도 부족
         ft_s = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
