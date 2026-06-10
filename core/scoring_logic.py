@@ -316,10 +316,10 @@ class AssortmentScorer:
 
         # [v107.8] 가중치 설정 (동적 적용)
         final_weights = {
-            'dis':   self.config.get('weight_discount', 0.33),
-            'fresh': self.config.get('weight_freshness', 0.22),
-            'sea':   self.config.get('weight_season', 0.05),
-            'best':  self.config.get('weight_best', 0.40),
+            'dis':   self.config.get('weight_discount', 0.30),
+            'fresh': self.config.get('weight_freshness', 0.20),
+            'sea':   self.config.get('weight_season', 0.15),
+            'best':  self.config.get('weight_best', 0.35),
             'item':  self.config.get('weight_item', 0.00)
         }
 
@@ -385,6 +385,7 @@ class AssortmentScorer:
             _known_d_amt = _get_record_ref(df['_dis_rate'] >= 0)['_amt'].sum()
             if 0 < _known_d_amt < _total_d_amt:
                 dis_scale = _total_d_amt / _known_d_amt
+        dis_estimated = dis_scale > 1.0  # [v17.12] True when estimation was applied
         # [v17.4] 각각의 할인율 구간별 달성률에 구간 비중을 가중 평균하여 점수 계산
         sum_r = sum(item['r'] for item in dis_cfg)
         discount_score = 0.0
@@ -524,6 +525,7 @@ class AssortmentScorer:
         df['season_score'] = int(round(season_score))
         df['best_score'] = int(round(best_score))
         df['item_score'] = int(round(item_score))
+        df['dis_estimated'] = dis_estimated  # [v17.12]
 
         drop_cols = ['_amt', '_dis_rate', '_sale_dt', 'item_group']
         return df.drop(drop_cols, axis=1, errors='ignore')

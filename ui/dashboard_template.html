@@ -1398,7 +1398,7 @@
     /* ─── Responsive Styles ─── */
     @media (max-width: 1400px) {
       .metrics-4-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(2, 1fr);
       }
       .kpi-grid {
         grid-template-columns: repeat(4, 1fr);
@@ -2621,8 +2621,15 @@
       document.getElementById('h-type').style.background = '';
       document.getElementById('h-type').style.color = '';
 
-      // 총점수 및 등급 업데이트 (v105.5: 사용자 요청에 따라 무조건 흰색)
-      const scoreVal = b.product_score || b.total || 0;
+      // 1. 지표 가중치 (v17.12: 배너 총점도 카드 합산으로 통일)
+      const _sw = (b.scoring_guide && b.scoring_guide.score_weights) || {};
+      const _wDis   = _sw.dis   || 30;
+      const _wFresh = _sw.fresh || 20;
+      const _wSea   = _sw.sea   || 15;
+      const _wBest  = _sw.best  || 35;
+
+      // 총점수 및 등급 업데이트 (v105.5: 무조건 흰색 / v17.12: 4카드 합산 = 배너 총점)
+      const scoreVal = Math.round((b.dis||0)*_wDis/100) + Math.round((b.fresh||0)*_wFresh/100) + Math.round((b.season||0)*_wSea/100) + Math.round((b.best||0)*_wBest/100);
       
       const scoreElem = document.getElementById('h-score');
       scoreElem.textContent = scoreVal;
@@ -2778,16 +2785,11 @@
   `;
 
       // 1. 4개 지표 카드 — 가중 기여 점수(X/만점점) 표시로 합산 = 총점
-      const _sw = (b.scoring_guide && b.scoring_guide.score_weights) || {};
-      const _wDis   = _sw.dis   || 33;
-      const _wFresh = _sw.fresh || 22;
-      const _wSea   = _sw.sea   || 5;
-      const _wBest  = _sw.best  || 40;
       const mList = [
-        { id: 'dis',    l: '할인율 점수', s: Math.round((b.dis    || 0) * _wDis   / 100), maxPt: _wDis,   c: 'm-dis'    },
-        { id: 'fresh',  l: '신선도 점수', s: Math.round((b.fresh  || 0) * _wFresh / 100), maxPt: _wFresh, c: 'm-fresh'  },
-        { id: 'season', l: '시즌 점수',   s: Math.round((b.season || 0) * _wSea   / 100), maxPt: _wSea,   c: 'm-season' },
-        { id: 'best',   l: 'BEST 점수',   s: Math.round((b.best   || 0) * _wBest  / 100), maxPt: _wBest,  c: 'm-best'   }
+        { id: 'dis',    l: '할인율 점수', s: Math.round((b.dis    || 0) * _wDis   / 100), maxPt: _wDis,   c: 'm-dis',    estimated: !!b.dis_estimated },
+        { id: 'fresh',  l: '신선도 점수', s: Math.round((b.fresh  || 0) * _wFresh / 100), maxPt: _wFresh, c: 'm-fresh',  estimated: false },
+        { id: 'season', l: '시즌 점수',   s: Math.round((b.season || 0) * _wSea   / 100), maxPt: _wSea,   c: 'm-season', estimated: false },
+        { id: 'best',   l: 'BEST 점수',   s: Math.round((b.best   || 0) * _wBest  / 100), maxPt: _wBest,  c: 'm-best',   estimated: false }
       ];
 
       function getRateColor(r) {
@@ -2980,6 +2982,7 @@
         <div class="m-head" style="display:flex; justify-content:space-between; align-items:center;">
           <div style="display:flex; align-items:center; gap:6px;">
             <span class="m-title">${m.l}</span>
+            ${m.estimated ? `<span style="font-size:10px; font-weight:700; background:#F59E0B; color:#fff; padding:1px 5px; border-radius:3px; letter-spacing:0.3px;">추정</span>` : ''}
             ${m.zoning ? `<span style="font-size:11px; font-weight:800; color:#64748B; background:#F1F5F9; padding:2px 6px; border-radius:4px;">${m.zoning}</span>` : ''}
           </div>
           <div style="text-align:right;">

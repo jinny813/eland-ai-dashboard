@@ -610,6 +610,7 @@ def load_dashboard_data(
                         "fresh": int(round(float(row.get('freshness_score', 0)))),
                         "best": int(round(float(row.get('best_score', 0)))),
                         "season": int(round(float(row.get('season_score', 0)))),
+                        "dis_estimated": bool(row.get('dis_estimated', False)),
                         "tM": round(tM_won / 1_000_000, 1),
                         "tM_inv": round(tM_inv_won / 1_000_000, 1),
                         "tM_adjusted": _tM_adjusted,
@@ -623,10 +624,10 @@ def load_dashboard_data(
                         "month": diag_month, "data_month": b_data_month,
                         "scoring_guide": {
                             "score_weights": {
-                                "dis":   round(cfg.get('weight_discount',  0.33) * 100),
-                                "fresh": round(cfg.get('weight_freshness', 0.22) * 100),
-                                "sea":   round(cfg.get('weight_season',    0.05) * 100),
-                                "best":  round(cfg.get('weight_best',      0.40) * 100),
+                                "dis":   round(cfg.get('weight_discount',  0.30) * 100),
+                                "fresh": round(cfg.get('weight_freshness', 0.20) * 100),
+                                "sea":   round(cfg.get('weight_season',    0.15) * 100),
+                                "best":  round(cfg.get('weight_best',      0.35) * 100),
                                 "item":  round(cfg.get('weight_item',      0.00) * 100),
                             },
                             "item_w":  {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('item',   {}).items() if v > 0},

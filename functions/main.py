@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.11"
+REPORT_VERSION = "v17.12"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -220,11 +220,11 @@ def main():
         st.session_state.overwrite_approval = {}
 
     # [v18.1] 긴급 패치: 사용자 환경의 고착화된 세션 캐시(빈 화면/에러) 완벽 해제
-    if st.session_state.get("_v18_cleared_v4") is None:
+    if st.session_state.get("_v18_cleared_v5") is None:
         st.cache_data.clear()
         if "last_valid_dashboard_data" in st.session_state:
             del st.session_state["last_valid_dashboard_data"]
-        st.session_state["_v18_cleared_v4"] = True
+        st.session_state["_v18_cleared_v5"] = True
 
     # [v112.0] 브랜드 맵핑 데이터
     CATEGORY_BRAND_MAP = {
