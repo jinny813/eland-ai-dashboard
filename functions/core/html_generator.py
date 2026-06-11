@@ -1,9 +1,70 @@
 import os
+import re
+import json
 import sqlite3
+import urllib.parse
+import urllib.request
 import pandas as pd
 from datetime import datetime
 from core.scoring_logic import AssortmentScorer, _is_outlet
 from core.analyzer import ActionAnalyzer
+
+# ── item_group(영문) → 한국어 카테고리명
+_ITEM_GROUP_KO = {
+    'Outer': '아우터', 'Top': '상의', 'Bottom': '하의', 'Skirt': '스커트',
+    'Dress': '원피스', 'Set': '세트', 'Suits': '수트', 'Shirts': '셔츠',
+    'Casual': '캐주얼', 'Knit': '니트',
+    'RunningShoes': '러닝화', 'CasualShoes': '캐주얼화', 'OtherShoes': '기타화',
+}
+
+_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
+_SCORER_GENERIC = AssortmentScorer({})
+
+
+def _item_code_to_ko(item_code: str) -> str:
+    if not item_code or item_code in ('—', '-', 'nan', 'None', ''):
+        return '—'
+    grp = _SCORER_GENERIC._get_item_group(item_code)
+    return _ITEM_GROUP_KO.get(grp, '—')
+
+
+def _naver_search_style_name(brand_name: str, style_code: str) -> str:
+    client_id = os.environ.get("NAVER_CLIENT_ID", "")
+    client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
+    if not client_id or not client_secret:
+        return ''
+    query = f"{brand_name} {style_code}".strip()
+    if not query:
+        return ''
+    try:
+        enc = urllib.parse.quote(query)
+        url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=1"
+        req = urllib.request.Request(url)
+        req.add_header("X-Naver-Client-Id", client_id)
+        req.add_header("X-Naver-Client-Secret", client_secret)
+        resp = urllib.request.urlopen(req, timeout=5)
+        if resp.getcode() != 200:
+            return ''
+        data = json.loads(resp.read().decode('utf-8'))
+        items = data.get('items', [])
+        if not items:
+            return ''
+        title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
+        if title:
+            try:
+                conn = sqlite3.connect(_DB_PATH)
+                conn.execute(
+                    "INSERT OR REPLACE INTO products (style_code, product_name, brand, updated_at) "
+                    "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                    (style_code, title, brand_name)
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+        return title
+    except Exception:
+        return ''
 
 # ── [v8.0] 다중 팔레트 기반 동적 색상 유틸리티
 def _get_dynamic_color(pct: float, p_type: str = "default") -> str:
@@ -222,9 +283,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     # [v4.4.5] 사용자 요청: _age나 _dis_rate 추정 로직을 전면 배제하고 오직 DB의 freshness_type 텍스트만 신뢰
     _new_mask = ft.str.contains('신상', na=False)
     _plan_mask = ft.str.contains('기획', na=False)
-    _off_mask = ~_new_mask & ~_plan_mask
-    
-    if outlet: 
+
+    if outlet:
         # 상설: 신상(10%), 기획(20%)
         fresh_cfg = [
             ('new', '신상', _new_mask, 0.10), 
@@ -350,31 +410,58 @@ def _get_product_info(style_codes: list) -> dict:
     except:
         return {}
 
+_EMPTY_VALS = {'', '—', '-', 'nan', 'None', 'none'}
+
 def _build_best_items(df) -> dict:
     if df is None or df.empty or "sales_qty" not in df.columns: return {"store":[], "nc":[]}
     df = df.copy()
     sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
     best_styles = df.assign(_sq=sq).groupby('style_code')['_sq'].sum().nlargest(10).index.tolist()
-    
+
     store_type = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
     outlet = _is_outlet(store_type)
     ref_df = _get_stock_ref_gen(df[df['style_code'].isin(best_styles)], outlet)
-    
+    brand_name = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
+
     res = []
-    # DB에서 명칭 정보 로드
     p_map = _get_product_info(best_styles)
-    
+
     for s in best_styles:
         sub = ref_df[ref_df['style_code'] == s]
         if sub.empty: continue
         row = sub.iloc[0]
-        # 명칭 보완 로직
-        raw_item_name = str(row.get('item_name','—'))
-        raw_style_name = str(row.get('style_name','—'))
-        
+
+        # ── 1) raw data에서 초기값 추출
+        raw_item_name = str(row.get('item_name', '') or '').strip()
+        raw_style_name = str(row.get('style_name', '') or '').strip()
+
+        # ── 2) dedup으로 누락된 경우: 같은 style_code의 다른 행에서 탐색
+        if raw_style_name in _EMPTY_VALS:
+            for _, srow in df[df['style_code'] == s].iterrows():
+                sn = str(srow.get('style_name', '') or '').strip()
+                if sn not in _EMPTY_VALS:
+                    raw_style_name = sn
+                    break
+
+        # ── 3) DB 마스터 override
         if s in p_map:
-            raw_item_name = p_map[s].get('item_name') or raw_item_name
-            raw_style_name = p_map[s].get('style_name') or raw_style_name
+            db_item = p_map[s].get('item_name') or ''
+            db_style = p_map[s].get('style_name') or ''
+            if db_item and db_item not in _EMPTY_VALS:
+                raw_item_name = db_item
+            if db_style and db_style not in _EMPTY_VALS:
+                raw_style_name = db_style
+
+        # ── 4) item_name: item_code 기반 한국어 카테고리명
+        if raw_item_name in _EMPTY_VALS:
+            ic = str(row.get('item_code', '') or '').strip()
+            raw_item_name = _item_code_to_ko(ic)
+
+        # ── 5) style_name: 네이버 쇼핑 검색 (API key 있을 때만)
+        if raw_style_name in _EMPTY_VALS and brand_name:
+            found = _naver_search_style_name(brand_name, s)
+            if found:
+                raw_style_name = found
 
         # [v131.0] 단가 보완 로직 강화:
         # 1. DB 마스터 정보(p_map)에 유효 단가가 있는지 우선 확인
