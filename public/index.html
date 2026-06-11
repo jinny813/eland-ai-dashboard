@@ -1005,10 +1005,10 @@
       </div>
       <nav class="nav">
         <div class="nav-item active" onclick="showPage('p1',this)" data-page="p1">
-          <span style="font-size:16px; flex-shrink:0;">☰</span> 상품 구색 점수판
+          <span style="font-size:16px; flex-shrink:0;">☰</span> 지점별 상품 구색 점수판
         </div>
         <div class="nav-item" onclick="showPage('p2',this)" data-page="p2">
-          <span style="font-size:16px; flex-shrink:0;">▶</span> 브랜드별 상품 현황판
+          <span style="font-size:16px; flex-shrink:0;">▶</span> 매장별 상세 현황판
         </div>
         <div class="nav-item" onclick="showPage('p3',this)" data-page="p3">
           <span style="font-size:16px; flex-shrink:0;">⇧</span> 상품 정보 입력
@@ -1017,14 +1017,13 @@
     </aside>
 
     <div class="main">
-      <div class="topbar"><span>상품구색 시스템</span><span class="top-sep">></span><span class="top-active" id="top-title">상품
-          구색 점수판</span></div>
+      <div class="topbar"><span>상품구색 시스템</span><span class="top-sep">></span><span class="top-active" id="top-title">지점별 상품 구색 점수판</span></div>
       <div class="content">
 
         <!-- P1: MAIN TABLE -->
         <div class="page active" id="p1">
           <div class="section-head">
-            <div class="section-title">상품 구색 점수판</div>
+            <div class="section-title">지점별 상품 구색 점수판</div>
             <div class="section-sub">점수 클릭 → 지점 분석 | 브랜드 행 클릭 → 브랜드 상세</div>
           </div>
           <div class="card">
@@ -1357,7 +1356,7 @@
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       if (el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
-      document.getElementById('top-title').textContent = { 'p1': '상품 구색 점수판', 'p2': '브랜드별 상품 현황판', 'p3': '상품 정보 입력' }[id] || '';
+      document.getElementById('top-title').textContent = { 'p1': '지점별 상품 구색 점수판', 'p2': '매장별 상세 현황판', 'p3': '상품 정보 입력' }[id] || '';
     }
 
     function buildMainTable() {

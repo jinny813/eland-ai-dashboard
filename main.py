@@ -437,8 +437,8 @@ def main():
                             st.markdown("---")
                             # [v172] 라디오 버튼 제거 및 공식 st.tabs 서브탭 레이아웃 적용
                             subtab_p1, subtab_p2 = st.tabs([
-                                "🏬 지점 요약 점수 다운로드 (P1 스타일)",
-                                "👚 브랜드 상세 노출판 다운로드 (P2 상세)"
+                                "🏬 지점별 상품 구색 점수판 다운로드",
+                                "👚 매장별 상세 현황판 다운로드"
                             ])
 
                             with subtab_p1:
@@ -446,7 +446,7 @@ def main():
                                 st.info("💡 카테고리를 선택하시면 지점별 상세 노출/측정 지표가 브랜드 항목 없이 집계되어 다운로드됩니다.")
                                 
                                 cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
-                                p1_cat = st.selectbox("👚 카테고리 선택 (P1)", cats, key="tab_dl_p1_cat")
+                                p1_cat = st.selectbox("👚 카테고리 선택 (지점별 상품 구색 점수판)", cats, key="tab_dl_p1_cat")
                                 
                                 score_mode_sel = st.selectbox(
                                     "⚖️ 환산 기준 선택",
@@ -456,7 +456,7 @@ def main():
                                 score_mode_param = "100_percent" if score_mode_sel == "지표별 100점 환산 기준" else "weighted"
 
                                 sel_metrics_p1 = st.multiselect(
-                                    "📊 포함할 지표 선택 (P1)",
+                                    "📊 포함할 지표 선택 (지점별 상품 구색 점수판)",
                                     ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
                                     default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
                                     key="tab_dl_p1_metrics"
