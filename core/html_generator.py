@@ -32,7 +32,7 @@ def _item_code_to_ko(item_code: str) -> str:
 def _naver_search_style_name(brand_name: str, style_code: str) -> str:
     """
     네이버 쇼핑 API로 브랜드+품번 검색 → 상품명 반환.
-    결과를 product_master.db에 캐시하여 재사용.
+    결과를 product_master.db에 캐시하고 core/style_master.json 파일에 저장하여 재사용.
     NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 환경변수가 없으면 빈 문자열 반환.
     """
     client_id = os.environ.get("NAVER_CLIENT_ID", "")
@@ -67,6 +67,26 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
                 )
                 conn.commit()
                 conn.close()
+            except Exception:
+                pass
+
+            # JSON 파일에 캐시 누적
+            try:
+                json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
+                if os.path.exists(json_path):
+                    with open(json_path, 'r', encoding='utf-8') as jf:
+                        master_data = json.load(jf)
+                else:
+                    master_data = {}
+                if style_code not in master_data:
+                    master_data[style_code] = {}
+                master_data[style_code]["style_name"] = title
+                master_data[style_code]["brand"] = brand_name
+                ko_item = _item_code_to_ko(style_code)
+                if ko_item and ko_item != '—':
+                    master_data[style_code]["item_name"] = ko_item
+                with open(json_path, 'w', encoding='utf-8') as jf:
+                    json.dump(master_data, jf, ensure_ascii=False, indent=2)
             except Exception:
                 pass
         return title
@@ -474,6 +494,8 @@ def _build_best_items(df) -> dict:
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:
             ic = str(row.get('item_code', '') or '').strip()
+            if not ic or ic in _EMPTY_VALS:
+                ic = s
             raw_item_name = _item_code_to_ko(ic)
 
         # ── 5) style_name: 네이버 쇼핑 검색 (API key 있을 때만)
