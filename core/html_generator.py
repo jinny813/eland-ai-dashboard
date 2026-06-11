@@ -455,7 +455,8 @@ def _build_best_items(df) -> dict:
     if df is None or df.empty or "sales_qty" not in df.columns: return {"store":[], "nc":[]}
     df = df.copy()
     sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
-    best_styles = df.assign(_sq=sq).groupby('style_code')['_sq'].sum().nlargest(10).index.tolist()
+    style_sales = df.assign(_sq=sq).groupby('style_code')['_sq'].sum()
+    best_styles = style_sales[style_sales > 0].nlargest(10).index.tolist()
 
     store_type = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
     outlet = _is_outlet(store_type)
