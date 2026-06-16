@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.13"
+REPORT_VERSION = "v17.14"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -78,7 +78,7 @@ def generate_optimized_excel(
     )
 
 
-@st.cache_data(ttl=3600, max_entries=2, persist="disk", show_spinner="구글 시트에서 데이터 로드 중...")
+@st.cache_data(ttl=3600, max_entries=2, show_spinner="구글 시트에서 데이터 로드 중...")
 def _cached_get_raw_records(_mgr, max_no: int):
     try:
         sheet = _mgr.spreadsheet.worksheet("Records")
