@@ -1003,15 +1003,18 @@
           </div>
         </div>
       </div>
-      <nav class="nav">
+            <nav class="nav">
         <div class="nav-item active" onclick="showPage('p1',this)" data-page="p1">
-          <span style="font-size:16px; flex-shrink:0;">☰</span> 지점별 상품 구색 점수판
+          <span style="font-size:16px; flex-shrink:0;">🏬</span> 지점별 상품 구색 점수판
         </div>
         <div class="nav-item" onclick="showPage('p2',this)" data-page="p2">
-          <span style="font-size:16px; flex-shrink:0;">▶</span> 매장별 상세 현황판
+          <span style="font-size:16px; flex-shrink:0;">📊</span> 브랜드별 비교 대시보드
         </div>
         <div class="nav-item" onclick="showPage('p3',this)" data-page="p3">
-          <span style="font-size:16px; flex-shrink:0;">⇧</span> 상품 정보 입력
+          <span style="font-size:16px; flex-shrink:0;">👚</span> 매장별 상세 현황판
+        </div>
+        <div class="nav-item" onclick="showPage('p4',this)" data-page="p4">
+          <span style="font-size:16px; flex-shrink:0;">📥</span> 상품 정보 입력
         </div>
       </nav>
     </aside>
@@ -1047,7 +1050,50 @@
         </div>
 
         <!-- P2: BRAND DETAIL -->
+                <!-- P2: BRAND COMPARISON (NEW) -->
         <div class="page" id="p2">
+          <div class="section-head">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+              <div class="section-title" style="margin-bottom:0;">브랜드별 비교 대시보드</div>
+              <div style="display:flex; align-items:center; gap:8px; margin-left:12px;">
+                <span style="font-size:12px; font-weight:800; color:#64748B;">👚 카테고리:</span>
+                <select id="p2_category_sel" style="padding:6px 12px; border-radius:8px; border:1px solid #E2E8F0; background:#fff; font-size:14px; font-weight:700; color:#0F172A; cursor:pointer;" onchange="changeP2Category(this.value)">
+                  <option value="여성">여성</option>
+                  <option value="스포츠">스포츠</option>
+                  <option value="신사">신사</option>
+                  <option value="아동">아동</option>
+                  <option value="캐주얼">캐주얼</option>
+                  <option value="잡화">잡화</option>
+                </select>
+              </div>
+            </div>
+            <div class="section-sub">브랜드 행 클릭 → 입점 매장별 상세 점수 현황 팝업이 나타납니다.</div>
+          </div>
+
+          <!-- 브랜드 비교 테이블 -->
+          <div class="card" style="margin-bottom:24px;">
+            <div style="padding:18px 24px; border-bottom:1px solid var(--border-main); font-weight:800; font-size:15px; background:#fff; color:#1E293B;">
+              🏷️ 카테고리 내 브랜드별 평균 구색 점수
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse;" class="table-wrap">
+                <thead>
+                  <tr style="border-bottom:2px solid #F3F4F6; color:#6B7280; font-size:11px; font-weight:800; background:#1D1E1E;">
+                    <th style="text-align:left; padding:12px; padding-left:24px; color:#fff; width:30%;">브랜드명</th>
+                    <th style="text-align:center; padding:12px; color:#fff; width:14%;">종합점수</th>
+                    <th style="text-align:center; padding:12px; color:#fff; width:14%;">할인율</th>
+                    <th style="text-align:center; padding:12px; color:#fff; width:14%;">신선도</th>
+                    <th style="text-align:center; padding:12px; color:#fff; width:14%;">시즌</th>
+                    <th style="text-align:center; padding:12px; color:#fff; width:14%;">BEST상품</th>
+                  </tr>
+                </thead>
+                <tbody id="p2BrandTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+<div class="page" id="p3">
           <div id="alertArea"></div>
           <div class="brand-hero">
             <div class="p2-header">
@@ -1114,7 +1160,7 @@
         </div>
 
         <!-- P3: UPLOAD (사진 100% 매칭) -->
-        <div class="page" id="p3">
+        <div class="page" id="p4">
           <div style="max-width:680px; margin:0 auto; padding:32px 0;">
             <div
               style="background:#fff; border-radius:20px; border:1px solid #E5E7EB; box-shadow:0 4px 20px rgba(0,0,0,0.06); padding:40px 48px;">
@@ -1237,6 +1283,38 @@
     </div>
   </div>
 
+    <!-- P2 전용 브랜드 입점 지점 리스트 모달 -->
+  <div class="overlay" id="p2BrandModal" onmousedown="_modalMouseDown(event,'p2BrandModal')" onmouseup="_modalMouseUp(event,'p2BrandModal',closeP2BrandModal)">
+    <div class="modal" onmousedown="event.stopPropagation()" onmouseup="event.stopPropagation()">
+      <div class="modal-hdr" style="background:#1D1E1E;">
+        <div>
+          <div class="modal-title" id="p2ModalTitle">🏬 <span id="p2SelectedBrandName" style="color:#FFF;">-</span> 입점 매장별 구색 점수</div>
+          <div class="modal-sub" style="color:rgba(255,255,255,0.7); font-size:12px; margin-top:4px;">💡 매장 행을 클릭하면 해당 매장의 상세 현황판(P3)으로 이동합니다.</div>
+        </div>
+        <button class="modal-close" onclick="closeP2BrandModal()" style="color:#FFF;">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="overflow-x:auto;">
+          <table class="modal-tbl" style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="background:#1D1E1E; border-bottom:2px solid #F3F4F6;">
+                <th style="text-align:left; padding-left:24px; color:#fff; background:#1D1E1E; width:16%;">입점 매장명</th>
+                <th style="background:#1D1E1E; width:14%; font-size:13px; color:#FFFFFF;">월 매출(성장률)</th>
+                <th style="background:#1D1E1E; color:#FFFFFF; width:11%; font-size:14px; font-weight:900;">종합 점수</th>
+                <th style="background:#1D1E1E; color:#fff; width:19%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x2배)</span></th>
+                <th style="background:#E30019; color:#fff; width:10%;">할인율</th>
+                <th style="background:#2563EB; color:#fff; width:10%;">신선도</th>
+                <th style="background:#F59E0B; color:#fff; width:10%;">시즌</th>
+                <th style="background:#16A34A; color:#fff; width:10%;">BEST</th>
+              </tr>
+            </thead>
+            <tbody id="p2StoreTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 지점 분석 모달 -->
   <div class="overlay" id="storeModal" onclick="if(event.target===this)closeStoreModal()">
     <div class="modal">
@@ -1352,11 +1430,179 @@
       btn.disabled = false; btn.textContent = '업로드 및 병합 실행';
     }
 
+            let currentP2Category = '여성';
+    let selectedP2Brand = null;
+
+    function changeP2Category(cat) {
+      currentP2Category = cat;
+      selectedP2Brand = null;
+      buildBrandComparisonTable();
+    }
+
+    function closeP2BrandModal() {
+      _animatedClose('p2BrandModal');
+    }
+
+    function getMetricBadgeHtml(score) {
+      if (score === undefined || score === null || isNaN(score)) return '<span style="color:#94A3B8;">—</span>';
+      let badgeBg = 'linear-gradient(135deg, #F59E0B, #D97706)'; // B
+      let gradeLabel = 'B';
+      if (score >= 80) {
+        badgeBg = 'linear-gradient(135deg, #3B82F6, #2563EB)'; // A
+        gradeLabel = 'A';
+      } else if (score < 60 && score >= 40) {
+        badgeBg = 'linear-gradient(135deg, #EF4444, #DC2626)'; // C
+        gradeLabel = 'C';
+      } else if (score < 40) {
+        badgeBg = 'linear-gradient(135deg, #991B1B, #7F1D1D)'; // D
+        gradeLabel = 'D';
+      }
+      return `<div class="badge-score" style="background:${badgeBg}; margin:0 auto;"><span class="grade" style="font-size:10px; font-weight:800; letter-spacing:-0.5px; opacity:0.85; margin-bottom:2px;">${gradeLabel}</span><span class="num" style="font-size:18px;">${score}</span></div>`;
+    }
+
+    function buildBrandComparisonTable() {
+      const tbody = document.getElementById('p2BrandTbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const catBrands = BRANDS.filter(b => b.category === currentP2Category);
+      if (catBrands.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:#94A3B8;">데이터가 없습니다.</td></tr>';
+        return;
+      }
+
+      const brandMap = {};
+      catBrands.forEach(b => {
+        if (!brandMap[b.name]) {
+          brandMap[b.name] = { name: b.name, total: 0, dis: 0, best: 0, fresh: 0, season: 0, count: 0 };
+        }
+        brandMap[b.name].total += b.total || 0;
+        brandMap[b.name].dis += b.dis || 0;
+        brandMap[b.name].best += b.best || 0;
+        brandMap[b.name].fresh += b.fresh || 0;
+        brandMap[b.name].season += b.season || 0;
+        brandMap[b.name].count += 1;
+      });
+
+      const brandList = Object.values(brandMap).map(b => {
+        return {
+          name: b.name,
+          total: Math.round(b.total / b.count),
+          dis: Math.round(b.dis / b.count),
+          best: Math.round(b.best / b.count),
+          fresh: Math.round(b.fresh / b.count),
+          season: Math.round(b.season / b.count)
+        };
+      }).sort((a, b) => b.total - a.total);
+
+      const formatScore = (val, color) => {
+        if (val === undefined || val === null || isNaN(val)) return '<span style="color:#94A3B8;">—</span>';
+        return `<span class="score-cell" style="color:${color}; font-weight:950; font-size:18px;">${val}</span>`;
+      };
+
+      brandList.forEach(b => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => selectP2Brand(b.name);
+        
+        tr.innerHTML = `
+          <td style="text-align:left; padding:12px; padding-left:24px; font-weight:800; color:#111; text-decoration:underline; width:30%;">${b.name}</td>
+          <td style="text-align:center; width:14%;">${getMetricBadgeHtml(b.total)}</td>
+          <td style="text-align:center; width:14%;">${formatScore(b.dis, '#E30019')}</td>
+          <td style="text-align:center; width:14%;">${formatScore(b.fresh, '#2563EB')}</td>
+          <td style="text-align:center; width:14%;">${formatScore(b.season, '#F59E0B')}</td>
+          <td style="text-align:center; width:14%;">${formatScore(b.best, '#16A34A')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function selectP2Brand(brandName) {
+      selectedP2Brand = brandName;
+      document.getElementById('p2SelectedBrandName').textContent = brandName;
+
+      const tbody = document.getElementById('p2StoreTbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const storeBrands = BRANDS.filter(b => b.name === brandName && b.category === currentP2Category)
+                                .sort((a, b) => b.total - a.total);
+
+      storeBrands.forEach(b => {
+        const tM2 = b.tM_inv !== undefined ? +b.tM_inv.toFixed(1) : +(b.tM * 2).toFixed(1);
+        const supply = tM2 > 0 ? Math.round(b.sM / tM2 * 100) : 0;
+
+        const isOver = supply >= 100;
+        const statusColor = isOver ? '#065F46' : '#B91C1C'; 
+        const statusText = isOver ? '충족' : '부족';
+
+        const getTotalColor = (s) => '#111827';
+        const totalColor = getTotalColor(b.product_score || b.total || 0);
+
+        const salesAmtM = b.sales_amt || 0;
+        const growthPct = b.growth_pct || 0;
+        const growthColor = growthPct >= 0 ? '#DC2626' : '#2563EB';
+        const growthArrow = growthPct >= 0 ? '▲' : '▼';
+
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => {
+          closeP2BrandModal();
+          currentBrand = { store: b.store, name: b.name };
+          showPage('p3', document.querySelector('[data-page="p3"]'));
+          
+          const sSel = document.getElementById('p2_store_sel');
+          if (sSel) {
+            sSel.value = b.store;
+            updateP2BrandOptions(b.store, b.name);
+            selectBrand(b.store, b.name);
+          }
+        };
+
+        tr.innerHTML = `
+          <td>
+            <div class="brand-row-name" style="text-align:left; padding-left:24px;">
+              ${b.store}
+            </div>
+          </td>
+          <td>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <span style="font-size:14px; font-weight:900; color:#111;">${salesAmtM.toFixed(1)}<span style="font-size:11px; color:#6B7280;">백만원</span></span>
+              <span style="font-size:11px; font-weight:800; color:${growthColor}; margin-top:2px;">(${growthArrow}${Math.abs(growthPct).toFixed(1)}%)</span>
+            </div>
+          </td>
+          <td><span class="score-cell" style="color:${totalColor}; font-weight:950; font-size:18px;">${b.product_score || b.total}</span></td>
+          <td>
+            <div class="stack-graph">
+              <div class="stack-percent" style="color:${statusColor}; font-size:13px;">${supply}%</div>
+              <div class="stack-bar"><div class="stack-bar-fill" style="width:${Math.min(100, supply)}%; background:${statusColor}"></div></div>
+              <div class="stack-status" style="color:${statusColor}; font-size:10px; font-weight:800; margin-top:2px;">${statusText}</div>
+            </div>
+          </td>
+          <td><span class="score-cell" style="color:#E30019">${b.dis || 0}</span></td>
+          <td><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
+          <td><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
+          <td><span class="score-cell" style="color:#16A34A">${b.best || 0}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      _openModalAtCursor('p2BrandModal');
+    }
+
     function showPage(id, el) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       if (el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
-      document.getElementById('top-title').textContent = { 'p1': '지점별 상품 구색 점수판', 'p2': '매장별 상세 현황판', 'p3': '상품 정보 입력' }[id] || '';
+      document.getElementById('top-title').textContent = { 
+        'p1': '지점별 상품 구색 점수판', 
+        'p2': '브랜드별 비교 대시보드', 
+        'p3': '매장별 상세 현황판', 
+        'p4': '상품 정보 입력' 
+      }[id] || '';
+      
+      if (id === 'p2') buildBrandComparisonTable();
+      if (id === 'p3') initP2Selectors();
     }
 
     function buildMainTable() {
@@ -1453,10 +1699,19 @@
     // 구 openModal 호환
     function openModal(store, cat) { openStoreModal(store, cat); }
 
-    function selectBrand(store, name) {
+        function selectBrand(store, name) {
       currentBrand = BRANDS.find(b => b.name === name && b.store === store) || BRANDS[0];
-      showPage('p2', document.querySelector('[data-page="p2"]'));
+      showPage('p3', document.querySelector('[data-page="p3"]'));
       renderBrandDetail();
+          
+          // P2 브랜드별 비교 대시보드 화면 및 매장 팝업 업데이트
+          if (typeof buildBrandComparisonTable === 'function') {
+            buildBrandComparisonTable();
+          }
+          const p2Modal = document.getElementById('p2BrandModal');
+          if (p2Modal && p2Modal.classList.contains('show') && typeof selectedP2Brand !== 'undefined' && selectedP2Brand) {
+            selectP2Brand(selectedP2Brand);
+          }
     }
 
     function renderBrandDetail() {
@@ -1716,6 +1971,15 @@
         if (d.error) { _showError(`데이터 로드 실패 — ${d.error}`); return; }
         _loadData(d);
         buildMainTable(); renderBrandDetail();
+          
+          // P2 브랜드별 비교 대시보드 화면 및 매장 팝업 업데이트
+          if (typeof buildBrandComparisonTable === 'function') {
+            buildBrandComparisonTable();
+          }
+          const p2Modal = document.getElementById('p2BrandModal');
+          if (p2Modal && p2Modal.classList.contains('show') && typeof selectedP2Brand !== 'undefined' && selectedP2Brand) {
+            selectP2Brand(selectedP2Brand);
+          }
         return;
       }
       try {
@@ -1727,6 +1991,15 @@
         } else { _showError('API 서버 응답 없음.'); return; }
       } catch (e) { _showError('연결 실패.'); return; }
       buildMainTable(); renderBrandDetail();
+          
+          // P2 브랜드별 비교 대시보드 화면 및 매장 팝업 업데이트
+          if (typeof buildBrandComparisonTable === 'function') {
+            buildBrandComparisonTable();
+          }
+          const p2Modal = document.getElementById('p2BrandModal');
+          if (p2Modal && p2Modal.classList.contains('show') && typeof selectedP2Brand !== 'undefined' && selectedP2Brand) {
+            selectP2Brand(selectedP2Brand);
+          }
     }
     window.onload = init;
   </script>

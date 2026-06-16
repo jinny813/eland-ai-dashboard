@@ -48,49 +48,53 @@ class GSheetManager:
             "no", "year", "season_code", "style_code", "style_name", "item_code", "item_name", "price_type",
             "stock_qty", "stock_amt", "sales_qty", "sales_amt", "normal_price", "sales_date",
             "brand_name", "store_name", "category_group", "store_type", "data_month", 
-            "freshness_type", "discount_rate", "inv_uid"
+            "freshness_type", "discount_rate", "inv_uid",
+            "tag_price", "predicted_online_price", "predicted_discount_rate"
         ]
 
     def _parse_response(self, response):
         """GAS 응답 공통 파싱"""
+        response.encoding = 'utf-8'
         raw_text = response.text.strip()
-        logger.info(f"[GAS] status={response.status_code} preview={raw_text[:120]}")
 
         if response.status_code != 200:
-            self.error_msg = f"HTTP {response.status_code}: {raw_text[:100]}"
+            self.error_msg = f"HTTP {response.status_code}: {raw_text[:200]}"
+            logger.error(f"[GAS] HTTP 오류 {response.status_code}: {raw_text[:200]}")
             return None
         if not raw_text:
             self.error_msg = "GAS 응답이 비어 있습니다."
+            logger.error("[GAS] 응답이 비어 있습니다.")
             return None
         try:
             result = response.json()
         except Exception as je:
-            self.error_msg = f"JSON 파싱 실패 (응답: {raw_text[:100]})"
-            logger.error(f"GAS JSON parse error: {je} | body: {raw_text[:300]}")
+            self.error_msg = f"JSON 파싱 실패 (응답: {raw_text[:200]})"
+            logger.error(f"[GAS] JSON parse error: {je} | body: {raw_text[:300]}")
             return None
 
         if isinstance(result, dict):
             if result.get("status") == "error":
-                self.error_msg = result.get("message", "GAS 오류")
+                self.error_msg = result.get("message") or "GAS 오류 (message 없음)"
+                logger.warning(f"[GAS] error: {self.error_msg}")
                 return None
-            return result.get("data") or result
+            data = result.get("data")
+            if data is not None:
+                return data
+            return result
         return result
 
-    def _get(self, params: dict, timeout: int = 180):
-        """소량 데이터용 GET 요청 (v7.0 Fresh Connection)"""
+    def _get(self, params: dict, timeout: int = 120):
+        """데이터 GET 요청"""
         try:
-            logger.info(f"[GAS] GET request start (action={params.get('action')})")
-            params["sheetName"] = self.sheet_master_name
-            headers = {'Connection': 'close', 'User-Agent': 'AI-Assortment-Agent'}
-            
-            # [v7.0] 세션 재사용 없이 직접 호출
-            response = requests.get(self.gas_url, params=params,
-                                   headers=headers, timeout=(5, timeout), 
+            if "sheetName" not in params:
+                params["sheetName"] = self.sheet_master_name
+            response = self.session.get(self.gas_url, params=params,
+                                   timeout=(15, timeout),
                                    allow_redirects=True)
             return self._parse_response(response)
         except Exception as e:
             self.error_msg = str(e)
-            logger.error(f"GAS GET Error: {e}")
+            logger.error(f"[GAS] GET 예외 action={params.get('action')}: {e}")
             return None
 
     def _post(self, form_data: dict, timeout: int = 180):
@@ -253,9 +257,66 @@ class GSheetManager:
         target_cols = self._get_target_cols()
         df = upload_df.copy().reindex(columns=target_cols, fill_value="").fillna("")
         
-        # 브랜드명 추출 (마스터 컬럼에 포함되어 있음을 가정)
-        brand_name = upload_df['brand_name'].iloc[0] if 'brand_name' in upload_df.columns else "Unknown"
+        # DataFrame에서 실제 브랜드명 안전하게 인출
+        brand_name = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and len(df) > 0 else "Generic"
         return self._append_chunks(brand_name, df.values.tolist())
+
+
+    def load_office_master(self) -> pd.DataFrame:
+        """구글 시트의 'officemaster' 탭 데이터 로드"""
+        params = {"action": "read_all", "sheetName": "officemaster"}
+        res = self._get(params)
+        if not res or not isinstance(res, list) or len(res) == 0:
+            logger.warning("[GSheet] 'officemaster' 데이터를 읽지 못했거나 비어있습니다. 기본값을 로드합니다.")
+            return pd.DataFrame(
+                [["8242", "신구로점", "수도권"], ["8227", "강서점", "수도권"]],
+                columns=["지점코드", "지점명", "지역"]
+            )
+        return pd.DataFrame(res)
+
+    def load_store_master(self) -> pd.DataFrame:
+        """data/storemaster_raw.txt 에서 매장 마스터 로드"""
+        import os
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        raw_path = os.path.join(base_dir, "data", "storemaster_raw.txt")
+        if not os.path.exists(raw_path):
+            logger.warning("[GSheet] storemaster_raw.txt 없음 — 빈 DataFrame 반환")
+            return pd.DataFrame()
+        fixed_cols = [
+            '지점', '카테고리', '조닝', '브랜드', '매장유형', '평수',
+            '25_03', '25_04', 'x1', '25_05', 'x2', '25_06', 'x3',
+            '26_03', 'grow_03', '26_04', 'grow_04',
+            '목표_04', '목표_05', '목표_06',
+        ]
+        for enc in ('utf-8', 'cp949', 'utf-8-sig', 'euc-kr', 'utf-16'):
+            try:
+                with open(raw_path, 'r', encoding=enc, errors='ignore') as f:
+                    head = f.read(2048)
+                delim = ',' if ',' in head and '\t' not in head else '\t'
+                df = pd.read_csv(raw_path, sep=delim, encoding=enc, header=0,
+                                 dtype=str, on_bad_lines='skip')
+                actual = len(df.columns)
+                col_names = fixed_cols[:actual]
+                if actual > len(fixed_cols):
+                    col_names = list(fixed_cols) + [f'extra_{i}' for i in range(actual - len(fixed_cols))]
+                df.columns = col_names
+                logger.warning(f"[GSheet] storemaster_raw.txt 로드 완료: {len(df)}행 ({enc})")
+                return df
+            except Exception:
+                continue
+        logger.error("[GSheet] storemaster_raw.txt 읽기 실패 — 빈 DataFrame 반환")
+        return pd.DataFrame()
+
+
+    def load_brand_master(self) -> pd.DataFrame:
+        """구글 시트의 'brandmaster' 탭 데이터 로드"""
+        params = {"action": "read_all", "sheetName": "brandmaster"}
+        res = self._get(params)
+        if not res or not isinstance(res, list) or len(res) == 0:
+            logger.warning("[GSheet] 'brandmaster' 데이터를 읽지 못했거나 비어있습니다. 빈 마스터를 반환합니다.")
+            return pd.DataFrame(columns=["브랜드코드", "브랜드명", "카테고리", "조닝", "회사"])
+        return pd.DataFrame(res)
+
 
 # ── Mock Classes for backward compatibility ──
 
@@ -270,12 +331,28 @@ class GASWorksheetMock:
         self.manager = manager
         self.name = name
     def get_all_records(self):
-        """gspread.get_all_records() 호환성 유지"""
-        return self.manager.call_gas("read_all") or []
+        """gspread.get_all_records() 호환성 유지 — GAS read_all 직접 사용"""
+        sheet_name = self.manager.sheet_master_name
+        logger.warning(f"[GSheet] read_all 요청 (sheetName={sheet_name})")
+        result = self.manager._get({"action": "read_all", "sheetName": sheet_name}, timeout=180)
+        if result is None:
+            logger.error(f"[GSheet] read_all 실패: {self.manager.error_msg!r}")
+            return []
+        if isinstance(result, list):
+            logger.warning(f"[GSheet] read_all 완료: {len(result)}행")
+            return result
+        logger.error(f"[GSheet] read_all 응답 형식 오류: {type(result).__name__} / {str(result)[:200]}")
+        return []
     
     def get_all_values(self):
-        """gspread.get_all_values() 호환성 유지 (헤더 포함)"""
-        return self.manager.call_gas("read_raw") or []
+        """gspread.get_all_values() 호환성 유지 (헤더 포함, 페이징 데이터 기반 재구성)"""
+        recs = self.get_all_records()
+        if not recs: return []
+        headers = list(recs[0].keys())
+        values = [headers]
+        for r in recs:
+            values.append([r.get(h, "") for h in headers])
+        return values
 
     def clear(self):
         pass

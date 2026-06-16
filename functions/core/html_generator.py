@@ -18,10 +18,11 @@ _ITEM_GROUP_KO = {
 }
 
 _DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
-_SCORER_GENERIC = AssortmentScorer({})
+_SCORER_GENERIC = AssortmentScorer({})  # 아이템 코드 매핑용 (config 불필요)
 
 
 def _item_code_to_ko(item_code: str) -> str:
+    """item_code → 한국어 카테고리명. AssortmentScorer의 기존 매핑 테이블 재사용."""
     if not item_code or item_code in ('—', '-', 'nan', 'None', ''):
         return '—'
     grp = _SCORER_GENERIC._get_item_group(item_code)
@@ -29,6 +30,11 @@ def _item_code_to_ko(item_code: str) -> str:
 
 
 def _naver_search_style_name(brand_name: str, style_code: str) -> str:
+    """
+    네이버 쇼핑 API로 브랜드+품번 검색 → 상품명 반환.
+    결과를 product_master.db에 캐시하고 core/style_master.json 파일에 저장하여 재사용.
+    NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 환경변수가 없으면 빈 문자열 반환.
+    """
     client_id = os.environ.get("NAVER_CLIENT_ID", "")
     client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
     if not client_id or not client_secret:
@@ -51,6 +57,7 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
             return ''
         title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
         if title:
+            # DB에 캐시
             try:
                 conn = sqlite3.connect(_DB_PATH)
                 conn.execute(
@@ -65,7 +72,7 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
 
             # JSON 파일에 캐시 누적
             try:
-                json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "core", "style_master.json")
+                json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
                 if os.path.exists(json_path):
                     with open(json_path, 'r', encoding='utf-8') as jf:
                         master_data = json.load(jf)
@@ -139,7 +146,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     store_type = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
     outlet = _is_outlet(store_type)
-    target_total = tM * 2.0  # 목표 재고액 (200%)
+    target_total = tM * 3.0  # 목표 재고액 (300%)
     inv_w = config.get('inv_weights', {})
 
     # 1. 아이템 점수 세부 (조닝별 특화 로직 반영)
@@ -271,11 +278,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     dis_inv = inv_w.get('dis', {})
 
-    if (outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h):
+    _use_rate_dis_h = (outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h)
+    if _use_rate_dis_h:
         # 상설 또는 스포츠: 실시간 할인율 필드 활용
-        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)), 
+        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)),
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
-                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)), 
+                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)),
                    ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10)),
                    ('d0',  '0%', (df['_dis_rate']==0), dis_inv.get('s0', 0.00))]
     else:
@@ -285,15 +293,26 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
                    ('d30', '30~50%', (df['_age']==2), dis_inv.get('s30', 0.10)),
                    ('d10', '1~30%', (df['_age']==1), dis_inv.get('s10', 0.15)),
                    ('d0',  '정상가', (df['_age']==0), dis_inv.get('s0', 0.70))]
-    
+
+    # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
+    dis_scale = 1.0
+    if _use_rate_dis_h:
+        _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
+        _known_d_amt = _get_stock_ref_gen(df[df['_dis_rate'] >= 0], outlet)['_amt'].sum()
+        if 0 < _known_d_amt < _total_d_amt:
+            dis_scale = _total_d_amt / _known_d_amt
+
     dis_segs = []
     for key, lbl, mask, ratio in dis_cfg:
         ref = _get_stock_ref_gen(df[mask], outlet)
-        amt = ref['_amt'].sum()
+        raw_amt = ref['_amt'].sum()
+        raw_qty = ref['_qty'].sum()
+        amt = raw_amt * dis_scale
+        qty = round(raw_qty * dis_scale)
         tgt_amt = target_total * ratio
         pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 and amt <= 0 else 0)
         dis_segs.append({
-            "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+            "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(qty),
             "c": "#EF4444" if ratio > 0 else "#CBD5E1", "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
             "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
         })
@@ -304,7 +323,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     _new_mask = ft.str.contains('신상', na=False)
     _plan_mask = ft.str.contains('기획', na=False)
 
-    if outlet:
+    if outlet: 
         # 상설: 신상(10%), 기획(20%)
         fresh_cfg = [
             ('new', '신상', _new_mask, 0.10), 

@@ -54,6 +54,7 @@ class GSheetManager:
 
     def _parse_response(self, response):
         """GAS 응답 공통 파싱"""
+        response.encoding = 'utf-8'
         raw_text = response.text.strip()
 
         if response.status_code != 200:
@@ -274,11 +275,12 @@ class GSheetManager:
         return pd.DataFrame(res)
 
     def load_store_master(self) -> pd.DataFrame:
-        """scratch/storemaster_raw.txt 에서 매장 마스터 로드"""
+        """data/storemaster_raw.txt 에서 매장 마스터 로드"""
         import os
-        raw_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scratch", "storemaster_raw.txt")
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        raw_path = os.path.join(base_dir, "data", "storemaster_raw.txt")
         if not os.path.exists(raw_path):
-            logger.warning("[GSheet] storemaster_raw.txt 없음 — 빈 DataFrame 반환")
+            logger.warning("[GSheet] data/storemaster_raw.txt 없음 — 빈 DataFrame 반환")
             return pd.DataFrame()
         fixed_cols = [
             '지점', '카테고리', '조닝', '브랜드', '매장유형', '평수',

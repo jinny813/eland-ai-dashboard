@@ -23,7 +23,7 @@ function doPost(e) {
     // 1. 데이터 추가 액션 (Batch 처리 최적화)
     if (action === "append_bulk_b64" || action === "append_chunk") {
       var payloadB64 = params.payload_b64 || params.data;
-      var decoded = Utilities.newBlob(Utilities.base64Decode(payloadB64), "application/json").getDataAsString();
+      var decoded = Utilities.newBlob(Utilities.base64Decode(payloadB64), "application/json").getDataAsString("UTF-8");
       var rows = JSON.parse(decoded); // [[row1], [row2], ...] 형식
       
       if (rows.length > 0) {
@@ -39,27 +39,31 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 2. 데이터 삭제 액션
+    // 2. 데이터 삭제 액션 (고속 메모리 필터링 적용으로 Timeout 예방)
     else if (action === "delete") {
       var storeName = params.store_name;
       var brandName = params.brand_name;
       var dataMonth = params.data_month;
       
       var data = sheet.getDataRange().getValues();
-      var rowsToDelete = [];
-      
-      // 역순으로 순회하며 삭제할 행 수집
-      for (var i = data.length - 1; i >= 1; i--) {
-        var row = data[i];
-        // 컬럼 순서는 GSheetManager._get_target_cols() 기준에 맞춰 인덱스 조정 (brand:14, store:15, month:18)
-        // 실제 시트 구조에 따라 인덱스를 확인하세요.
-        var rowBrand = row[14]; 
-        var rowStore = row[15];
-        var rowMonth = row[18];
+      if (data.length > 1) {
+        var header = data[0];
+        var filteredData = [header];
         
-        if (rowStore == storeName && rowBrand == brandName && rowMonth == dataMonth) {
-          sheet.deleteRow(i + 1);
+        for (var i = 1; i < data.length; i++) {
+          var row = data[i];
+          var rowBrand = row[14]; 
+          var rowStore = row[15];
+          var rowMonth = row[18];
+          
+          if (!(rowStore == storeName && rowBrand == brandName && rowMonth == dataMonth)) {
+            filteredData.push(row);
+          }
         }
+        
+        // 메모리 상에서 필터링 후 한 번에 시트 덮어쓰기 (0.5초 소요)
+        sheet.getDataRange().clearContent();
+        sheet.getRange(1, 1, filteredData.length, header.length).setValues(filteredData);
       }
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success" }))

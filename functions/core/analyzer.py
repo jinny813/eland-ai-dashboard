@@ -7,14 +7,20 @@ from config.scoring_config import SCORING_CONFIG
 
 logger = logging.getLogger(__name__)
 
+import os
+
 class ActionAnalyzer:
     """
     프로덕션 급 분석 엔진: KPI 지표 부족분 기반 가중치 산출 및 
     상품별 Target_Score를 매겨 최적의 액션 가이드 도출
     """
-    def __init__(self, db_path="database/product_master.db"):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            # __file__ 기준으로 database/product_master.db의 절대 경로를 안전하게 조립
+            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
         self.db_path = db_path
         self.scorer = AssortmentScorer(SCORING_CONFIG)
+
 
     def _get_db_connection(self):
         return sqlite3.connect(self.db_path)

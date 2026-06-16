@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.12"
+REPORT_VERSION = "v17.13"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -89,33 +89,32 @@ def _cached_get_raw_records(_mgr, max_no: int):
 
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner="데이터 전처리 중 (1회)...")
-def _cached_preprocess(_mgr, max_no: int, _raw_recs_tuple: tuple, report_version: str = REPORT_VERSION):
+def _cached_preprocess(_mgr, max_no: int, report_version: str = REPORT_VERSION):
     """
-    [Stage 1 캐시] 전처리. _raw_recs_tuple은 캐시 키 해시에서 제외 (대용량 방지).
+    [Stage 1 캐시] 전처리.
     캐시 키: max_no, report_version. TTL 만료 시 자동 재실행.
     """
     import importlib, sys
-    for _m in ['core.data_loader', 'config.storemaster_override']:
+    for _m in ['core.data_loader']:
         if _m in sys.modules:
             importlib.reload(sys.modules[_m])
     from core.data_loader import preprocess_raw_records
-    raw_recs = [dict(r) if isinstance(r, (tuple, list)) and r and isinstance(r[0], (tuple, list)) else r
-                for r in _raw_recs_tuple]
+    raw_recs = _cached_get_raw_records(_mgr, max_no)
     return preprocess_raw_records(_mgr, raw_recs)
 
 
 @st.cache_data(ttl=600, max_entries=3, show_spinner="월별 점수 산출 중...")
-def _cached_build_month(_mgr, max_no: int, month: str, _raw_recs_tuple: tuple, report_version: str = REPORT_VERSION):
+def _cached_build_month(_mgr, max_no: int, month: str, report_version: str = REPORT_VERSION):
     """
-    [Stage 2 캐시] 월별 대시보드 빌드. _raw_recs_tuple은 캐시 키 해시에서 제외.
+    [Stage 2 캐시] 월별 대시보드 빌드.
     캐시 키: (max_no, month, report_version). 월별 독립 엔트리 유지.
     """
     import importlib, sys
-    for _m in ['core.data_loader', 'config.storemaster_override']:
+    for _m in ['core.data_loader']:
         if _m in sys.modules:
             importlib.reload(sys.modules[_m])
     from core.data_loader import load_dashboard_data
-    preprocessed = _cached_preprocess(_mgr, max_no, _raw_recs_tuple, report_version=report_version)
+    preprocessed = _cached_preprocess(_mgr, max_no, report_version=report_version)
     return load_dashboard_data(
         mgr=_mgr,
         selected_month=month,
@@ -133,13 +132,14 @@ def _cached_get_max_no(_mgr):
 
 
 @st.cache_data(ttl=600, max_entries=2, show_spinner=False)
-def _cached_get_available_months(_mgr, max_no: int, _raw_recs: list):
-    """_raw_recs는 캐시 키 해시에서 제외. 캐시 키: max_no."""
+def _cached_get_available_months(_mgr, max_no: int):
+    """캐시 키: max_no."""
     try:
         import unicodedata
         months = set()
-        if _raw_recs:
-            for r in _raw_recs:
+        raw_recs = _cached_get_raw_records(_mgr, max_no)
+        if raw_recs:
+            for r in raw_recs:
                 m = str(r.get('data_month', '')).strip()
                 if m:
                     m_nfc = unicodedata.normalize('NFC', m)
@@ -157,24 +157,18 @@ def _cached_get_available_months(_mgr, max_no: int, _raw_recs: list):
         return []
 
 
-def cached_load_all_dashboard_data(mgr, available_months, raw_recs=None):
+def cached_load_all_dashboard_data(mgr, available_months):
     """모든 가용 월 데이터를 로드. Stage 1 전처리는 1회, Stage 2 채점은 월별 캐시."""
     max_no = _cached_get_max_no(mgr)
-    cache_key = f"last_valid_all_dashboard_data_{len(available_months)}_{REPORT_VERSION}"
+    cache_key = f"last_valid_all_dashboard_data_{max_no}_{len(available_months)}_{REPORT_VERSION}"
 
     if cache_key in st.session_state and st.session_state[cache_key]:
         return st.session_state[cache_key]
 
-    # raw_recs를 tuple로 변환 → @st.cache_data 해시 안정화 (이중 로드 버그 수정)
-    raw_recs_tuple = tuple(
-        tuple(sorted(r.items())) if isinstance(r, dict) else r
-        for r in (raw_recs or [])
-    )
-
     try:
         all_data = {}
         for m in available_months:
-            res = _cached_build_month(mgr, max_no, m, raw_recs_tuple, report_version=REPORT_VERSION)
+            res = _cached_build_month(mgr, max_no, m, report_version=REPORT_VERSION)
             if res and "error" not in res:
                 all_data[m] = res
 
@@ -228,12 +222,6 @@ def _show_detector_result(result: dict):
 
 def main():
     # [v18.1] 긴급 패치: 사용자 환경의 고착화된 세션 캐시(빈 화면/에러) 완벽 해제
-    if st.session_state.get("_v18_cleared_v5") is None:
-        st.cache_data.clear()
-        if "last_valid_dashboard_data" in st.session_state:
-            del st.session_state["last_valid_dashboard_data"]
-        st.session_state["_v18_cleared_v5"] = True
-
     if 'overwrite_approval' not in st.session_state:
         st.session_state.overwrite_approval = {}
 
@@ -388,10 +376,9 @@ def main():
             try:
                 # [v183] 대시보드 로딩 속도를 SPA 급으로 개선하기 위해 모든 월 데이터를 한 번에 로드
                 max_no = _cached_get_max_no(check_mgr)
-                raw_recs = _cached_get_raw_records(check_mgr, max_no)
-                available_months = _cached_get_available_months(check_mgr, max_no, raw_recs)
+                available_months = _cached_get_available_months(check_mgr, max_no)
                 
-                all_months_data = cached_load_all_dashboard_data(check_mgr, available_months, raw_recs)
+                all_months_data = cached_load_all_dashboard_data(check_mgr, available_months)
 
                 if "error" in all_months_data:
                     st.error(f"❌ 데이터 빌드 실패: {all_months_data['error']}")
@@ -436,8 +423,9 @@ def main():
                             
                             st.markdown("---")
                             # [v172] 라디오 버튼 제거 및 공식 st.tabs 서브탭 레이아웃 적용
-                            subtab_p1, subtab_p2 = st.tabs([
+                            subtab_p1, subtab_p2, subtab_p3 = st.tabs([
                                 "🏬 지점별 상품 구색 점수판 다운로드",
+                                "🏷️ 브랜드별 비교 대시보드 다운로드",
                                 "👚 매장별 상세 현황판 다운로드"
                             ])
 
@@ -512,6 +500,11 @@ def main():
                                 st.markdown("</div>", unsafe_allow_html=True)
 
                             with subtab_p2:
+                                st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
+                                st.info("💡 브랜드별 비교 데이터는 실시간 대시보드(P2) 화면에서 제공되며, 엑셀/PPT 다운로드는 '지점별 상품 구색 점수판 다운로드' 또는 '매장별 상세 현황판 다운로드' 탭을 이용해 주세요.")
+                                st.markdown("</div>", unsafe_allow_html=True)
+
+                            with subtab_p3:
                                 st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
                                 stores = ["전체 지점"] + list(db_data.get("STORES", []))
                                 cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
@@ -622,12 +615,23 @@ def main():
             st.caption("🏬 1. 진단 지점")
             # [v162] clean_store_name 표준 유틸리티 로컬 정의
             def clean_store_name(name: str) -> str:
-                if not name: return ""
+                """NC/뉴코아/동아/2001 수식어를 완벽하게 제거하고 지점명을 표준명(점포명)으로 정규화"""
+                if not name:
+                    return ""
                 name = str(name).strip()
                 name = name.replace("(진척중)", "").replace("[진척중]", "").replace("진척중", "").strip()
                 for prefix in ["NC", "뉴코아", "동아", "2001"]:
                     if name.startswith(prefix):
                         name = name[len(prefix):].strip()
+                        break
+                if '분당' in name:
+                    name = '분당점'
+                elif '강남' in name:
+                    name = '강남점'
+                elif name == '불광':
+                    name = '불광점'
+                elif name == '쇼핑':
+                    name = '쇼핑점'
                 return name
 
             # [v162] officemaster 동적 연동 및 지점명 리스트 추출

@@ -295,20 +295,24 @@ class AssortmentScorer:
         # 목표 매출액(tM) 추출 및 목표 총액 설정
         tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
         if tM <= 0: tM = 1.0
-        target_total = tM * 2.0  # 목표 재고액 (200%)
+        target_total = tM * 3.0  # 목표 재고액 (300%)
 
         # 매장 유형 판단
         store_type_val = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
         is_outlet = _is_outlet(store_type_val)
 
-        # 중복 제거 참조용 함수 (v7 기준 유지)
+        # 중복 제거 참조용 함수
         def _get_record_ref(mask):
             sub = df[mask]
             if sub.empty: return sub
+            
+            has_valid_uid = False
             if 'inv_uid' in sub.columns and sub['inv_uid'].notna().any():
+                if not (sub['inv_uid'].astype(str).str.strip().eq('') | sub['inv_uid'].astype(str).str.strip().eq('nan')).all():
+                    has_valid_uid = True
+                    
+            if has_valid_uid:
                 return sub.drop_duplicates('inv_uid')
-            if is_outlet:
-                return sub
             else:
                 d_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
                 valid_cols = [c for c in d_cols if c in sub.columns]
@@ -372,7 +376,7 @@ class AssortmentScorer:
             ]
         else:
             dis_cfg = [
-                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.70)},
+                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.10 if use_age_for_dis else 0.70)},
                 {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.10 if use_age_for_dis else 0.00)},
                 {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.20 if use_age_for_dis else 0.05)},
                 {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
@@ -388,6 +392,8 @@ class AssortmentScorer:
         dis_estimated = dis_scale > 1.0  # [v17.12] True when estimation was applied
         # [v17.4] 각각의 할인율 구간별 달성률에 구간 비중을 가중 평균하여 점수 계산
         sum_r = sum(item['r'] for item in dis_cfg)
+        if use_age_for_dis:
+            sum_r = 1.0
         discount_score = 0.0
         if sum_r > 0:
             for item in dis_cfg:
@@ -538,7 +544,7 @@ class AssortmentScorer:
         df['item_group'] = df['item_code'].apply(self._get_item_group) if 'item_code' in df.columns else 'Others'
         
         tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
-        target_total = tM * 2.0
+        target_total = tM * 3.0
         is_outlet = _is_outlet(str(df['store_type'].iloc[0])) if 'store_type' in df.columns else False
         inv_weights = self.config.get('inv_weights', {})
 

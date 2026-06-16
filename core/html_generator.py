@@ -146,7 +146,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     store_type = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
     outlet = _is_outlet(store_type)
-    target_total = tM * 2.0  # 목표 재고액 (200%)
+    target_total = tM * 3.0  # 목표 재고액 (300%)
     inv_w = config.get('inv_weights', {})
 
     # 1. 아이템 점수 세부 (조닝별 특화 로직 반영)

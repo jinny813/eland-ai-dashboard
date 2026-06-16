@@ -22,6 +22,7 @@ from config.brand_targets import (
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
 from config.store_type_config import get_store_type as _cfg_store_type, get_display_label as _cfg_display_label, BRAND_STORE_TYPES
+from config.brand_targets import _normalize_month_key
 import logging
 
 logger = logging.getLogger(__name__)
@@ -183,6 +184,118 @@ def preprocess_raw_records(
     except Exception as _soe:
         logger.error("[storemaster_override] 적용 실패: %s", _soe)
 
+    # ── [v185.0] storemaster 동적 오버라이드 ──
+    try:
+        import config.brand_targets as _cfg_targets
+        import config.area_config as _cfg_area
+        import config.store_type_config as _cfg_type
+        
+        # storemaster 데이터를 로드하여 동적으로 딕셔너리 구성
+        df_sm = mgr.load_store_master() if mgr else None
+        if df_sm is not None and not df_sm.empty:
+            cols = df_sm.columns.tolist()
+            
+            # 컬럼 매핑 인덱스 찾기
+            def find_col_local(df_cols, keywords):
+                for kw in keywords:
+                    for col in df_cols:
+                        if kw.lower() in str(col).lower():
+                            return col
+                return None
+
+            store_col = find_col_local(cols, ['지점', '점포', '매장'])
+            brand_col = find_col_local(cols, ['브랜드', 'brand'])
+            area_col  = find_col_local(cols, ['평수', '면적', 'area'])
+            type_col  = find_col_local(cols, ['유형', '구분', 'type', '매장유형'])
+            
+            # 매출 컬럼 파싱 (25_03, 26_04 등)
+            sales_cols = {}
+            for col in cols:
+                import re
+                m = re.match(r'^(\d{2})_(\d{2})$', str(col).strip())
+                if m:
+                    sales_cols[('20' + m.group(1), m.group(2))] = col
+                    
+            # 목표 컬럼 파싱 (목표_04 등)
+            target_cols = {}
+            for col in cols:
+                import re
+                m = re.match(r'^목표_(\d{2})$', str(col).strip())
+                if m:
+                    target_cols[m.group(1)] = col
+            
+            # 브랜드/지점명 정형화 헬퍼
+            def clean_brand_local(name: str) -> str:
+                if not name: return ""
+                return str(name).split('(')[0].strip()
+                
+            def clean_store_local(name: str) -> str:
+                if not name: return ""
+                name = str(name).strip()
+                for prefix in ["NC", "뉴코아", "동아", "2001"]:
+                    if name.startswith(prefix):
+                        name = name[len(prefix):].strip()
+                        break
+                if '분당' in name:
+                    name = '분당점'
+                elif '강남' in name:
+                    name = '강남점'
+                elif name == '불광':
+                    name = '불광점'
+                elif name == '쇼핑':
+                    name = '쇼핑점'
+                return name
+                
+            def normalize_type_local(t: str) -> str:
+                t = str(t).strip()
+                return '정상' if '정상' in t else '상설'
+                
+            _cur_mo = f"{datetime.now().month:02d}"
+            _cur_yr = str(datetime.now().year)
+
+            for _, row in df_sm.iterrows():
+                store_name = clean_store_local(row.get(store_col, ''))
+                brand_name = clean_brand_local(row.get(brand_col, ''))
+                if not store_name or not brand_name or store_name == 'nan' or brand_name == 'nan':
+                    continue
+                
+                # 평수 오버라이드
+                if area_col:
+                    area_val = _try_float(row.get(area_col, 0))
+                    if area_val > 0:
+                        _cfg_area.AREA_CONFIG.setdefault(store_name, {})[brand_name] = area_val
+                
+                # 유형 오버라이드
+                if type_col:
+                    _cfg_type.BRAND_STORE_TYPES.setdefault(store_name, {})[brand_name] = normalize_type_local(row.get(type_col, '상설'))
+                
+                # 매출 실적 오버라이드
+                for (yr, mo), col in sales_cols.items():
+                    v_sales = _try_float(row.get(col, 0))
+                    if v_sales > 0:
+                        ym_key = f"{yr}_{mo}"
+                        if yr == '2025':
+                            _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(store_name, {}).setdefault(ym_key, {}).update({brand_name: v_sales})
+                        elif yr == '2026':
+                            _cfg_targets.CURR_MONTH_ACTUALS.setdefault(store_name, {}).setdefault(ym_key, {}).update({brand_name: v_sales})
+                            
+                # 당월 목표 오버라이드
+                for mo, col in target_cols.items():
+                    v_target = _try_float(row.get(col, 0))
+                    if v_target > 0:
+                        # 10만 이하 단위는 M 단위로 판단하여 보정
+                        if 0 < v_target < 100000:
+                            v_target = v_target * 1_000_000
+                        _cfg_targets.MONTHLY_TM.setdefault(store_name, {}).setdefault(f"2026_{mo}", {}).update({brand_name: v_target})
+                        if yr == _cur_yr and mo == _cur_mo:
+                            _cfg_targets.STORE_BRAND_TM.setdefault(store_name, {}).update({brand_name: v_target})
+                            
+            logger.info("[storemaster] 동적 오버라이드 주입 완료")
+    except ImportError:
+        pass
+    except Exception as _soe:
+        logger.error("[storemaster_override] 적용 실패: %s", _soe)
+
     # ── 특수 브랜드 store_type 강제 설정 ──
     if 'brand_name' in df.columns:
         _no_year_outlet_brands = ['압소바', '더레노마']
@@ -226,7 +339,11 @@ def preprocess_raw_records(
     # ── 가용 월 목록 ──
     def _get_m_num(m_str):
         try:
-            return int(str(m_str).replace('월', '').strip())
+            mk = _normalize_month_key(str(m_str))
+            if mk:
+                yr, mo = mk.split('_')
+                return int(yr) * 100 + int(mo)
+            return 0
         except Exception:
             return 0
 
@@ -521,12 +638,8 @@ def load_dashboard_data(
                 stock_amt = stock_ref['stock_amt'].apply(lambda x: max(0.0, _try_float(x))).sum()
                 stock_qty = stock_ref['stock_qty'].apply(lambda x: max(0.0, _try_float(x))).sum()
                 
-                # [v4.2] 당월 실적 키 계산
-                try:
-                    _diag_mo = int(str(diag_month).replace('월', '').strip())
-                    _cur_mk = f"{datetime.now().year}_{_diag_mo:02d}"
-                except Exception:
-                    _cur_mk = None
+                # [v4.2] 당월 실적 키 계산 — 모든 월 형식 처리 ("6월", "26년 6월", "2026-06" 등)
+                _cur_mk = _normalize_month_key(diag_month)
 
                 b_data_month = str(b_df.iloc[0].get('data_month', '')).strip()
                 b_df['area'] = get_area(store, b_name)

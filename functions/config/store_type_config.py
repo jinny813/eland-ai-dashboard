@@ -2,6 +2,49 @@
 # - '복합': 상설 로직 사용, 화면에는 '상설(복합)' 표시
 # - '#N/A': 매장유형 미확인, 화면에 '미확인' 표시 (로직은 DB 저장값 유지)
 BRAND_STORE_TYPES = {
+    "분당점": {
+                "에이비에프지": "상설",
+                "온앤온": "상설",
+                "올리브데올리브": "상설",
+                "클라비스": "상설",
+                "리스트": "상설",
+                "나이스클랍": "상설",
+                "베네통": "상설",
+                "숲": "상설",
+                "시슬리": "상설",
+                "씨씨콜렉트": "상설",
+                "오픈클로젯": "상설",
+                "주크": "상설",
+                "틸버리": "상설",
+                "듀엘": "상설",
+                "에잇컨셉": "상설",
+                "반에이크": "상설",
+                "JJ지고트": "상설",
+                "케네스레이디": "상설",
+                "샤틴": "상설",
+                "잇미샤": "상설",
+                "데코": "상설",
+                "쉬즈미스": "상설",
+                "안지크": "정상",
+                "요하넥스": "상설",
+                "앤클라인": "상설",
+                "올리비아로렌": "상설",
+                "베스띠벨리": "상설",
+                "더레노마": "상설",
+                "리본": "상설",
+                "쁘렝땅": "상설",
+                "린": "상설",
+                "모조에스핀": "상설",
+                "발렌시아": "상설",
+                "비꼴리끄": "상설",
+                "비씨비지": "상설",
+                "아이잗바바": "상설",
+                "캐리스노트": "상설",
+                "기비/키이스": "상설",
+                "더아이잗": "상설",
+                "케이엘": "상설",
+                "보니스팍스": "상설"
+        },
     "NC신구로점": {
         # 캐주얼
         "폴햄": "정상", "마인드브릿지": "정상", "프로젝트M": "정상",
@@ -93,11 +136,33 @@ BRAND_STORE_TYPES = {
         "루이까스텔": "정상", "제이디엑스(JDX)": "정상", "팬텀": "정상",
     },
 }
+def clean_store_name(name: str) -> str:
+    """NC/뉴코아/동아/2001 수식어를 완벽하게 제거하고 지점명을 표준명(점포명)으로 정규화"""
+    if not name:
+        return ""
+    name = str(name).strip()
+    name = name.replace("(진척중)", "").replace("[진척중]", "").replace("진척중", "").strip()
+    for prefix in ["NC", "뉴코아", "동아", "2001"]:
+        if name.startswith(prefix):
+            name = name[len(prefix):].strip()
+            break
+    if '분당' in name:
+        name = '분당점'
+    elif '강남' in name:
+        name = '강남점'
+    elif name == '불광':
+        name = '불광점'
+    elif name == '쇼핑':
+        name = '쇼핑점'
+    return name
+
+# [v162] 로딩 시점에 지점명 키를 정화하여 표준명으로 저장
+BRAND_STORE_TYPES = {clean_store_name(k): v for k, v in BRAND_STORE_TYPES.items()}
 
 
 def get_store_type(store_name: str, brand_name: str):
     """config에 정의된 매장유형 반환. '#N/A' 또는 미정의 시 None 반환 (로직 오버라이드 없음)"""
-    raw = BRAND_STORE_TYPES.get(store_name, {}).get(brand_name)
+    raw = BRAND_STORE_TYPES.get(clean_store_name(store_name), {}).get(brand_name)
     if raw is None or raw == "#N/A":
         return None
     return raw
@@ -105,7 +170,7 @@ def get_store_type(store_name: str, brand_name: str):
 
 def get_display_label(store_name: str, brand_name: str, fallback: str = "") -> str:
     """화면 표시용 매장유형 레이블 반환"""
-    raw = BRAND_STORE_TYPES.get(store_name, {}).get(brand_name, fallback)
+    raw = BRAND_STORE_TYPES.get(clean_store_name(store_name), {}).get(brand_name, fallback)
     return _to_display(raw if raw else fallback)
 
 
