@@ -1987,7 +1987,25 @@
         if (r.ok) {
           const d = await r.json();
           if (d.error) { _showError(`API 오류 — ${d.error}`); return; }
-          _loadData(d);
+          
+          // [v17.14] API 응답 데이터가 월별 딕셔너리(SPA 구조)인지 판별
+          const firstKey = Object.keys(d)[0];
+          const isMultiMonth = firstKey && d[firstKey] && (d[firstKey].AVAILABLE_MONTHS || d[firstKey].CATS);
+          
+          if (isMultiMonth) {
+            window.__ALL_DATA__ = d;
+            // 가장 최신 월 찾기
+            const sortedKeys = Object.keys(d).sort((a, b) => {
+              const getNum = (s) => parseInt(s.replace('월', '').trim()) || 0;
+              return getNum(b) - getNum(a);
+            });
+            const defaultMonth = sortedKeys[0];
+            currentGlobalMonth = defaultMonth;
+            _loadData(window.__ALL_DATA__[defaultMonth]);
+          } else {
+            // 단일 월 하위 호환
+            _loadData(d);
+          }
         } else { _showError('API 서버 응답 없음.'); return; }
       } catch (e) { _showError('연결 실패.'); return; }
       buildMainTable(); renderBrandDetail();

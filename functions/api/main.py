@@ -13,6 +13,17 @@ from config.brand_targets import get_tm
 from fastapi.middleware.cors import CORSMiddleware
 from core.data_loader import load_dashboard_data
 
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+# [v17.14] API 전역 캐시 정의 (600초 TTL)
+_API_CACHE = {
+    "data": None,
+    "expire_at": 0
+}
+
 app = FastAPI()
 
 app.add_middleware(
@@ -25,13 +36,46 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Extract logic from html_generator into a pure JSON endpoint
 @app.get("/api/dashboard")
 async def get_dashboard():
-    data = load_dashboard_data()
-    if "error" in data:
-        return JSONResponse(status_code=500, content=data)
-    return data
+    global _API_CACHE
+    now = time.time()
+    if _API_CACHE["data"] is not None and _API_CACHE["expire_at"] > now:
+        return _API_CACHE["data"]
+        
+    try:
+        mgr = GSheetManager(sheet_name="Records")
+        sheet = mgr.spreadsheet.worksheet("Records")
+        raw_recs = sheet.get_all_records()
+        if not raw_recs:
+            return JSONResponse(status_code=500, content={"error": "Records sheet is empty"})
+            
+        from core.data_loader import preprocess_raw_records
+        cleaned_df, brand_zoning_map, sorted_months = preprocess_raw_records(mgr, raw_recs)
+        
+        if not sorted_months:
+            return JSONResponse(status_code=500, content={"error": "No available months found in data"})
+            
+        all_data = {}
+        for m in sorted_months:
+            res = load_dashboard_data(
+                mgr=mgr,
+                selected_month=m,
+                _preprocessed=(cleaned_df, brand_zoning_map, sorted_months)
+            )
+            if res and "error" not in res:
+                all_data[m] = res
+                
+        if not all_data:
+            return JSONResponse(status_code=500, content={"error": "Failed to build dashboard data for any month"})
+            
+        _API_CACHE["data"] = all_data
+        _API_CACHE["expire_at"] = now + 600
+        return all_data
+    except Exception as e:
+        import traceback
+        logger.error(f"API Dashboard load failed: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e), "traceback": traceback.format_exc()})
 
 @app.post("/api/upload")
 async def upload_data(
@@ -70,6 +114,9 @@ async def upload_data(
         is_saved = mgr.overwrite_record(final_df, store_name, brand_name, data_month)
         
         if is_saved:
+            # 캐시 무효화 (업로드 후 즉시 대시보드 반영)
+            _API_CACHE["data"] = None
+            _API_CACHE["expire_at"] = 0
             return {"status": "success", "message": "성공적으로 업로드 및 병합되었습니다.", "rows": len(final_df)}
         else:
             return JSONResponse(status_code=500, content={"error": "DB 저장 중 오류가 발생했습니다."})
