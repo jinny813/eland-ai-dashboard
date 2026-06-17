@@ -57,7 +57,22 @@ async def get_dashboard():
     try:
         mgr = GSheetManager(sheet_name="Records")
         sheet = mgr.spreadsheet.worksheet("Records")
-        raw_recs = sheet.get_all_records()
+        
+        import asyncio
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+        try:
+            raw_recs = await asyncio.wait_for(
+                loop.run_in_executor(None, sheet.get_all_records),
+                timeout=8.0
+            )
+        except asyncio.TimeoutError:
+            raise TimeoutError("Google Sheets read operation timed out after 8 seconds due to large data rows (320k+)")
+            
         if not raw_recs:
             return JSONResponse(status_code=500, content={"error": "Records sheet is empty"})
             
@@ -85,8 +100,34 @@ async def get_dashboard():
         return all_data
     except Exception as e:
         import traceback
-        logger.error(f"API Dashboard load failed: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e), "traceback": traceback.format_exc()})
+        logger.warning(f"API Dashboard GSheet load failed: {e} — Attempting fallback to local dashboard_backup.json")
+        import json
+        curr_dir = os.path.dirname(os.path.abspath(__file__))
+        candidates = [
+            os.path.join(os.path.dirname(curr_dir), "data", "dashboard_backup.json"),
+            os.path.join(os.path.dirname(os.path.dirname(curr_dir)), "data", "dashboard_backup.json"),
+            os.path.join(curr_dir, "data", "dashboard_backup.json"),
+            os.path.join("data", "dashboard_backup.json"),
+        ]
+        backup_path = None
+        for cand in candidates:
+            if os.path.exists(cand):
+                backup_path = cand
+                break
+        
+        if backup_path and os.path.exists(backup_path):
+            try:
+                with open(backup_path, "r", encoding="utf-8") as f:
+                    backup_data = json.load(f)
+                if backup_data:
+                    logger.info(f"✅ [API Fallback] Local dashboard backup loaded successfully from {backup_path}!")
+                    _API_CACHE["data"] = backup_data
+                    _API_CACHE["expire_at"] = time.time() + 600
+                    return backup_data
+            except Exception as fe:
+                logger.error(f"[API Fallback] Failed to load local backup file: {fe}")
+        
+        return JSONResponse(status_code=500, content={"error": f"GSheet load failed ({str(e)}) and fallback failed.", "traceback": traceback.format_exc()})
 
 import io
 from typing import Optional

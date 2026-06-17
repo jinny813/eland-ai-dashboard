@@ -29,69 +29,121 @@ def _item_code_to_ko(item_code: str) -> str:
     return _ITEM_GROUP_KO.get(grp, '—')
 
 
-def _naver_search_style_name(brand_name: str, style_code: str) -> str:
+def _crawl_naver_shopping_title(brand_name: str, style_code: str) -> str:
     """
-    네이버 쇼핑 API로 브랜드+품번 검색 → 상품명 반환.
-    결과를 product_master.db에 캐시하고 core/style_master.json 파일에 저장하여 재사용.
-    NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 환경변수가 없으면 빈 문자열 반환.
+    API 키가 없거나 실패한 경우, 네이버 통합 검색 쇼핑 영역 결과를 직접 파싱하여 상품명을 반환합니다.
     """
-    client_id = os.environ.get("NAVER_CLIENT_ID", "")
-    client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
-    if not client_id or not client_secret:
-        return ''
     query = f"{brand_name} {style_code}".strip()
     if not query:
         return ''
     try:
         enc = urllib.parse.quote(query)
-        url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=1"
-        req = urllib.request.Request(url)
-        req.add_header("X-Naver-Client-Id", client_id)
-        req.add_header("X-Naver-Client-Secret", client_secret)
-        resp = urllib.request.urlopen(req, timeout=5)
-        if resp.getcode() != 200:
-            return ''
-        data = json.loads(resp.read().decode('utf-8'))
-        items = data.get('items', [])
-        if not items:
-            return ''
-        title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
-        if title:
-            # DB에 캐시
+        url = f"https://search.naver.com/search.naver?query={enc}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Referer': 'https://search.naver.com/'
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            html = resp.read().decode('utf-8', errors='ignore')
+            
+        matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
+        if matches:
+            raw_title = matches[0]
+            # JSON escape decode
             try:
-                conn = sqlite3.connect(_DB_PATH)
-                conn.execute(
-                    "INSERT OR REPLACE INTO products (style_code, product_name, brand, updated_at) "
-                    "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
-                    (style_code, title, brand_name)
-                )
-                conn.commit()
-                conn.close()
+                safe_s = raw_title.replace('"', '\\"')
+                decoded = json.loads(f'"{safe_s}"')
             except Exception:
-                pass
+                def replace_match(m):
+                    return chr(int(m.group(1), 16))
+                try:
+                    decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
+                    decoded = decoded.replace('\\/', '/')
+                except Exception:
+                    decoded = raw_title
+            
+            cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
+            if cleaned:
+                return cleaned
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Naver scrap failed for {query}: {e}")
+    return ''
 
-            # JSON 파일에 캐시 누적
-            try:
-                json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
-                if os.path.exists(json_path):
-                    with open(json_path, 'r', encoding='utf-8') as jf:
-                        master_data = json.load(jf)
-                else:
-                    master_data = {}
-                if style_code not in master_data:
-                    master_data[style_code] = {}
-                master_data[style_code]["style_name"] = title
-                master_data[style_code]["brand"] = brand_name
-                ko_item = _item_code_to_ko(style_code)
-                if ko_item and ko_item != '—':
-                    master_data[style_code]["item_name"] = ko_item
-                with open(json_path, 'w', encoding='utf-8') as jf:
-                    json.dump(master_data, jf, ensure_ascii=False, indent=2)
-            except Exception:
-                pass
-        return title
-    except Exception:
+
+def _naver_search_style_name(brand_name: str, style_code: str) -> str:
+    """
+    네이버 쇼핑 API로 브랜드+품번 검색 → 상품명 반환.
+    실패하거나 API 키가 없으면 직접 웹 스크래핑을 통한 폴백 시도.
+    결과를 product_master.db에 캐시하고 core/style_master.json 파일에 저장하여 재사용.
+    """
+    client_id = os.environ.get("NAVER_CLIENT_ID", "")
+    client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
+    
+    title = ''
+    query = f"{brand_name} {style_code}".strip()
+    if not query:
         return ''
+        
+    # 1. API 키가 있으면 OpenAPI 우선 시도
+    if client_id and client_secret:
+        try:
+            enc = urllib.parse.quote(query)
+            url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=1"
+            req = urllib.request.Request(url)
+            req.add_header("X-Naver-Client-Id", client_id)
+            req.add_header("X-Naver-Client-Secret", client_secret)
+            resp = urllib.request.urlopen(req, timeout=5)
+            if resp.getcode() == 200:
+                data = json.loads(resp.read().decode('utf-8'))
+                items = data.get('items', [])
+                if items:
+                    title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
+        except Exception:
+            pass
+
+    # 2. API 결과가 없거나 실패 시 웹 스크래핑 폴백 시도
+    if not title:
+        title = _crawl_naver_shopping_title(brand_name, style_code)
+
+    if title:
+        # DB에 캐시
+        try:
+            conn = sqlite3.connect(_DB_PATH)
+            conn.execute(
+                "INSERT OR REPLACE INTO products (style_code, product_name, brand, updated_at) "
+                "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                (style_code, title, brand_name)
+            )
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+        # JSON 파일에 캐시 누적
+        try:
+            json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
+            if os.path.exists(json_path):
+                with open(json_path, 'r', encoding='utf-8') as jf:
+                    master_data = json.load(jf)
+            else:
+                master_data = {}
+            if style_code not in master_data:
+                master_data[style_code] = {}
+            master_data[style_code]["style_name"] = title
+            master_data[style_code]["brand"] = brand_name
+            ko_item = _item_code_to_ko(style_code)
+            if ko_item and ko_item != '—':
+                master_data[style_code]["item_name"] = ko_item
+            with open(json_path, 'w', encoding='utf-8') as jf:
+                json.dump(master_data, jf, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+        return title
+    return ''
 
 # ── [v8.0] 다중 팔레트 기반 동적 색상 유틸리티
 def _get_dynamic_color(pct: float, p_type: str = "default") -> str:
@@ -497,7 +549,11 @@ def _build_best_items(df) -> dict:
             ic = str(row.get('item_code', '') or '').strip()
             if not ic or ic in _EMPTY_VALS:
                 ic = s
-            raw_item_name = _item_code_to_ko(ic)
+            mapped_name = _item_code_to_ko(ic)
+            if mapped_name and mapped_name not in _EMPTY_VALS:
+                raw_item_name = mapped_name
+            else:
+                raw_item_name = ic
 
         # ── 5) style_name: 네이버 쇼핑 검색 (API key 있을 때만)
         if raw_style_name in _EMPTY_VALS and brand_name:

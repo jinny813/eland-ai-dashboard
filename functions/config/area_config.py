@@ -136,7 +136,7 @@ def _normalize(name: str) -> str:
 
 
 def get_area(store_name: str, brand_name: str) -> float:
-    """지점 및 브랜드에 해당하는 평수를 반환합니다. (괄호 내용 무시 매칭 지원)"""
+    """지점 및 브랜드에 해당하는 평수를 반환합니다. (괄호 내용 무시 및 키즈 접미사 폴백 지원)"""
     store_cfg = AREA_CONFIG.get(clean_store_name(store_name), {})
     if not store_cfg:
         return 0.0
@@ -149,6 +149,13 @@ def get_area(store_name: str, brand_name: str) -> float:
     target_norm = _normalize(brand_name)
     for cfg_brand, area in store_cfg.items():
         if _normalize(cfg_brand) == target_norm:
+            return area
+            
+    # 3. [v17.16] 키즈 접미사 폴백 매칭 (예: 베네통키즈 ↔ 베네통)
+    target_clean = target_norm.replace('키즈', '').replace('KIDS', '')
+    for cfg_brand, area in store_cfg.items():
+        cfg_clean = _normalize(cfg_brand).replace('키즈', '').replace('KIDS', '')
+        if cfg_clean == target_clean and cfg_clean:
             return area
             
     return 0.0

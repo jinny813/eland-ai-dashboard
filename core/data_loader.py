@@ -406,6 +406,44 @@ def load_dashboard_data(
                 "BEST_ITEMS": {}, "ACTION_PLAN": {}
             }
 
+        # ── [v17.16] 구글 시트 DB(df) 기반 실적 데이터를 brand_targets 매핑 딕셔너리에 동적으로 대량 적재 ──
+        try:
+            import config.brand_targets as _cfg_targets
+            from config.brand_targets import _normalize_month_key, normalize_brand_name
+            from config.area_config import clean_store_name
+            
+            valid_rows = df[
+                df['store_name'].notna() & (df['store_name'] != "") &
+                df['brand_name'].notna() & (df['brand_name'] != "") &
+                df['data_month'].notna() & (df['data_month'] != "")
+            ].copy()
+            
+            if not valid_rows.empty:
+                valid_rows['_norm_store'] = valid_rows['store_name'].apply(clean_store_name)
+                valid_rows['_norm_brand'] = valid_rows['brand_name'].apply(normalize_brand_name)
+                valid_rows['_norm_month_key'] = valid_rows['data_month'].apply(_normalize_month_key)
+                
+                group_df = valid_rows[valid_rows['_norm_month_key'].notna()].groupby(
+                    ['_norm_store', '_norm_month_key', '_norm_brand']
+                )['sales_amt'].sum().reset_index()
+                
+                for _, r_data in group_df.iterrows():
+                    st_key = r_data['_norm_store']
+                    ym_key = r_data['_norm_month_key']
+                    br_key = r_data['_norm_brand']
+                    s_amt = float(r_data['sales_amt'])
+                    
+                    if s_amt > 0:
+                        yr_key = ym_key.split('_')[0]
+                        if yr_key == '2025':
+                            _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
+                        elif yr_key == '2026':
+                            _cfg_targets.CURR_MONTH_ACTUALS.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
+                            
+                logger.info("[data_loader] DB 내 과거 및 당기 실적 데이터 동적 적재 완료 (%d건)", len(group_df))
+        except Exception as _e:
+            logger.error("[data_loader] DB 실적 동적 적재 오류: %s", _e)
+
         # ── 가용 월 및 진단 월 결정 ──
         available_months = df['data_month'].unique()
         current_month = f"{datetime.now().month}월"
@@ -610,18 +648,21 @@ def load_dashboard_data(
                 
                 tM_won = get_tm(brand_name=b_name, store_name=store, month=diag_month)
 
-                # 평매출 기반 목표재고액 보정 (채점용만 적용, 목표매출 표시는 tM_won 원본 유지)
-                # [v175.0] 모든 브랜드의 목표재고액을 평당 일평매출 10만원 달성 기준(평수 * 10만원 * 30일 * 2배)으로 단일 통일
+                # [v176.0] 목표재고액 공식 통일: 평수 * 10만원/일 * 30일 (×2 제거)
+                # - tM_won (목표매출): 전년동월×1.3 자동계산 (get_tm 1순위)
+                # - tM_inv_won (목표재고액): 평수 * 100,000 * 30 (재고 회전 기준)
                 _tM_adjusted = None
                 _b_area_for_cap = get_area(store, b_name)
-                tM_for_score = tM_won  # 채점에 사용할 tM
-                tM_inv_won = tM_won * 2  # 목표재고액 기본값
-                
+                tM_for_score = tM_won  # 채점에 사용할 tM (목표매출 기준)
+
                 if _b_area_for_cap > 0:
-                    tM_inv_won = _b_area_for_cap * 100_000.0 * 30.0 * 2.0
-                    tM_for_score = tM_won  # 채점용 목표매출은 원래대로 원본(30% 성장) 유지
+                    tM_inv_won = _b_area_for_cap * 100_000.0 * 30.0 * 3.0  # 평수 * 10만 * 30일 * 3배
                     _tM_adjusted = 'cap'
-                b_df['tM'] = tM_for_score  # 채점 로직은 보정된 값 사용
+                else:
+                    # 평수 미설정 브랜드: 목표매출의 3배를 목표재고로 (최소 안전망)
+                    tM_inv_won = tM_won * 3.0
+
+                b_df['tM'] = tM_for_score  # 채점 로직은 목표매출 기준 사용
 
                 # [v74.5] 중복 제거 로직 완화 (상설 매장은 inv_uid가 없으면 모든 행 합산)
                 is_outlet_b = _is_outlet_type(b_type)
@@ -710,6 +751,22 @@ def load_dashboard_data(
                         mom_base = prev_benchmark_sales
                         g_pct = ((mom_cur - mom_base) / mom_base * 100) if (mom_cur > 0 and mom_base > 0) else 0.0
 
+                    # ── 평균 할인율 계산 (가중 평균)
+                    try:
+                        dis_rates = b_df['discount_rate'].apply(AssortmentScorer._parse_discount_rate).fillna(0.0) if 'discount_rate' in b_df.columns else pd.Series(0.0, index=b_df.index)
+                        # -1.0은 제외하거나 0으로 보정 (파싱 에러 방지)
+                        dis_rates = dis_rates.apply(lambda x: max(0.0, x))
+                        qtys = pd.to_numeric(b_df['stock_qty'], errors='coerce').fillna(0.0) if 'stock_qty' in b_df.columns else pd.Series(0.0, index=b_df.index)
+                        
+                        total_qty = qtys.sum()
+                        if total_qty > 0:
+                            avg_dis = float((dis_rates * qtys).sum() / total_qty)
+                        else:
+                            avg_dis = float(dis_rates.mean()) if not dis_rates.empty else 0.0
+                    except Exception as _e:
+                        logger.warning(f"Failed to calculate avg_discount_rate: {_e}")
+                        avg_dis = 0.0
+
                     brands_list.append({
                         "name": b_name, "store": store, "category": b_cat,
                         "type": "outlet" if _is_outlet_type(b_type) else "normal",
@@ -720,6 +777,7 @@ def load_dashboard_data(
                         "item": int(round(float(row.get('item_score', 0)))),
                         "zoning": brand_zoning_map.get(b_name) or cfg.get('zoning', '미분류'),
                         "dis": int(round(float(row.get('discount_score', 0)))),
+                        "avg_discount_rate": round(avg_dis, 1),
                         "fresh": int(round(float(row.get('freshness_score', 0)))),
                         "best": int(round(float(row.get('best_score', 0)))),
                         "season": int(round(float(row.get('season_score', 0)))),

@@ -1839,6 +1839,10 @@
                       <select id="p2_store_sel" class="p2-selector" onchange="onNavStoreChange(this.value)"></select>
                     </div>
                     <div class="p2-sel-box">
+                      <div class="p2-sel-label">📂 카테고리</div>
+                      <select id="p2_cat_sel" class="p2-selector" onchange="onNavCatChange(this.value)"></select>
+                    </div>
+                    <div class="p2-sel-box">
                       <div class="p2-sel-label">🏷️ 브랜드</div>
                       <select id="p2_brand_sel" class="p2-selector" onchange="onNavBrandChange(this.value)"></select>
                     </div>
@@ -2641,13 +2645,35 @@
       
       if (currentBrand) {
         sSel.value = currentBrand.store;
-        updateP2BrandOptions(currentBrand.store, currentBrand.name);
+        updateP2CatOptions(currentBrand.store, currentBrand.category);
+        updateP2BrandOptions(currentBrand.store, currentBrand.category, currentBrand.name);
       }
     }
 
-    function updateP2BrandOptions(store, selectedName, showPlaceholder = false) {
-      const bSel = document.getElementById('p2_brand_sel');
+    function updateP2CatOptions(store, selectedCat, showPlaceholder = false) {
+      const cSel = document.getElementById('p2_cat_sel');
+      if (!cSel) return;
+      
       const filtered = BRANDS.filter(b => b.store === store);
+      const uniqueCats = [...new Set(filtered.map(b => b.category).filter(Boolean))].sort();
+      
+      let html = '';
+      if (showPlaceholder) {
+        html = '<option value="" selected disabled>카테고리를 선택하세요</option>';
+      }
+      html += uniqueCats.map(c => `<option value="${c}">${c}</option>`).join('');
+      cSel.innerHTML = html;
+      
+      if (selectedCat) {
+        cSel.value = selectedCat;
+      }
+    }
+
+    function updateP2BrandOptions(store, cat, selectedName, showPlaceholder = false) {
+      const bSel = document.getElementById('p2_brand_sel');
+      if (!bSel) return;
+      
+      const filtered = BRANDS.filter(b => b.store === store && (!cat || b.category === cat));
       
       let html = '';
       if (showPlaceholder) {
@@ -2657,12 +2683,20 @@
       html += filtered.map(b => `<option value="${b.name}">${b.name} (${b.type_label || (b.type === 'normal' ? '정상' : '상설')})</option>`).join('');
       bSel.innerHTML = html;
       
-      if (selectedName) bSel.value = selectedName;
+      if (selectedName) {
+        bSel.value = selectedName;
+      }
     }
 
     function onNavStoreChange(st) {
-      // 지점 변경 시 즉시 이동하지 않고 브랜드 목록만 "선택하세요" 상태로 갱신
-      updateP2BrandOptions(st, null, true);
+      updateP2CatOptions(st, null, true);
+      const bSel = document.getElementById('p2_brand_sel');
+      if (bSel) bSel.innerHTML = '<option value="" selected disabled>카테고리를 먼저 선택하세요</option>';
+    }
+
+    function onNavCatChange(cat) {
+      const st = document.getElementById('p2_store_sel').value;
+      updateP2BrandOptions(st, cat, null, true);
     }
 
     function onNavBrandChange(bName) {
@@ -2730,7 +2764,7 @@
     <th style="text-align:left;padding-left:24px;background:#1D1E1E;width:16%;">브랜드명</th>
     <th style="background:#1D1E1E; width:14%; font-size:13px; color:#FFFFFF;">월 매출(성장률)</th>
     <th style="background:#1D1E1E; color:#FFFFFF; width:11%; font-size:14px; font-weight:900;">종합 점수</th>
-    <th style="background:#1D1E1E; width:19%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x3배)</span></th>
+    <th style="background:#1D1E1E; width:19%; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x3배)</span></th>
     <th style="background:#E30019; width:10%;">할인율</th>
     <th style="background:#2563EB; width:10%;">신선도</th>
     <th style="background:#F59E0B; width:10%;">시즌</th>
@@ -3008,7 +3042,7 @@
             <div style="font-size:22px; font-weight:950; color:#111; margin-bottom:14px;">
               ${formatM(b.sM)}<span style="font-size:14px; color:#475569;">M</span>
               <span style="font-size:14px; color:#94A3B8; margin:0 4px;">/</span>
-              <span style="font-size:13px; color:#94A3B8; font-weight:700;">목표 ${formatM(tM2)}M</span>${b.tM_adjusted ? '<span style="background:#9CA3AF;color:#fff;font-size:9px;font-weight:900;padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:5px;letter-spacing:0.3px;">' + (b.tM_adjusted === 'cap' ? '평매출상한' : '평매출하한') + '</span>' : ''}
+              <span style="font-size:13px; color:#94A3B8; font-weight:700; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">목표 ${formatM(tM2)}M</span>${b.tM_adjusted ? '<span style="background:#9CA3AF;color:#fff;font-size:9px;font-weight:900;padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:5px;letter-spacing:0.3px; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">' + (b.tM_adjusted === 'cap' ? '평매출상한' : '평매출하한') + '</span>' : ''}
             </div>
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
               <div style="flex:1; height:10px; background:#F1F5F9; border-radius:5px; overflow:hidden;">
@@ -3191,7 +3225,7 @@
           <div class="dual-bar-container" style="display:flex; flex-direction:column; gap:2px; width:100%;">
             <!-- 목표 행 -->
             <div class="bar-row" style="display:flex; align-items:center; gap:6px; height:20px;">
-              <div class="bar-label" style="width:58px; font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase;">목표 재고액</div>
+              <div class="bar-label" style="width:58px; font-size:10px; font-weight:800; color:#94A3B8; text-transform:uppercase; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">목표 재고액</div>
               <div class="bar-track-wrap" style="flex:1;">
                 <div class="bar-track" style="background:#F1F5F9; height:14px; width:100%; border-radius:7px; overflow:hidden; position:relative;">
                   <div class="bar-fill target-bar-fill" style="width:${targetW}%; height:100%; background:#CBD5E1; border-radius:7px;"></div>
@@ -3227,6 +3261,7 @@
             <span class="m-title">${m.l}</span>
             ${m.estimated ? `<span style="font-size:10px; font-weight:700; background:#94A3B8; color:#fff; padding:1px 5px; border-radius:3px; letter-spacing:0.3px;">추정</span>` : ''}
             ${m.zoning ? `<span style="font-size:11px; font-weight:800; color:#64748B; background:#F1F5F9; padding:2px 6px; border-radius:4px;">${m.zoning}</span>` : ''}
+            ${m.id === 'dis' && b.avg_discount_rate !== undefined ? `<span style="font-size:11px; font-weight:850; color:#E30019; background:#FFF1F2; border:1px solid #FFE4E6; padding:2px 8px; border-radius:6px; margin-left:6px;">평균 ${b.avg_discount_rate}%</span>` : ''}
           </div>
           <div style="text-align:right;">
             <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">/${m.maxPt}점</span>
@@ -3378,7 +3413,7 @@
                 <div class="action-col-icon">💡</div>
                 <div>
                   <div class="action-col-title">재고 확보 필요 상품</div>
-                  <div class="action-col-sub">우리 매장 BEST 10 중 재고 부족분</div>
+                  <div class="action-col-sub">자사 BEST 10 중 재고 5개 이하 (확보 필요)</div>
                 </div>
               </div>
               ${renderAiAdvice()}
@@ -3390,7 +3425,7 @@
                 <div class="action-col-icon">🔥</div>
                 <div>
                   <div class="action-col-title">집중 판매 필요 상품</div>
-                  <div class="action-col-sub">1등매장 BEST 10 중 현 지점 판매 저조분</div>
+                  <div class="action-col-sub">자사 BEST 10 중 재고 5개 초과 (집중 판매 필요)</div>
                 </div>
               </div>
               ${renderPushItems()}
@@ -3474,7 +3509,7 @@
             
             <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
               <div style="display: flex; align-items: center; gap: 8px; height: 16px;">
-                <div style="width: 54px; font-size: 10px; font-weight: 800; color: #94A3B8;">목표 재고액</div>
+                <div style="width: 54px; font-size: 10px; font-weight: 800; color: #94A3B8; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">목표 재고액</div>
                 <div style="flex: 1; background: #E2E8F0; height: 10px; border-radius: 5px; overflow: hidden; position: relative;">
                   <div style="width: ${targetW}%; height: 100%; background: #CBD5E1; border-radius: 5px;"></div>
                 </div>

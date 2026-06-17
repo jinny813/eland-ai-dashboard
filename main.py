@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.16"
+REPORT_VERSION = "v17.17"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -158,27 +158,86 @@ def _cached_get_available_months(_mgr, max_no: int):
 
 
 def cached_load_all_dashboard_data(mgr, available_months):
-    """모든 가용 월 데이터를 로드. Stage 1 전처리는 1회, Stage 2 채점은 월별 캐시."""
+    """모든 가용 월 데이터를 로드. GSheet 로드 실패 시 로컬 dashboard_backup.json 폴백 작동."""
     max_no = _cached_get_max_no(mgr)
     cache_key = f"last_valid_all_dashboard_data_{max_no}_{len(available_months)}_{REPORT_VERSION}"
 
-    if cache_key in st.session_state and st.session_state[cache_key]:
-        return st.session_state[cache_key]
+    # [BUG-FIX] 이전에 저장된 에러 dict({"error": ...})가 truthy여서 재반환되던 문제 수정
+    cached = st.session_state.get(cache_key)
+    if cached and isinstance(cached, dict) and "error" not in cached:
+        return cached
 
+    all_data = {}
     try:
-        all_data = {}
+        if not available_months:
+            raise ValueError("Empty available months from GSheet")
+            
         for m in available_months:
             res = _cached_build_month(mgr, max_no, m, report_version=REPORT_VERSION)
-            if res and "error" not in res:
+            if res and isinstance(res, dict) and "error" not in res:
                 all_data[m] = res
 
         if not all_data:
-            raise ValueError("No valid dashboard data found for any month")
+            raise ValueError("No valid dashboard data found for any month from GSheet")
 
         st.session_state[cache_key] = all_data
         return all_data
     except Exception as e:
-        logger.error(f"[Cache] 로드 실패: {e}.")
+        logger.warning(f"[Cache] GSheet 로드 실패 ({e}) — 로컬 백업 파일 폴백 시도")
+        import os
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        backup_path = os.path.join(base_dir, "data", "dashboard_backup.json")
+        if os.path.exists(backup_path):
+            try:
+                with open(backup_path, "r", encoding="utf-8") as f:
+                    backup_data = json.load(f)
+                if backup_data and isinstance(backup_data, dict) and "error" not in backup_data:
+                    logger.info("✅ [Fallback] 로컬 dashboard_backup.json 복원 성공! (3배수 및 평수 연동 수동 보정 중...)")
+                    # 동적 평수 갱신을 위해 storemaster load 시도
+                    import config.area_config as _cfg_area
+                    from core.data_loader import preprocess_raw_records
+                    try:
+                        preprocess_raw_records(mgr, [])
+                    except Exception as _pe:
+                        logger.error(f"[Fallback Patch] storemaster 로드 오류: {_pe}")
+                    
+                    # 데이터 보정 루프
+                    from config.area_config import get_area
+                    from config.brand_targets import get_tm
+                    for m_key, m_val in backup_data.items():
+                        if not isinstance(m_val, dict):
+                            continue
+                        brands_list = m_val.get("BRANDS", [])
+                        for b_data in brands_list:
+                            store = b_data.get("store")
+                            b_name = b_data.get("name")
+                            if not store or not b_name:
+                                continue
+                            area = get_area(store, b_name)
+                            b_data["area"] = area
+                            
+                            tM_won = get_tm(brand_name=b_name, store_name=store, month=m_key)
+                            b_data["tM"] = round(tM_won / 1_000_000, 1)
+                            
+                            if area > 0:
+                                tM_inv_won = area * 100_000.0 * 30.0 * 3.0
+                            else:
+                                tM_inv_won = tM_won * 3.0
+                            b_data["tM_inv"] = round(tM_inv_won / 1_000_000, 1)
+                            
+                            sM = b_data.get("sM", 0.0)
+                            if b_data["tM_inv"] > 0:
+                                b_data["inv_reached_pct"] = round((sM / b_data["tM_inv"]) * 100)
+                            else:
+                                b_data["inv_reached_pct"] = 0
+                                
+                    st.session_state[cache_key] = backup_data
+                    return backup_data
+                else:
+                    logger.error("[Fallback] 백업 파일이 비었거나 에러 상태입니다.")
+            except Exception as fe:
+                logger.error(f"[Fallback] 로컬 백업 파일 로드 실패: {fe}")
+                
         return {"error": f"전체 데이터 로드 실패 (상세: {e})"}
 
 
@@ -355,13 +414,15 @@ def main():
                 st.rerun()
 
         # [v7.1] 캐시 강제 초기화 버튼 (모든 사용자에게 항시 노출)
-        if st.button("🔄 캐시 초기화 (신규 지점 반영)", use_container_width=True):
+        if st.button("\U0001f504 캐시 초기화 (신규 지점 반영)", use_container_width=True):
             st.cache_data.clear()
-            if 'last_valid_dashboard_data' in st.session_state:
-                del st.session_state['last_valid_dashboard_data']
-            st.success("✅ 캐시 초기화 완료! 페이지를 새로고침하세요.")
+            # [BUG-FIX] last_valid_all_dashboard_data_* 포함 모든 캐시 키 삭제
+            stale_keys = [k for k in list(st.session_state.keys()) if k.startswith('last_valid')]
+            for _k in stale_keys:
+                del st.session_state[_k]
+            st.success("\u2705 캐시 초기화 완료! 페이지를 새로고침하세요.")
             st.rerun()
-        
+
         st.caption(f"DB Connected: {check_mgr.is_connected}")
 
 

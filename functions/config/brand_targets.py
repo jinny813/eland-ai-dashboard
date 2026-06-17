@@ -2032,8 +2032,19 @@ def get_tm(brand_name: str, store_name: str = None, month: str = None) -> float:
         if prev_mo and prev_mo > 0:
             return float(prev_mo * 1.3)
 
+    # 6.5순위: 당년 DB 실적(CURR_MONTH_ACTUALS) 최근 가용 월 × 1.3
+    # — storemaster에 없는 아동/스포츠 브랜드 등 전년 데이터 미존재 시 활용
+    if store_name and key and b_norm:
+        _curr_store = CURR_MONTH_ACTUALS.get(store_name, {})
+        for _try_mk in sorted(_curr_store.keys(), reverse=True):
+            if _try_mk <= key and isinstance(_curr_store[_try_mk], dict):
+                _v = _curr_store[_try_mk].get(b_norm, 0)
+                if _v > 0:
+                    return float(_v * 1.3)
+
     # 최종 fallback
     return float(DEFAULT_TM) * 1_000_000
+
 
 
 def get_tm_m(brand_name: str, store_name: str = None, month: str = None) -> float:

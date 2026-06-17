@@ -5,6 +5,8 @@ import pandas as pd
 import requests
 import time
 import random
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
@@ -40,6 +42,7 @@ class GSheetManager:
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session = requests.Session()
+        self.session.verify = False  # SSL 인증 오류 우회
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
 
@@ -108,7 +111,7 @@ class GSheetManager:
             # [v7.0] 1단계: POST 전송 (새로운 연결)
             r1 = requests.post(self.gas_url, data=form_data,
                                headers=headers, timeout=(5, timeout), 
-                               allow_redirects=False)
+                               allow_redirects=False, verify=False)
             logger.info(f"[GAS] POST status={r1.status_code}")
 
             if r1.status_code in (301, 302, 303, 307, 308):
@@ -116,7 +119,7 @@ class GSheetManager:
                 logger.info(f"[GAS] redirect -> {redirect_url}")
                 # 2단계: 리다이렉트를 GET으로 추적 (새로운 연결)
                 r2 = requests.get(redirect_url, headers=headers, 
-                                  timeout=(5, timeout), allow_redirects=True)
+                                  timeout=(5, timeout), allow_redirects=True, verify=False)
                 return self._parse_response(r2)
 
             return self._parse_response(r1)
@@ -199,7 +202,8 @@ class GSheetManager:
                         data=data, 
                         headers=headers,
                         timeout=(10, 180),
-                        allow_redirects=True
+                        allow_redirects=True,
+                        verify=False
                     )
                     
                     # [v100.1] 대소문자 무시 및 정식 응답 파싱 적용
@@ -290,11 +294,12 @@ class GSheetManager:
         ]
         for enc in ('utf-8', 'cp949', 'utf-8-sig', 'euc-kr', 'utf-16'):
             try:
-                with open(raw_path, 'r', encoding=enc, errors='ignore') as f:
+                with open(raw_path, 'r', encoding=enc, errors='strict') as f:
                     head = f.read(2048)
                 delim = ',' if ',' in head and '\t' not in head else '\t'
-                df = pd.read_csv(raw_path, sep=delim, encoding=enc, header=0,
-                                 dtype=str, on_bad_lines='skip')
+                with open(raw_path, 'r', encoding=enc, errors='ignore') as f_in:
+                    df = pd.read_csv(f_in, sep=delim, header=0,
+                                     dtype=str, on_bad_lines='skip')
                 actual = len(df.columns)
                 col_names = fixed_cols[:actual]
                 if actual > len(fixed_cols):

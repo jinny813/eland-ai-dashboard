@@ -27,9 +27,9 @@ class ActionAnalyzer:
 
     def get_action_recommendations(self, b_df: pd.DataFrame, bp_brand_df: pd.DataFrame = None) -> dict:
         """
-        [v20.0] 사용자 요청 정밀 로직 적용:
-        1) 재고 확보 필요: 자사 BEST 10 중 [재고 < 판매량] 품목 → 목표 재고액 기반 확보 수량 산출
-        2) 집중 판매 필요: 전사 BEST 10 중 [현 지점 판매 <= 10개] 품목 → 진열 강화 안내
+        [v21.0] 사용자 요청 정밀 로직 적용:
+        1) 재고 확보 필요: 자사 BEST 10 중 재고 5개 이하 품목
+        2) 집중 판매 필요: 자사 BEST 10 중 재고 5개 초과 품목
         """
         if b_df is None or b_df.empty:
             return {"ai_unified": [], "push": [], "has_bp_data": False}
@@ -69,9 +69,7 @@ class ActionAnalyzer:
                 if name: return name
             return str(row.get('style_name', row.get('product_name', row.get('item_name', sc))))
 
-        # 1. 재고 확보 필요 상품 (자사 BEST 10 기반)
-        secure_list = []
-        # 자사 판매 BEST 10 추출
+        # 1. 자사 판매 BEST 10 추출 및 재고량별 액션 가이드 분류
         agg_dict = {
             'sales_qty': 'sum', 'stock_qty': 'sum', 'stock_amt': 'sum', 'normal_price': 'first'
         }
@@ -80,88 +78,41 @@ class ActionAnalyzer:
                 agg_dict[c] = 'first'
         
         my_best = b_df.groupby('style_code').agg(agg_dict).sort_values('sales_qty', ascending=False).head(10)
-        my_best_codes = [str(c).strip() for c in my_best.index.tolist()]
+
+        secure_list = []
+        push_list = []
 
         for sc, row in my_best.iterrows():
-            # [v20.2] 재고가 판매량보다 적거나, 목표 대비 부족한 경우
-            if row['stock_qty'] < row['sales_qty'] or row['stock_amt'] < target_per_item:
-                price = row['normal_price'] if row['normal_price'] > 0 else 1.0
-                shortfall_amt = target_per_item - row['stock_amt']
-                qty_by_amt = int(max(0, shortfall_amt) / price)
-                qty_by_sales = int(max(0, row['sales_qty'] - row['stock_qty']))
-                
-                final_secure_qty = max(qty_by_amt, qty_by_sales)
-                if final_secure_qty < 3: continue # 너무 적은 수량은 제외
-                if final_secure_qty > 50: final_secure_qty = 50 # 최대치 제한
-                
-                name = get_name(sc, row)
+            name = get_name(sc, row)
+            stock_qty = int(row['stock_qty'])
+            
+            if stock_qty <= 5:
+                # 5개 이하: 확보 필요
                 secure_list.append({
                     "rank": len(secure_list) + 1,
-                    "icon": "🏆",
-                    "tag": "BEST (TOP 10)",
+                    "icon": "⚠️",
+                    "tag": "확보 필요",
                     "style_code": sc,
                     "style_name": name,
-                    "action_msg": f"{final_secure_qty}장 필요",
-                    "message": f"<b>{name}</b> / {sc} / <b>{final_secure_qty}장 필요</b>",
+                    "action_msg": f"<span style='color:#DC2626; font-weight:800;'>확보 필요 (재고 {stock_qty}개)</span>",
+                    "message": f"<b>{name}</b> / {sc} / <b>확보 필요 (재고 {stock_qty}개)</b>",
                     "keywords": ["재고부족", "인기상품", "추가입고"],
-                    "sub_info": f"현재고 {int(row['stock_qty'])}EA / 2주 판매 {int(row['sales_qty'])}EA"
+                    "sub_info": f"현재고 {stock_qty}EA / 2주 판매 {int(row['sales_qty'])}EA"
                 })
-
-        # 2. 집중 판매 필요 상품
-        push_list = []
-        brand_name_raw = b_df['brand_name'].iloc[0] if not b_df.empty else ""
-
-        # [v151.0] JJ지고트 → BP 데이터 유무와 무관하게 무조건 하드코딩 5개 주입
-        if "JJ지고트" in brand_name_raw:
-            logger.info(f"[{brand_name_raw}] Applying Hard-coded Focus List (unconditional).")
-            jj_focus_list = [
-                {"rank": 1, "code": "GR3M0TC921", "name": "트렌치 코트",                    "msg": "1등매장 1위 / 본매장 재고 1EA"},
-                {"rank": 2, "code": "GR3A0TCJ11", "name": "레더 디테쳐블 칼라 트렌치 코트", "msg": "1등매장 2위 / 본매장 재고 13EA"},
-                {"rank": 3, "code": "GP4A0OP811", "name": "브레이드 패치 포켓 원피스",       "msg": "1등매장 3위 / 본매장 재고 16EA"},
-                {"rank": 4, "code": "GP4A0OP331", "name": "벨티드 플리츠 원피스+재킷 세트", "msg": "1등매장 4위 / 본매장 재고 42EA"},
-                {"rank": 5, "code": "GP3A0JKJ41", "name": "롤업 슬리브 트위드 재킷",        "msg": "1등매장 5위 / 본매장 재고 9EA"},
-            ]
-            for item in jj_focus_list:
-                push_list.append({
-                    "rank": item['rank'],
-                    "style_code": item['code'],
-                    "style_name": item['name'],
-                    "sales_qty": 0, "stock_qty": 0,
-                    "tag": "JJ 전략 상품",
-                    "reason": f"<span style='color:#DC2626; font-weight:800;'>[{item['msg']}]</span>"
-                })
-
-        elif bp_brand_df is not None and not bp_brand_df.empty:
-            bp_df = bp_brand_df.copy()
-            for c in ['sales_qty', 'stock_qty']:
-                if c in bp_df.columns: bp_df[c] = pd.to_numeric(bp_df[c], errors='coerce').fillna(0)
-# [v4.8] ComparisonEngine을 통한 정밀 차집합 분석 (강제 렌더링 포함)
-            gap_codes = ComparisonEngine.get_gap_analysis(bp_brand_df, my_best_codes)
-            # 1등 매장 BEST 순위 매핑
-            bp_rank_map = {sc: i+1 for i, sc in enumerate(
-                bp_df.groupby('style_code')['sales_qty'].sum().sort_values(ascending=False).head(10).index
-            )}
-            for sc in gap_codes:
-                my_item = b_df[b_df['style_code'] == sc]
-                my_sales = my_item['sales_qty'].sum() if not my_item.empty else 0
-                my_stock = my_item['stock_qty'].sum() if not my_item.empty else 0
-                row = my_item.iloc[0] if not my_item.empty else bp_df[bp_df['style_code'] == sc].iloc[0]
-                name = get_name(sc, row)
-                bp_rank = bp_rank_map.get(sc, '?')
-                tag = "재고 확보 필요" if my_stock == 0 else "집중 노출 필요"
+            else:
+                # 5개 초과: 집중 판매 필요
                 push_list.append({
                     "rank": len(push_list) + 1,
                     "style_code": sc,
                     "style_name": name,
-                    "sales_qty": int(my_sales),
-                    "stock_qty": int(my_stock),
-                    "tag": tag,
-                    "reason": f"<b>1등 매장 BEST {bp_rank}위 / 현 지점 재고 {int(my_stock)}장</b>"
+                    "sales_qty": int(row['sales_qty']),
+                    "stock_qty": stock_qty,
+                    "tag": "집중 판매 필요",
+                    "reason": f"<span style='color:#F97316; font-weight:800;'>집중 판매 필요 (재고 {stock_qty}개)</span>"
                 })
-                if len(push_list) >= 10: break
 
         return {
             "ai_unified": secure_list,
             "push": push_list,
-            "has_bp_data": True if (push_list or (bp_brand_df is not None and not bp_brand_df.empty)) else False
+            "has_bp_data": True
         }
