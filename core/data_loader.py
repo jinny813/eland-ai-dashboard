@@ -436,9 +436,14 @@ def load_dashboard_data(
                     if s_amt > 0:
                         yr_key = ym_key.split('_')[0]
                         if yr_key == '2025':
-                            _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
+                            # 기존 storemaster 데이터가 없을 때만 fallback으로 채움
+                            existing = _cfg_targets.PREV_YEAR_MONTHLY_SALES.get(st_key, {}).get(ym_key, {}).get(br_key, 0)
+                            if not existing or existing <= 0:
+                                _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
                         elif yr_key == '2026':
-                            _cfg_targets.CURR_MONTH_ACTUALS.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
+                            existing = _cfg_targets.CURR_MONTH_ACTUALS.get(st_key, {}).get(ym_key, {}).get(br_key, 0)
+                            if not existing or existing <= 0:
+                                _cfg_targets.CURR_MONTH_ACTUALS.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
                             
                 logger.info("[data_loader] DB 내 과거 및 당기 실적 데이터 동적 적재 완료 (%d건)", len(group_df))
         except Exception as _e:
