@@ -34,12 +34,16 @@ def extract_specs(text):
     
     return {k: ",".join(v) if v else "" for k, v in specs.items()}
 
-def search_naver_shopping(query):
+def search_naver_shopping(query, brand=""):
     if not NAVER_CLIENT_ID or not NAVER_CLIENT_SECRET:
         return None
     
-    encText = urllib.parse.quote(query)
-    url = f"https://openapi.naver.com/v1/search/shop.json?query={encText}&display=1"
+    # 검색어에 브랜드를 포함시켜 검색 정확도를 높입니다.
+    search_query = f"{brand} {query}".strip()
+    encText = urllib.parse.quote(search_query)
+    
+    # 브랜드 교차 검증을 위해 여유 있게 5개 항목을 요청합니다.
+    url = f"https://openapi.naver.com/v1/search/shop.json?query={encText}&display=5"
     request = urllib.request.Request(url)
     request.add_header("X-Naver-Client-Id", NAVER_CLIENT_ID)
     request.add_header("X-Naver-Client-Secret", NAVER_CLIENT_SECRET)
@@ -50,8 +54,16 @@ def search_naver_shopping(query):
             response_body = response.read()
             data = json.loads(response_body.decode('utf-8'))
             if data['items']:
+                # 브랜드가 명시된 경우, 타이틀/브랜드/몰 이름 등에 포함되어 있는지 확인
+                if brand:
+                    for item in data['items']:
+                        title = re.sub(r'<[^>]*>', '', item['title'])
+                        if brand in title or brand in item.get('brand', '') or brand in item.get('mallName', ''):
+                            category = item.get('category3', item.get('category2', item.get('category1', '')))
+                            return {"title": title, "category": category}
+                
+                # 브랜드가 없거나 매칭되는 항목이 없으면 최상단(첫 번째) 아이템 반환
                 item = data['items'][0]
-                # 상품명에서 HTML 태그 제거
                 title = re.sub(r'<[^>]*>', '', item['title'])
                 category = item.get('category3', item.get('category2', item.get('category1', '')))
                 return {"title": title, "category": category}
@@ -98,9 +110,10 @@ def main():
     for idx, (item_code, info) in enumerate(items):
         old_name = info.get("style_name", info.get("item_name", ""))
         category = info.get("item_name", "")
+        brand = info.get("brand", "")
         
         # 1. API 호출
-        api_data = search_naver_shopping(item_code)
+        api_data = search_naver_shopping(item_code, brand)
         
         if api_data:
             product_name = api_data['title']
