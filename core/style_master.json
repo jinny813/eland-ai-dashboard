@@ -850,8 +850,8 @@
     ]
   },
   "AG4JK3000": {
-    "item_name": "자켓",
-    "style_name": "더블 코튼 트렌치 자켓",
+    "item_name": "아우터",
+    "style_name": "네이처하이크 Pro 앙고 에어텐트(펌프내장형) 캐노피 타프포함 그늘막",
     "brand": "안지크",
     "keywords": [
       "자켓",
@@ -921,8 +921,8 @@
     ]
   },
   "B3G22KPO010": {
-    "item_name": "니트",
-    "style_name": "반오픈 카라 5부 소매 니트",
+    "item_name": "상의",
+    "style_name": "오픈카라 니트-B3G22KPO010",
     "brand": "보니스팍스",
     "keywords": [
       "니트"
@@ -1324,8 +1324,8 @@
     ]
   },
   "B1G22DSL040": {
-    "item_name": "팬츠",
-    "style_name": "세미 배기 데님 팬츠",
+    "item_name": "상의",
+    "style_name": "옆 밴딩 밑단 오비 디테일 8부 와이드 데님 팬츠-B1H22DSL040",
     "brand": "보니스팍스",
     "keywords": [
       "데님",
@@ -2335,7 +2335,7 @@
     "brand": "샤틴"
   },
   "AG4BL2000": {
-    "style_name": "AGK NORDIC 에이지케이 퀵 클린 BLDC 무선 청소기 AGK-VC2000B 295326",
+    "style_name": "AGSOUND AG-400BU / 4채널 400W / 블루투스 마이크에코내장 매장앰프",
     "brand": "안지크",
     "item_name": "상의"
   },
@@ -2355,7 +2355,7 @@
     "item_name": "상의"
   },
   "AK2BL5190": {
-    "style_name": "안지크 안지크 비비드 버블 지지미 티블라우스 AK2BL5190",
+    "style_name": "안지크 비비드 버블 지지미 티블라우스 AK2BL5190",
     "brand": "안지크",
     "item_name": "상의"
   },
@@ -2561,5 +2561,4481 @@
     "style_name": "제시뉴욕 린넨 와이드 팬츠 BE4NRPI0250",
     "brand": "제시뉴욕",
     "item_name": "상의"
+  },
+  "CVHWG2402Q": {
+    "style_name": "[클라비스]5부 타이 티블라우스 CVHWG2405Q",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVBWG2401Q": {
+    "style_name": "[클라비스]넥셔링 블라우스 CVBWG2403M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVHWG2303M": {
+    "style_name": "CLOVIS 배색 레터링 클라비스 티셔츠 CVHWF2501M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVHWG2401M": {
+    "style_name": "[클라비스][아이보리/네이비 재입고] 반팔 스트라이프 티셔츠 CVHWG2401M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVCKG2301Q": {
+    "style_name": "[클라비스]후드 집업 니트 CVCKF4V04S",
+    "brand": "클라비스",
+    "item_name": "아우터"
+  },
+  "CVHWG2302M": {
+    "style_name": "CLOVIS 루즈핏 티셔츠 CVHWF2302M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVAMG2301N": {
+    "style_name": "[클라비스][찰랑셔츠] 기본핏 CVYWG2301N",
+    "brand": "클라비스"
+  },
+  "CVBWG2403Q": {
+    "style_name": "[클라비스]넥셔링 블라우스 CVBWG2403M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVCKG2401M": {
+    "style_name": "[클라비스]케이블 가디건 CVCKG2401M",
+    "brand": "클라비스",
+    "item_name": "아우터"
+  },
+  "CVHWG2301M": {
+    "style_name": "[클라비스]베이직 반팔 티셔츠 CVHWG2301M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "PS7XB3T3": {
+    "style_name": "플라스틱아일랜드 스카프 디테일 티셔츠 PS7XB3T3",
+    "brand": "플라스틱아일랜드"
+  },
+  "PQ2AG501": {
+    "style_name": "NC강서점 플라스틱아일랜드 크링클 미니 호보백 PQ2AG501",
+    "brand": "플라스틱아일랜드"
+  },
+  "PQ3WO801": {
+    "style_name": "플라스틱아일랜드 허리스모킹 집업 원피스 PQ3WO801",
+    "brand": "플라스틱아일랜드"
+  },
+  "PR2CH461": {
+    "style_name": "플라스틱아일랜드 멀티스트라이프 루즈핏 티셔츠 PR2CH461",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PR7CH363": {
+    "style_name": "플라스틱아일랜드 실켓터치 자수포인트 티셔츠 PR7CH363",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PQ3WS965": {
+    "style_name": "플라스틱아일랜드 밴딩 포켓 스커트 PQ3WS965",
+    "brand": "플라스틱아일랜드",
+    "item_name": "상의"
+  },
+  "PS7XB1J0": {
+    "style_name": "플라스틱아일랜드 프릴 바람막이 점퍼 PS7XB1J0",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS7XB3G4": {
+    "style_name": "플라스틱아일랜드 잔골지 슬림핏 크롭 가디건 DJ DJ PS7XB3G4",
+    "brand": "플라스틱아일랜드"
+  },
+  "PR2KG002": {
+    "style_name": "플라스틱아일랜드 끈장식 스카시 니트 가디건 PR2KG002",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS7XB1B0": {
+    "style_name": "플라스틱아일랜드 포켓 베이직 블라우스 PS7XB1B0",
+    "brand": "플라스틱아일랜드"
+  },
+  "FK261CD01X008": {
+    "style_name": "[휠라키즈] 레인저코어 KD_FK261CD01X008_001",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK262SD01X001": {
+    "style_name": "[AK수원점] 휠라키즈 어반크릭샌들 FK262SD01X001",
+    "brand": "휠라키즈"
+  },
+  "FK262SD01X008": {
+    "style_name": "[AK수원점] 휠라키즈 어반크릭샌들 FK262SD01X008",
+    "brand": "휠라키즈"
+  },
+  "FK261CD01X015": {
+    "style_name": "[AK분당점] 휠라키즈 인터런 키즈 FK261CD01X015(452/100)",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK262FS07G008": {
+    "style_name": "휠라키즈 휠라 키즈 프린세스 캐치 티니핑 시어서커 셋업 FK262FS07G008 100",
+    "brand": "휠라키즈"
+  },
+  "FK262RS07G013": {
+    "style_name": "NC동수원점 휠라키즈 프린세스 캐치 티니핑 소매트임 티셔츠 FK262RS07G013 700",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK261CD01X001": {
+    "style_name": "[AK분당점] 휠라키즈 문더스트 다이얼  FK261CD01X001(456/260)",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK261CD01X042": {
+    "style_name": "[휠라키즈] 다이아나핑 휠라꾸미 라이트_FK261CD01X042_100",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK262RS07X001": {
+    "style_name": "[AK분당점] 휠라키즈 에센셜 포켓와펜티셔츠 FK262RS07X001(101/001/442)",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK262SD01X005": {
+    "style_name": "[휠라키즈] 하츄핑 컴피 샌들_FK262SD01X005_260",
+    "brand": "휠라키즈"
+  },
+  "GY26MAFRBW3": {
+    "style_name": "조지루시 오븐레인지 마호빈 오븐 에베리노 ES-GW26-WA",
+    "brand": "기비키이스",
+    "item_name": "상의"
+  },
+  "GY26MAFRMW2": {
+    "style_name": "MEIKI 메이키 미쓰비시 엔진 GB18GPN 정속수동",
+    "brand": "기비키이스",
+    "item_name": "상의"
+  },
+  "BO24M4FRT41": {
+    "style_name": "[기비키이스]B4SB2T5시보리배색데님셔츠",
+    "brand": "기비키이스"
+  },
+  "GY23M4FRA9C": {
+    "style_name": "[기비키이스]G3SM115 카터",
+    "brand": "기비키이스",
+    "item_name": "상의"
+  },
+  "GY24M1FRV31": {
+    "style_name": "[기비키이스]G3WH0Z1 기비 박시 숏 코트",
+    "brand": "기비키이스"
+  },
+  "GY24S4FRG38": {
+    "style_name": "[롯데백화점] 키이스 GIVY 파인딩 가디건 GY24S4FRG38 LE1221151464",
+    "brand": "기비키이스"
+  },
+  "GY26MDFRKW2": {
+    "style_name": "MEIKI 메이키 미쓰비시 엔진 GB18GPN 정속수동",
+    "brand": "기비키이스",
+    "item_name": "상의"
+  },
+  "BO24S4FRM16": {
+    "style_name": "[기비키이스]B4SB2T5시보리배색데님셔츠",
+    "brand": "기비키이스"
+  },
+  "GY22A1FRA05": {
+    "style_name": "[기비키이스]G3AH0X6 기비 꽈배기 니트 코트",
+    "brand": "기비키이스",
+    "item_name": "상의"
+  },
+  "GY22A1FRJKD": {
+    "style_name": "기비키이스 키이스 카라넥 재킷 K4SK153",
+    "brand": "기비키이스",
+    "item_name": "아우터"
+  },
+  "R3G21WBL010": {
+    "style_name": "[더레노마]잔체크 후드 반팔 블라우스-R1G21WBL960",
+    "brand": "더레노마",
+    "item_name": "상의"
+  },
+  "R3G21WJK020": {
+    "style_name": "[더레노마] 린넨 100 투버튼 자켓 (R3G21WJK020)",
+    "brand": "더레노마",
+    "item_name": "스커트"
+  },
+  "R3G21WJP020": {
+    "style_name": "[신세계백화점][하남점] [더레노마] 밑단 배색 점퍼 R3G21WJP020",
+    "brand": "더레노마",
+    "item_name": "스커트"
+  },
+  "R3G21WSL020": {
+    "style_name": "더 레노마 밴딩 슬랙스 R3G21WSL020 LE1219678597",
+    "brand": "더레노마",
+    "item_name": "상의"
+  },
+  "R3G21WSL010": {
+    "style_name": "더 레노마 코튼 스트링 슬랙스 팬츠 R2H21WSL010",
+    "brand": "더레노마",
+    "item_name": "상의"
+  },
+  "R2G21WJK060": {
+    "style_name": "[현대킨텍스점] [레노마] 오픈카라 스트링 반팔 쟈켓 R2G21WJK120A",
+    "brand": "더레노마",
+    "item_name": "스커트"
+  },
+  "R2G21WOP050": {
+    "style_name": "[더레노마]레이스 포인트 밴딩 원피스-R2G21WOP010",
+    "brand": "더레노마",
+    "item_name": "원피스"
+  },
+  "R2G22JCD190": {
+    "style_name": "[롯데백화점] 더 레노마 버튼 후드 가디건-R2G22JCD190 LE1221307902",
+    "brand": "더레노마",
+    "item_name": "상의"
+  },
+  "R2G21WJP040": {
+    "style_name": "[신세계백화점][하남점] [더레노마] 밑단 배색 점퍼 R3G21WJP020",
+    "brand": "더레노마",
+    "item_name": "스커트"
+  },
+  "R2G22KPO170": {
+    "style_name": "[더레노마]린넨 스트라이프 니트 풀오버-R2G22KPO060",
+    "brand": "더레노마",
+    "item_name": "상의"
+  },
+  "RSZPDC02A": {
+    "style_name": "레노마 옴므 S/S 경량페딩 아웃터 셔츠 BC02A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSZPDC02B": {
+    "style_name": "레노마옴므 레노마옴므 레노마 옴므베이지 컬러 기본핏 트러커 가죽점퍼 CHRRAMLU02B_IC",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSIMSP18B": {
+    "style_name": "레노마옴므 린넨라이크 투톤네이비 모 혼방 여름 스판 정장 바지 RSIMSP18B",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "RRFPCP55A": {
+    "style_name": "레노마옴므 SS 다크그레이 폴리 일자 핏 팬츠 RRFPCP55A  90",
+    "brand": "레노마옴므"
+  },
+  "RSJPSJ55A": {
+    "style_name": "[레노마옴므] S/S 네이비 스트레치 정장세트 RSJPSJ55A / RSJPSP55A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSJPSP55A": {
+    "style_name": "[레노마옴므] S/S 네이비 스트레치 정장세트 RSJPSJ55A / RSJPSP55A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RRAISP71A": {
+    "style_name": "레노마 옴므 겨울 페딩 카키 코트 (BH71A)",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "RSJPSP58A": {
+    "style_name": "레노마옴므 26년 SS 마혼방셋업 정장바지 네이비 RSCP58A-S59",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSIMSJ12A": {
+    "style_name": "레노마 레노마옴므 다크그레이 트위드저지 모 혼방 여름 스판 정장 RSIMSJ12A SP12A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSIMSP12A": {
+    "style_name": "레노마 레노마옴므 다크그레이 트위드저지 모 혼방 여름 스판 정장바지 RSIMSP12A",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "7LOPT301": {
+    "style_name": "루이까스텔 여성 바지 부츠컷 솔리드V 밴드 엠보자수 봄 여름 팬츠 바지 7LOPT301",
+    "brand": "루이까스텔",
+    "item_name": "원피스"
+  },
+  "7LOTS408": {
+    "style_name": "루이까스텔 쿨 냉감 스트라이프 스포츠 라운드 반팔 티셔츠 7lots408",
+    "brand": "루이까스텔",
+    "item_name": "아우터"
+  },
+  "7MOTS302": {
+    "style_name": "루이까스텔 카라뒤 레터링포인트 긴팔티셔츠 7MOTS302",
+    "brand": "루이까스텔",
+    "item_name": "아우터"
+  },
+  "7MOTS401": {
+    "style_name": "루이까스텔 남성 티셔츠 에리 스트라이프 공갈 포켓 반팔 카라 반팔 티셔츠 7MOTS401",
+    "brand": "루이까스텔",
+    "item_name": "아우터"
+  },
+  "7LOSW401": {
+    "style_name": "루이까스텔 여성 골프 여름 기본 폴로 카라 반팔 티셔츠 7LETS401",
+    "brand": "루이까스텔",
+    "item_name": "상의"
+  },
+  "7LOTS305": {
+    "style_name": "루이까스텔 여성 봄 크롭기장 시보리 티셔츠 7LOTS305W",
+    "brand": "루이까스텔",
+    "item_name": "아우터"
+  },
+  "7MOPT304": {
+    "style_name": "루이까스텔 여성 봄여름 캐주얼 양옆밴딩 슬림스트레이트 팬츠 7LOPT304B",
+    "brand": "루이까스텔",
+    "item_name": "원피스"
+  },
+  "7LOTS303": {
+    "style_name": "루이까스텔 여성 봄여름 올록볼록 엠보싱 긴팔티셔츠 뉴코아인천점 7LOTS303",
+    "brand": "루이까스텔",
+    "item_name": "아우터"
+  },
+  "7MOJP301": {
+    "style_name": "루이까스텔 골프 S/S 남성 시보리 포인트 베이직 점퍼 7mojp301",
+    "brand": "루이까스텔",
+    "item_name": "원피스"
+  },
+  "7MOJP403": {
+    "style_name": "루이까스텔 남성 바람막이 점퍼 골프웨어 봄 여름 잠바 바람막이 자켓 점퍼 7MOJP303",
+    "brand": "루이까스텔",
+    "item_name": "원피스"
+  },
+  "MZBAWJ401A": {
+    "style_name": "5부 벨트 자켓 MZBAWJ4240",
+    "brand": "미니멈",
+    "item_name": "상의"
+  },
+  "MYAAWJ2240": {
+    "style_name": "미니멈 자켓 팬츠세트 (MYAAWJ1190MYAAWP1190 BE1)_IC 모다아울렛 인천점",
+    "brand": "미니멈",
+    "item_name": "스커트"
+  },
+  "MZBAWB506A": {
+    "style_name": "미니멈 베이직 러플 블라우스 MZBAWB506A 420556",
+    "brand": "미니멈",
+    "item_name": "상의"
+  },
+  "M1BGWO3930": {
+    "style_name": "미니멈 블라우스 배색 플레어 원피스 M1BGWO3930_ESC",
+    "brand": "미니멈"
+  },
+  "M1BGWO3950": {
+    "style_name": "미니멈 시스루 플레어 벨트 원피스 M1BGWO3910DV_BP 모다아울렛 부평점",
+    "brand": "미니멈"
+  },
+  "MXBGKU3190": {
+    "style_name": "미니멈 펄 버튼 라운드 풀오버 니트 MXBGKU3190",
+    "brand": "미니멈"
+  },
+  "MYBAWS5240": {
+    "style_name": "미니멈 블라우스 스커트세트 BL3 IC MYBAWB5240 MYBAWS5240",
+    "brand": "미니멈",
+    "item_name": "상의"
+  },
+  "MZBGWO3850": {
+    "style_name": "미니멈 MZBGWO4960DV 크롭자켓. 세트 원피스_JK 모다아울렛 전주김제점",
+    "brand": "미니멈"
+  },
+  "MZBGWO3960": {
+    "style_name": "미니멈 MZBGWO4960DV 크롭자켓. 세트 원피스_JK 모다아울렛 전주김제점",
+    "brand": "미니멈"
+  },
+  "M1BGWJ3880": {
+    "style_name": "[신세계백화점]핀턱 벨트 카라 자켓 M1BGWJ3850",
+    "brand": "미니멈",
+    "item_name": "스커트"
+  },
+  "WSA2PV14A": {
+    "style_name": "바쏘옴므26SS 그레이 쿨맥스 스판 히든밴딩 슬랙스 바지 WSA2PS32",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JW14A": {
+    "style_name": "바쏘옴므 정장 여름 슬림핏 스판 캐주얼 셋업정장 네이비 WSA2JK66",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "WSA2PV15A": {
+    "style_name": "바쏘옴므26SS 그레이 쿨맥스 스판 히든밴딩 슬랙스 바지 WSA2PS32",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JW15A": {
+    "style_name": "바쏘옴므 그레이 린넨 스판 경량 캐주얼 셋업 정장 WSA2JK PK06ALG",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "WSA1PV27A": {
+    "style_name": "바쏘옴므26SS 라이트그레이 솔리드 린넨혼방 스트레치 히든밴딩 셋업 바지 WSA2PK06",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JW30A": {
+    "style_name": "바쏘옴므 네이비 모 혼방 데일리 3피스 수트 정장 WSA1JT VE05 ANY",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "WSA2PV30A": {
+    "style_name": "바쏘옴므26SS 그레이 프리미엄 경량 스판 아세테이트 히든밴딩 셋업 바지 WSA2PK62",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JS53A": {
+    "style_name": "바쏘옴므 까노니코 수입원단 브라운 솔리드 정장 수트 WSA1JW20ABR",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JS57A": {
+    "style_name": "바쏘옴므26SS 블루 슬럽 쿨맥스 스판 히든밴딩 캐주얼 셋업 정장 WSA2JK54-PK54",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JS62A": {
+    "style_name": "바쏘옴므 자켓 봄 가을 플리츠 스판 블루종 자켓 블랙 WSA1UA03",
+    "brand": "바쏘옴므"
+  },
+  "B1G22KCD070": {
+    "style_name": "프린트 후드 집업 가디건-B1G22KCD040",
+    "brand": "보니스팍스",
+    "item_name": "아우터"
+  },
+  "B3H21WJP050": {
+    "style_name": "하이넥 래글런 프린팅 포켓 점퍼-B3H21WJP050",
+    "brand": "보니스팍스",
+    "item_name": "스커트"
+  },
+  "B2H25WBL140": {
+    "style_name": "몸판 배색 카라 블라우스-B2H25WBL130",
+    "brand": "보니스팍스",
+    "item_name": "상의"
+  },
+  "B3G21WJP030": {
+    "style_name": "매쉬 후드 점퍼-B3G21WJP040",
+    "brand": "보니스팍스",
+    "item_name": "스커트"
+  },
+  "B3H21WJP010": {
+    "style_name": "하이넥 롤업소매 립스탁 점퍼-B3H21WJP020",
+    "brand": "보니스팍스",
+    "item_name": "스커트"
+  },
+  "B1G15LJK520": {
+    "style_name": "[신세계백화점][하남점] 라운드 어깨셔링 레더 자켓-B1G15LJK520",
+    "brand": "보니스팍스",
+    "item_name": "아우터"
+  },
+  "B1H21WBL060": {
+    "style_name": "포켓 스트라이프 프린팅 블라우스-B1H21WBL060",
+    "brand": "보니스팍스",
+    "item_name": "상의"
+  },
+  "BRFCM26343NYX": {
+    "style_name": "[브렌우드] 울블렌디드 네이비 마이크로 슈트 팬츠 BRFCM26343NYX 남색 BRFCM26343NYX",
+    "brand": "브렌우드",
+    "item_name": "아우터"
+  },
+  "BRSDX26351WHX": {
+    "style_name": "[브렌우드]매직셔츠 레귤러핏 져지 솔리드 드레스셔츠 화이트 BRSDX25161WHX",
+    "brand": "브렌우드"
+  },
+  "BRFBM26343NYX": {
+    "style_name": "울블렌디드 네이비 마이크로 슈트 BRFBM26343NYX SET",
+    "brand": "브렌우드"
+  },
+  "BRSDX26151WHX": {
+    "style_name": "[브렌우드]매직셔츠 레귤러핏 져지 솔리드 드레스셔츠 화이트 BRSDX25161WHX",
+    "brand": "브렌우드"
+  },
+  "BRUAM26561NYX": {
+    "style_name": "[비즈브리즈] 심플 경량 블루종 BRUAM26551NYX",
+    "brand": "브렌우드"
+  },
+  "BRWAM26521NYX": {
+    "style_name": "[브렌우드]워셔블 칼라 배색 폴로넥 스웨터 네이비 BRWAM26531NYX",
+    "brand": "브렌우드"
+  },
+  "BRJCM26471BUX": {
+    "style_name": "[브렌우드] 솔리드 피그먼트 워싱 자켓_BRJCM25521BUX 로열 블루 BRJCM25521BUX",
+    "brand": "브렌우드",
+    "item_name": "아우터"
+  },
+  "BRJCM26521BUX": {
+    "style_name": "[브렌우드] 솔리드 피그먼트 워싱 자켓_BRJCM25521BUX 로열 블루 BRJCM25521BUX",
+    "brand": "브렌우드",
+    "item_name": "아우터"
+  },
+  "BRPNM26414NYX": {
+    "style_name": "브렌우드 워셔블 솔리드 트윌 셋업 팬츠(BRPNM26414NYX)  네이비  86",
+    "brand": "브렌우드"
+  },
+  "BRUAS26861IVX": {
+    "style_name": "[셀렉션] 니팅 페리자켓 BRUAS26861NYX",
+    "brand": "브렌우드"
+  },
+  "BZG2PP1101": {
+    "style_name": "앤드지  투웨이 스트레치 쿨링 카츠온 히든밴딩 슬림핏 팬츠_BZD2PP1101",
+    "brand": "앤드지",
+    "item_name": "상의"
+  },
+  "BZG4WD1101": {
+    "style_name": "앤드지 남성 트리코트 반팔 셔츠_BZG2WD1251WT",
+    "brand": "앤드지"
+  },
+  "BZG2SP1103": {
+    "style_name": "앤드지  이모션 임팩트 체크 패턴 사르토리아핏 정장 팬츠_BZD2SP1103",
+    "brand": "앤드지",
+    "item_name": "하의"
+  },
+  "BZG5SB1201": {
+    "style_name": "[앤드지] 이모션 임팩트 슬림핏 수트 자켓_BZD5SB1201",
+    "brand": "앤드지"
+  },
+  "BZG5SP1201": {
+    "style_name": "[앤드지] 이모션 임팩트 슬림핏 수트 팬츠_BZD5SP1201",
+    "brand": "앤드지",
+    "item_name": "하의"
+  },
+  "BZG2ER1101": {
+    "style_name": "앤드지 남성 잔조직 카라넥 반팔티_BZG2ET1105BL",
+    "brand": "앤드지"
+  },
+  "BZG2WD1251": {
+    "style_name": "앤드지 남성 트리코트 반팔 셔츠_BZG2WD1251",
+    "brand": "앤드지"
+  },
+  "BZG2KG1103": {
+    "style_name": "앤드지 남성아티산 CANONICO 정장 자켓_BZG2SB1202GR",
+    "brand": "앤드지"
+  },
+  "BZG2SB1103": {
+    "style_name": "앤드지 남성아티산 CANONICO 정장 자켓_BZG2SB1202NV",
+    "brand": "앤드지"
+  },
+  "BZG2ER1102": {
+    "style_name": "앤드지 남성 잔조직 카라넥 반팔티_BZG2ET1105BL",
+    "brand": "앤드지"
+  },
+  "NEG2PP1624": {
+    "style_name": "[롯데백화점] 에디션 스트레치 코튼 치노 팬츠 5종 NEF2PP1921 LE1219464593",
+    "brand": "에디션",
+    "item_name": "상의"
+  },
+  "NEG2KG1952": {
+    "style_name": "[에디션] 쿨링 베이직 싱글 자켓  (NEC2KG1952)",
+    "brand": "에디션"
+  },
+  "NEG2PP1627": {
+    "style_name": "에디션 리넨 라이크 테이퍼드 슬랙스 NEG2PP1627",
+    "brand": "에디션",
+    "item_name": "상의"
+  },
+  "NEG2PP1951": {
+    "style_name": "에디션 빈티지 나일론 셋업 스트레이트 팬츠 NEF2PP1951",
+    "brand": "에디션",
+    "item_name": "상의"
+  },
+  "C26D4FJP006": {
+    "style_name": "에잇컨셉 윈커 후드 점퍼 C26D4FJP006",
+    "brand": "에잇컨셉",
+    "item_name": "아우터"
+  },
+  "C26D7FTS329": {
+    "style_name": "에잇컨셉 루즈핏 보트 컬러단가라티셔츠 C26D7FTS276",
+    "brand": "에잇컨셉",
+    "item_name": "상의"
+  },
+  "C26D4FTS073": {
+    "style_name": "에잇컨셉 컨텐반팔T C26D4FTS073",
+    "brand": "에잇컨셉",
+    "item_name": "상의"
+  },
+  "C26D7FTS323": {
+    "style_name": "에잇컨셉 루즈핏 보트 컬러단가라티셔츠 C26D7FTS276",
+    "brand": "에잇컨셉",
+    "item_name": "상의"
+  },
+  "C25F1FPT001": {
+    "style_name": "에잇컨셉 266일자PT C26F1FPT001",
+    "brand": "에잇컨셉",
+    "item_name": "하의"
+  },
+  "C26D4FTS063": {
+    "style_name": "에잇컨셉 8부스판라운드T C26D4FTS063",
+    "brand": "에잇컨셉",
+    "item_name": "상의"
+  },
+  "VVBASYM3371": {
+    "style_name": "[행복한백화점][올리비아로렌]여성케주얼 티셔츠 VVBAS5M3371",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VOBAL3X1331": {
+    "style_name": "[행복한백화점][올리비아로렌]여성케주얼 티셔츠 VOBAL5X3111",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VOBAS4M4281": {
+    "style_name": "앞판 주머니 디테일 티셔츠_VOBAS6M3311",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VOCBSYM3431": {
+    "style_name": "하트프린트 포인트 티셔츠_VVCAS5M3431",
+    "brand": "올리비아로렌"
+  },
+  "VOBDL4X1321": {
+    "style_name": "썸머 와이드 핏 팬츠_VOBDL6M3251",
+    "brand": "올리비아로렌",
+    "item_name": "하의"
+  },
+  "VOCDL3M5416": {
+    "style_name": "백 밴딩 포인트 팬츠_VOCDL6M5221",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VVCCL3M3161": {
+    "style_name": "탈착 라이너 하프 점퍼_VVCCL6S1371",
+    "brand": "올리비아로렌"
+  },
+  "VOBAL3X1321": {
+    "style_name": "[행복한백화점][올리비아로렌]여성케주얼 티셔츠 VOBAL5X3111",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VOBAL4M3121": {
+    "style_name": "[행복한백화점][올리비아로렌]여성케주얼 티셔츠 VOBAL5X3111",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VOBBL4W9311": {
+    "style_name": "스트라이프 텍스처 니트_VOBBL6M3151",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "ZOG2TT1306": {
+    "style_name": "올젠 린넨 티에리 ZOG2TT1306",
+    "brand": "올젠"
+  },
+  "ZOG2JJ1303": {
+    "style_name": "올젠 셔츠형 점퍼 ZOG2JJ1303",
+    "brand": "올젠",
+    "item_name": "아우터"
+  },
+  "ZOG3WC1351": {
+    "style_name": "올젠 패턴 추연 셔츠 ZOG2WC1302",
+    "brand": "올젠"
+  },
+  "ZBG2ET1201": {
+    "style_name": "올젠 반팔 솔리드 티에리 ZBG2ET1201",
+    "brand": "올젠"
+  },
+  "ZOF2TT1309": {
+    "style_name": "올젠 트위스트 코튼 카라 티셔츠 ZOF2TT1309",
+    "brand": "올젠"
+  },
+  "ZBG2PP1203": {
+    "style_name": "올젠 멜란지 스트레치 팬츠 ZBG2PP1203",
+    "brand": "올젠",
+    "item_name": "상의"
+  },
+  "ZOF2PH1302": {
+    "style_name": "올젠 잔조직감 팬츠 ZOF2PP1302",
+    "brand": "올젠"
+  },
+  "ZOF2TR1319": {
+    "style_name": "[롯데백화점] 올젠 린넨 혼방 솔리드 반팔 카라 티셔츠 ZOF2TT1303 LE1219574982",
+    "brand": "올젠",
+    "item_name": "하의"
+  },
+  "B6B5PQ90-2": {
+    "style_name": "요하넥스 (B6B5BQ50) 프린팅 포켓 스트링 블라우스",
+    "brand": "요하넥스"
+  },
+  "Z5B5V200-1": {
+    "style_name": "[롯데백화점] 요하넥스 반후드 숏 구스다운 GZ5D1U100 LE1221066577",
+    "brand": "요하넥스"
+  },
+  "B6B5OQ20-1": {
+    "style_name": "요하넥스 [롯데백화점]밍크트리밍 토끼구스다운 J5D1R13M",
+    "brand": "요하넥스"
+  },
+  "J5B5O305-1": {
+    "style_name": "점퍼(J5B5O305-1)DJ",
+    "brand": "요하넥스"
+  },
+  "B6B5NQ15-1": {
+    "style_name": "요하넥스 라운드 슬리브리스 니트 B6B5NQ15-1-WH_BP 모다아울렛 부평점",
+    "brand": "요하넥스"
+  },
+  "B6B5TQ90-1": {
+    "style_name": "[요하넥스]라운드넥 5부티셔츠 Z6B5T504-1-BE_BP",
+    "brand": "요하넥스"
+  },
+  "B6B5TQ94-1": {
+    "style_name": "[요하넥스]라운드넥 5부티셔츠 Z6B5T504-1-BE_BP",
+    "brand": "요하넥스"
+  },
+  "J5B5T303-1": {
+    "style_name": "[요하넥스]라운드넥 5부티셔츠 Z6B5T504-1-BE_BP",
+    "brand": "요하넥스"
+  },
+  "Z6B5D100-1": {
+    "style_name": "요하넥스 반오픈 카라 스트링 원피스 Z5B5D903-1",
+    "brand": "요하넥스"
+  },
+  "B5A3TQ30-1": {
+    "style_name": "[요하넥스]라운드넥 5부티셔츠 Z6B5T504-1-BE_BP",
+    "brand": "요하넥스"
+  },
+  "MIVDL5M3161": {
+    "style_name": "[롯데백화점] 인디안 여름 슬림 허리 밴딩 면바지 MIVDL5M316134 LE1221506723",
+    "brand": "인디안"
+  },
+  "MIUDL5M3261": {
+    "style_name": "인디안 INDIAN 린넨라이크 팬츠 _MIUDL4M3161",
+    "brand": "인디안"
+  },
+  "MIEAS5M2221": {
+    "style_name": "인디안 RCP 투톤 솔리드 반팔 티셔츠 MIEAS5M2221 여름 티셔츠 반팔",
+    "brand": "인디안"
+  },
+  "MIEAS5M2101": {
+    "style_name": "인디안 아이스쿨 솔리드 티셔츠 MIEAS5M2101",
+    "brand": "인디안"
+  },
+  "MIUCL5M3271": {
+    "style_name": "[롯데백화점] 인디안 린넨 혼방 낮은 에리 점퍼_ MIUCL5M3171  3종택1 LE1221516867",
+    "brand": "인디안"
+  },
+  "MITFU5M2431": {
+    "style_name": "인디안 린넨 프린트 자켓 MITFU5M2421 여름 캐주얼자켓",
+    "brand": "인디안",
+    "item_name": "아우터"
+  },
+  "MITFU5M4206": {
+    "style_name": "인디안 린넨 프린트 자켓 MITFU5M2421 여름 캐주얼자켓",
+    "brand": "인디안",
+    "item_name": "아우터"
+  },
+  "MIVAS6M2281": {
+    "style_name": "인디안 MIVAS4M2281",
+    "brand": "인디안"
+  },
+  "MIUKA5M2461": {
+    "style_name": "인디안 린넨혼방 경량 사파리 점퍼 MIUKA5M2461",
+    "brand": "인디안",
+    "item_name": "상의"
+  },
+  "MIVDL6M3161": {
+    "style_name": "인디안 26 면혼방 팬츠 MIVDL6M3161",
+    "brand": "인디안"
+  },
+  "X2TLX6452": {
+    "style_name": "여성 패턴 제에리 긴팔 티셔츠(X2TLX6455NA)",
+    "brand": "제이디엑스"
+  },
+  "X2TLX6450": {
+    "style_name": "여성 패턴 제에리 긴팔 티셔츠(X2TLX6455NA)",
+    "brand": "제이디엑스"
+  },
+  "X2TLX2450": {
+    "style_name": "여성 패턴 제에리 긴팔 티셔츠(X2TLX6455NA)",
+    "brand": "제이디엑스"
+  },
+  "X2TSW2542": {
+    "style_name": "남성 기본핏 솔리드 카라 티셔츠(X2TSW2542TQ)",
+    "brand": "제이디엑스",
+    "item_name": "상의"
+  },
+  "X2TSX2541": {
+    "style_name": "남성 멜란지 반팔 티셔츠(X2TSX2541CH)",
+    "brand": "제이디엑스",
+    "item_name": "상의"
+  },
+  "X2TLW6454": {
+    "style_name": "여성 라이트 하이넥 베이스 레이어(X2TLW6450WH)",
+    "brand": "제이디엑스",
+    "item_name": "상의"
+  },
+  "X2PTW2723": {
+    "style_name": "남성 멜란지 스트레치 팬츠(X2PTW2726NA)",
+    "brand": "제이디엑스",
+    "item_name": "하의"
+  },
+  "X2TLW6451": {
+    "style_name": "여성 라이트 하이넥 베이스 레이어(X2TLW6450WH)",
+    "brand": "제이디엑스",
+    "item_name": "상의"
+  },
+  "X2PTW2722": {
+    "style_name": "남성 멜란지 스트레치 팬츠(X2PTW2726NA)",
+    "brand": "제이디엑스",
+    "item_name": "하의"
+  },
+  "X2TLX2454": {
+    "style_name": "남성 아이스샷 냉감 긴팔 티셔츠(X2TLX2454CH)",
+    "brand": "제이디엑스"
+  },
+  "ABG2WD1101": {
+    "style_name": "지오지아 논아이론 시그니처 정장셔츠 ABG2WD1101",
+    "brand": "지오지아"
+  },
+  "ABG5SP1101": {
+    "style_name": "지오지아 남성 쿨맥스 스트레이트 슬랙스 팬츠_ABG2PP1102",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ABG5SB1101": {
+    "style_name": "지오지아 바른자세사계절 미라클 슬림핏 슈트 3종 컬러 ABG5SB1101/SP1101",
+    "brand": "지오지아"
+  },
+  "ABG2WD1103": {
+    "style_name": "지오지아 루즈핏 미라쿨 긴팔 셔츠 스트라이프 네이비 ABF2WC1101SNV",
+    "brand": "지오지아"
+  },
+  "ABG2ER1101": {
+    "style_name": "지오지아 슬럽 반팔 라운드 풀오버 ABG2ER1101",
+    "brand": "지오지아"
+  },
+  "AAG5AT1101": {
+    "style_name": "지오지아 레지멘탈 스마트 넥타이 네이비 AAF5AT1141NV",
+    "brand": "지오지아"
+  },
+  "ABG2SB1202": {
+    "style_name": "[지오지아] 솔리드 차콜그레이 정장세트 (ABE2SB1202_ABE2SP1202_CGR)",
+    "brand": "지오지아"
+  },
+  "ACG2SP1202": {
+    "style_name": "지오지아 데님라이크 솔리드 컴포트 팬츠 acg2sp1202",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ABG1WD1101": {
+    "style_name": "지오지아 오버핏 크리즈 반팔 셔츠 블랙 ABG2WC1201BK",
+    "brand": "지오지아"
+  },
+  "ABG2PP1101": {
+    "style_name": "지오지아 쿨맥스 테이퍼드 슬랙스 팬츠 베이지 ABG2PP1101BE",
+    "brand": "지오지아",
+    "item_name": "상의"
+  },
+  "EVWBLQE880": {
+    "style_name": "[케네스레이디] 클레멘 레이어드 블라우스 EVWBLQE880",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EVWSKQE990": {
+    "style_name": "케네스레이디 시스루 플레어 롱스커트 EVWSKQE990",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EVWSLQE880": {
+    "style_name": "[케네스레이디] 로키 투턱 슬랙스 EVWSLQE840",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EMWJKQD410": {
+    "style_name": "[케네스레이디] 모리에 크롭 자켓 EMWJKQF410",
+    "brand": "케네스레이디",
+    "item_name": "스커트"
+  },
+  "EVWOPQD980": {
+    "style_name": "케네스레이디 티어린 자켓 원피스 EVWOPQD980",
+    "brand": "케네스레이디",
+    "item_name": "원피스"
+  },
+  "EMWOPQD040": {
+    "style_name": "[케네스레이디] 디어 리본 원피스(서수민 착용) EMWOPQD040",
+    "brand": "케네스레이디",
+    "item_name": "원피스"
+  },
+  "EVWJKQD810": {
+    "style_name": "[케네스레이디] 뉴린 자켓 원피스 세트 EVWOPQD810",
+    "brand": "케네스레이디",
+    "item_name": "스커트"
+  },
+  "EVWSLQD810": {
+    "style_name": "[케네스레이디] 뉴린 자켓 원피스 세트 EVWOPQD810",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EMWJKQC460": {
+    "style_name": "[TAG 279000원][케네스레이디]네일리 크롭 자켓 EMWJKQE460",
+    "brand": "케네스레이디",
+    "item_name": "스커트"
+  },
+  "EMWOPQE010": {
+    "style_name": "[케네스레이디]베리크 자켓 원피스 세트 EMWOPQE300",
+    "brand": "케네스레이디",
+    "item_name": "원피스"
+  },
+  "CDAA8TS2Z11": {
+    "style_name": "크로커다일 나일론 메쉬조직 카라 티셔츠 CDAA9TP2704",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA6WS2Z11": {
+    "style_name": "[크로커다일] 울 모티브 글렌체크 남방 CDAA5WS3431",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA7PT2Z11": {
+    "style_name": "크로커다일 줄 조직 여름바지 CDAA2PT2528",
+    "brand": "크로커다일",
+    "item_name": "하의"
+  },
+  "CDAA6KT2Z11": {
+    "style_name": "[크로커다일] 변형 조직 스트라이프 하프집업 니트 CDAA8KR4334",
+    "brand": "크로커다일"
+  },
+  "CDAA9PT2Z11": {
+    "style_name": "크로커다일 줄 조직 여름바지 CDAA2PT2528",
+    "brand": "크로커다일",
+    "item_name": "하의"
+  },
+  "CDAA7JK2Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAA9TS2Z11": {
+    "style_name": "크로커다일 나일론 메쉬조직 카라 티셔츠 CDAA9TP2704",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA8TS2Z12": {
+    "style_name": "크로커다일 나일론 메쉬조직 카라 티셔츠 CDAA9TP2704",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA6TS2Z11": {
+    "style_name": "크로커다일 나일론 메쉬조직 카라 티셔츠 CDAA9TP2704",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAACTP2706": {
+    "style_name": "크로커다일 멜란지 요꼬에리 반팔 티셔츠 CDAACTP2706",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CVKRG2402M": {
+    "style_name": "CLOVIS 베이직 2WAY 슬리브리스 CVKRG2402M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVHWG2501M": {
+    "style_name": "CLOVIS 배색 티셔츠 CVHWG2501M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVTJG2411Q": {
+    "style_name": "CLOVIS 벨티드 커브 데님 RE_CVTJG2411Q",
+    "brand": "클라비스",
+    "item_name": "하의"
+  },
+  "CVJKG2502M": {
+    "style_name": "[클라비스]세미크롭 테일러드 자켓 CVJKG2302M",
+    "brand": "클라비스",
+    "item_name": "아우터"
+  },
+  "CVTJG2501N": {
+    "style_name": "CLOVIS 쿨 와이드 데님팬츠 CVTJG2501N",
+    "brand": "클라비스",
+    "item_name": "하의"
+  },
+  "CVCKG2501M": {
+    "style_name": "CLOVIS 스카시 니트후드 자켓 CVCKG2501M",
+    "brand": "클라비스",
+    "item_name": "아우터"
+  },
+  "CVJKG2501S": {
+    "style_name": "[클라비스]세미크롭 테일러드 자켓 CVJKG2302M",
+    "brand": "클라비스",
+    "item_name": "아우터"
+  },
+  "CVHWG2503M": {
+    "style_name": "[클라비스]조직감 프릴 티셔츠 CVHWG2503M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVYWG2501M": {
+    "style_name": "CLOVIS 와이드 슬랙스 CVTWG2501M",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "MKG2TS3807": {
+    "style_name": "[탑텐키즈]NC강서점 공용) [마인드어데이 커버캣] 코튼 크루넥 T MKG2TS3807",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKG2PS3002": {
+    "style_name": "[롯데백화점] 탑텐 키즈 공용) COOL Air 코튼 카고 버뮤다 팬츠 MKG2PS3002 LE1221426281",
+    "brand": "탑텐키즈"
+  },
+  "MKG2UI3002": {
+    "style_name": "[신세계백화점]26년 신상품 공용) [쿄니] 뱀부 라운지세트 (반소매)MKG2UI3002",
+    "brand": "탑텐키즈"
+  },
+  "MKG2TS2001": {
+    "style_name": "[롯데백화점] 탑텐 키즈 남아) 매쉬 매치 반팔티셔츠 MKF2TS1404 LE1221385893",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKF2DH3012": {
+    "style_name": "탑텐키즈 MKF2DH3012  공용) 에코 아웃포켓 헤지데님 쇼츠",
+    "brand": "탑텐키즈"
+  },
+  "MKG2PT3491": {
+    "style_name": "[신세계백화점]26년 SS (공용) 에슬레틱 수퍼스트레치  카고조거팬츠 MKG2PT3491",
+    "brand": "탑텐키즈",
+    "item_name": "하의"
+  },
+  "MKG2PT3492": {
+    "style_name": "[탑텐키즈]NC강서점 공용) 수퍼스트레치 팬츠 7부 MKG2PT3492",
+    "brand": "탑텐키즈",
+    "item_name": "하의"
+  },
+  "MKG2TS2004": {
+    "style_name": "[신세계백화점]26년 SS 여아)소프트 립 T (반팔)MKG2TS2004",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKG2PH3211": {
+    "style_name": "[신세계백화점]26년 SS 공용) 수퍼스트레치 쇼츠 5부 MKG2PS3491",
+    "brand": "탑텐키즈"
+  },
+  "MKG5UL1002": {
+    "style_name": "[신세계백화점]26년 신상품 공용) [쿄니] 뱀부 라운지세트 (반소매)MKG2UI3002",
+    "brand": "탑텐키즈"
+  },
+  "TRNFU6M2431": {
+    "style_name": "남성 폴리스판 캐주얼 자켓 TRNFU6M2431 358186",
+    "brand": "트레몰로",
+    "item_name": "아우터"
+  },
+  "TRBXA6X3311": {
+    "style_name": "트레몰로 HC09 26 남자 양말세트 26남성 신사양말 3족세트 TRBXA6X3311",
+    "brand": "트레몰로"
+  },
+  "TRHDL6S1141": {
+    "style_name": "트레몰로 데님 팬츠 TRHDL6S1141-52",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRHKA5M2411": {
+    "style_name": "트레몰로 세정 경량나일론사파리 네이비 TRHKA5M2411 (P003800296)",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRHDL6M2311": {
+    "style_name": "트레몰로 HC10 2026 여름 워싱 면바지 TRHDL6M2311",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRNAS6M3101": {
+    "style_name": "트레몰로 TREMOLO 라운드 솔리드 티셔츠_TRNAS4Y2471",
+    "brand": "트레몰로"
+  },
+  "TRHKA5M2421": {
+    "style_name": "트레몰로 TREMOLO HC14 경량나일론 사파리 점퍼 TRHKA5M2421 33104317",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRNCL6M3131": {
+    "style_name": "트레몰로 HC09 26SS 봄 차콜그레이 26SS 봄 차콜그레이 점퍼 TRNCL6SC431 (S47365734)",
+    "brand": "트레몰로"
+  },
+  "TRBCL4Y2521": {
+    "style_name": "트레몰로 TREMOLO 나일론스판 점퍼_TRBCL4M3121",
+    "brand": "트레몰로"
+  },
+  "TRNAS5M2331": {
+    "style_name": "트레몰로 TREMOLO 라운드 솔리드 티셔츠_TRNAS4Y2471",
+    "brand": "트레몰로"
+  },
+  "211F2TO802": {
+    "style_name": "[팬텀] 남성 큐프라 카라 반팔 티셔츠 211F2TO802_MT",
+    "brand": "팬텀"
+  },
+  "211D2TR406": {
+    "style_name": "PHANTOM 와플 조직 V넥 반팔티셔츠 211D2TR406",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "221F2TO802": {
+    "style_name": "[팬텀] 여성 큐프라 카라 반팔 티셔츠 221F2TO802_RE",
+    "brand": "팬텀"
+  },
+  "211D2TO006": {
+    "style_name": "팬텀 팬텀 반팔티 KQF 211D2TO006_BK 남성 시어서커 카라 반팔티셔츠",
+    "brand": "팬텀"
+  },
+  "221D2CP694": {
+    "style_name": "PHANTOM 라인 컬러 배색 리본 썬바이저 221d2cp694",
+    "brand": "팬텀"
+  },
+  "211D2CP901": {
+    "style_name": "팬텀 팬텀 골프모자 KQF 211D2CP901_NA 남성 볼륨 로고 자수 볼캡",
+    "brand": "팬텀"
+  },
+  "211D2PT586": {
+    "style_name": "PHANTOM 남성 옆선 타공 포인트 팬츠 211d2pt586",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "211F2TO801": {
+    "style_name": "[팬텀] 남성 베이직 솔리드 카라 반팔 티셔츠 211F2TO801_TQ",
+    "brand": "팬텀"
+  },
+  "221F2TR803": {
+    "style_name": "PHANTOM 서커 시보리 반팔 티셔츠 221F2TR803",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "211D2TH011": {
+    "style_name": "[팬텀] [가격인하] 남성 등판 부분 메쉬 냉감 소매 반집업 긴팔티셔츠 211D2TH011_WH",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "PKG1DP3022": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 시그니처 5부 데님 팬츠 PKF2DH3013 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "원피스"
+  },
+  "PKG1DP2716": {
+    "style_name": "폴햄키즈 여아 와이드핏 라이오셀 데님 팬츠_PKG2DP2016",
+    "brand": "폴햄키즈",
+    "item_name": "원피스"
+  },
+  "PKG1DP2024": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 6부 버뮤다 데님 숏츠 PKG2DH3713 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "원피스"
+  },
+  "PKG1DP3713": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 시그니처 5부 데님 팬츠 PKF2DH3013 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "원피스"
+  },
+  "PKG1PT2016": {
+    "style_name": "폴햄키즈 공용 카고 버뮤다 6부 숏츠_PKG2PH3013",
+    "brand": "폴햄키즈",
+    "item_name": "하의"
+  },
+  "PKG1DP3013": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 시그니처 5부 데님 팬츠 PKF2DH3013 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "원피스"
+  },
+  "PKG1ER2010": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 크루넥 반팔 니트 PKG2ER2010 뉴코아 울산점",
+    "brand": "폴햄키즈"
+  },
+  "1L35182": {
+    "style_name": "PAT 남성 여름 강연 소재 반팔 카라 티셔츠 1L35182-820 115",
+    "brand": "피에이티"
+  },
+  "1L31635": {
+    "style_name": "PAT 피에이티 남성 연사 스트레치 노턱 일자핏 바지 팬츠 1L31635",
+    "brand": "피에이티"
+  },
+  "1L42509": {
+    "style_name": "[PAT 여성] 수입 폴리 카라 블라우스_1L42509",
+    "brand": "피에이티"
+  },
+  "1L45308": {
+    "style_name": "[PAT 여성] 실켓 베이직 반팔 티셔츠_1L45308",
+    "brand": "피에이티"
+  },
+  "1L45382": {
+    "style_name": "[PAT 여성] 원포인트 라운드 티셔츠_1L45382",
+    "brand": "피에이티"
+  },
+  "1L31331": {
+    "style_name": "[PAT 남성] 잔조직 점퍼_1L31331",
+    "brand": "피에이티"
+  },
+  "1L35105": {
+    "style_name": "피에이티 뎅깡 카라 티셔츠   1L35105-2_US 모다아울렛 울산점",
+    "brand": "피에이티"
+  },
+  "1L45181": {
+    "style_name": "[PAT 여성] 헤리티지 반팔 티셔츠_1L45181",
+    "brand": "피에이티"
+  },
+  "1L31507": {
+    "style_name": "[PAT 남성] 에어메쉬 한기장 프린트 셔츠_1L31507",
+    "brand": "피에이티"
+  },
+  "1L31602": {
+    "style_name": "PAT 바지 1L31602",
+    "brand": "피에이티"
+  },
+  "HPMTO6001": {
+    "style_name": "헤이린뉴욕 여성 도트 땡땡이 쉬폰블라우스 HQ2BL6001  핑크  FREE",
+    "brand": "헤이린뉴욕",
+    "item_name": "상의"
+  },
+  "HPMSL1007": {
+    "style_name": "헤이린 헤이린뉴욕 라보카시 니트 HPMKT 1007",
+    "brand": "헤이린뉴욕",
+    "item_name": "하의"
+  },
+  "HPMJP5023": {
+    "style_name": "헤이린 헤이린뉴욕 엠보 후드 점퍼 HPMJP 3001",
+    "brand": "헤이린뉴욕",
+    "item_name": "아우터"
+  },
+  "HPMKT2027": {
+    "style_name": "헤이린 헤이린뉴욕 레이스 브이넥 가디건 HPMKT 2027",
+    "brand": "헤이린뉴욕"
+  },
+  "HPMTO6007": {
+    "style_name": "Hai 하이(해) 리틀 실크 미니백 7컬러",
+    "brand": "헤이린뉴욕",
+    "item_name": "상의"
+  },
+  "HPMTS3024": {
+    "style_name": "[헤이린뉴욕] 파랑티셔츠 hpmts5000",
+    "brand": "헤이린뉴욕",
+    "item_name": "상의"
+  },
+  "HPMTS2005": {
+    "style_name": "헤이린 헤이린뉴욕 엘리 펜트 티셔츠 HPMTS 2005",
+    "brand": "헤이린뉴욕",
+    "item_name": "상의"
+  },
+  "HPMKT3001": {
+    "style_name": "[헤이린뉴욕]블랙가디건 hpmkt3001",
+    "brand": "헤이린뉴욕"
+  },
+  "HPMSL1009": {
+    "style_name": "헤이린 헤이린뉴욕 프릴 블라우스 HPSBL 1009",
+    "brand": "헤이린뉴욕",
+    "item_name": "하의"
+  },
+  "HPMJP5003": {
+    "style_name": "헤이린 헤이린뉴욕 스트링 후드 절개 점퍼 HPSJP5003",
+    "brand": "헤이린뉴욕",
+    "item_name": "아우터"
+  },
+  "FK262SD01X012": {
+    "style_name": "[AK분당점] 휠라키즈 플레어가드 아동화 FK262SD01X012",
+    "brand": "휠라키즈"
+  },
+  "FK261CD01X017": {
+    "style_name": "[휠라키즈] 인터런 메리제인_FK261CD01X017_541",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK261CD01X053": {
+    "style_name": "휠라키즈 휠라 헬로카봇 라이트 블랙화이트 X016 100 FK261CD01X053",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK262SN01X002": {
+    "style_name": "휠라키즈 휠라 키즈 앤시러스 FK262SN01X002 660",
+    "brand": "휠라키즈"
+  },
+  "FK262TR07B001": {
+    "style_name": "휠라키즈 5.5부 화섬 카고 팬츠 FK262TR07B001",
+    "brand": "휠라키즈",
+    "item_name": "하의"
+  },
+  "GS5A1POJ61": {
+    "style_name": "(JJ지고트) 셔츠 배색 브이넥 풀오버 니트 GS5A1POJ61",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "GS6A1PO101": {
+    "style_name": "JJ지고트 골지 스퀘어넥 브이넥 양면 민소매 이너 티셔츠 니트 GS6A1PO101",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "GR4A0BL301": {
+    "style_name": "JJ지고트 퍼프 슬리브 라운드넥 블라우스 GR4A0BL301",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "GS4A0SL302": {
+    "style_name": "JJ지고트 미니멀 히든 와이드 일자핏 팬츠 GS4A0SL302",
+    "brand": "JJ지고트",
+    "item_name": "하의"
+  },
+  "GS4A0JK302": {
+    "style_name": "JJ지고트 미니멀 히든 싱글 투버튼 재킷 GS4A0JK302",
+    "brand": "JJ지고트",
+    "item_name": "아우터"
+  },
+  "GS6R1PO121": {
+    "style_name": "JJ지고트 스트라이프 민소매 니트 GS6R1PO121",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "GR6A1CDR31": {
+    "style_name": "JJ지고트 브이넥 기본 가디건 GR6A1CDR31",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "CS5B0BL521": {
+    "style_name": "더아이잗컬렉션 넥 프릴 밴딩 블라우스 CS5B0BL521",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "CR5A1CD331": {
+    "style_name": "더아이잗컬렉션 진주 버튼 피케 니트 가디건 CR5A1CD331",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "CR5A1SK331": {
+    "style_name": "더아이잗컬렉션 벨라인 미디 니트 스커트 CR5A1SK331",
+    "brand": "더아이잗",
+    "item_name": "스커트"
+  },
+  "CS5B0JK521": {
+    "style_name": "더아이잗컬렉션 7부 라운드넥 케이프 재킷 CS5B0JK521",
+    "brand": "더아이잗",
+    "item_name": "아우터"
+  },
+  "CS4B0BL681": {
+    "style_name": "더아이잗컬렉션 셔링밴딩 블라우스 CS4B0BL681",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "CR4A1CD121": {
+    "style_name": "더아이잗컬렉션 로맨틱 레이스 믹스 풀오버 cr4a1cd121",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "CR6A0SK031": {
+    "style_name": "더아이잗컬렉션 언밸런스 새틴 스커트 CR6A0SK031",
+    "brand": "더아이잗",
+    "item_name": "스커트"
+  },
+  "CS6B0SK701": {
+    "style_name": "[롯데백화점] 아이잗컬렉션 페미닌 플레어 스커트(CS6B0SK701) LE1221785887",
+    "brand": "더아이잗",
+    "item_name": "스커트"
+  },
+  "CR5A0SL711": {
+    "style_name": "더아이잗컬렉션 벨트 장식 백 벤딩 퀼로트 팬츠 CR5A0SL711",
+    "brand": "더아이잗",
+    "item_name": "하의"
+  },
+  "CR5A0SLD41": {
+    "style_name": "더아이잗컬렉션 핀턱 슬릿 A라인 데님 팬츠 cr5a0sld41",
+    "brand": "더아이잗",
+    "item_name": "하의"
+  },
+  "L262MSM039": {
+    "style_name": "[듀엘] 여성 스트라이프 로고 민소매 티셔츠 (L262MSM048)",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "D243MSE009": {
+    "style_name": "듀엘 텍스처 블록 플레어 원피스 D243MSE009 LE1221904279",
+    "brand": "듀엘"
+  },
+  "L262MSM042": {
+    "style_name": "임박 듀엘 아틀리에 그래픽 티셔츠 L262MSM042",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L252PSE035": {
+    "style_name": "[듀엘] 미디 스트링 셔츠 원피스 NY_L252PSE052",
+    "brand": "듀엘"
+  },
+  "L253PSE010": {
+    "style_name": "[듀엘] 소매 배색 벨티드 원피스 BK_L251PSE010",
+    "brand": "듀엘"
+  },
+  "D243MSC018": {
+    "style_name": "DEWL듀엘프린트 시스루 티셔츠 D243MSC018",
+    "brand": "듀엘"
+  },
+  "L262MSM046": {
+    "style_name": "[듀엘] 여성 스트라이프 로고 민소매 티셔츠 (L262MSM048)",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L262MSM033": {
+    "style_name": "[현대아울렛김포점] [듀엘] [아울렛] 라운드 넥 배색 스트라이프 티셔츠 2color / 2size L262MSM033",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L262MSM040": {
+    "style_name": "[듀엘] 여성 스트라이프 로고 민소매 티셔츠 (L262MSM048)",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L262PSC046": {
+    "style_name": "[듀엘] 여성 레이스 포인트 페미닌 블라우스 (L262PSC046)",
+    "brand": "듀엘"
+  },
+  "RSJPSP55B": {
+    "style_name": "[레노마옴므] S/S 봄 여름 다크블루 모혼방 스판정장 RSJPSJ56A RSJPSP56A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSJPSJ55B": {
+    "style_name": "[레노마옴므] S/S 봄 여름 다크블루 모혼방 스판정장 RSJPSJ56A RSJPSP56A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSJPSP57A": {
+    "style_name": "레노마옴므 26년 SS 마혼방셋업 정장바지 다크그레이 RSCP57A-M08",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSJPSJ56A": {
+    "style_name": "[레노마옴므] S/S 봄 여름 다크블루 모혼방 스판정장 RSJPSJ56A RSJPSP56A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSJPSP56A": {
+    "style_name": "[레노마옴므] S/S 봄 여름 다크블루 모혼방 스판정장 RSJPSJ56A RSJPSP56A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSFPKT61A": {
+    "style_name": "레노마옴므 26년 SS 시원한 여름 시어서커 자켓 RSBJ61A-M52",
+    "brand": "레노마옴므"
+  },
+  "RSJMBP79A": {
+    "style_name": "레노마옴므 SS 네이비 시어서커 슬랙스 팬츠 RSJMBP79A  94",
+    "brand": "레노마옴므",
+    "item_name": "상의"
+  },
+  "RNEWJK040": {
+    "style_name": "리안뉴욕 스트라이프 노카라 자켓 RNEWJK040",
+    "brand": "리안뉴욕",
+    "item_name": "스커트"
+  },
+  "RUCWTP400": {
+    "style_name": "리안뉴욕 허리밴딩 카고 바지 RSGWPT400",
+    "brand": "리안뉴욕"
+  },
+  "RUEKCD010": {
+    "style_name": "리안뉴욕 라운드 트위드 숏 가디건 RUEKCD010",
+    "brand": "리안뉴욕",
+    "item_name": "아우터"
+  },
+  "RRYWBL040": {
+    "style_name": "리안뉴욕 라이트 데일리 블라우스 RRYWBL040",
+    "brand": "리안뉴욕",
+    "item_name": "상의"
+  },
+  "RUDWJK020": {
+    "style_name": "리안뉴욕 벨티드 더블 카라 원피스 RSDWOP020 EIC",
+    "brand": "리안뉴욕",
+    "item_name": "스커트"
+  },
+  "RUCWBL050": {
+    "style_name": "프릴 포인트 민소매 블라우스RUCWBL050J",
+    "brand": "리안뉴욕",
+    "item_name": "상의"
+  },
+  "RUYASF020": {
+    "style_name": "리안뉴욕 퍼프 슬리브 카라 블라우스 (RUFWBL020)",
+    "brand": "리안뉴욕",
+    "item_name": "상의"
+  },
+  "RUBWBL030": {
+    "style_name": "리안뉴욕 넥라인 포인트 블라우스 RUBWBL030",
+    "brand": "리안뉴욕",
+    "item_name": "상의"
+  },
+  "RUCWSK010": {
+    "style_name": "리안뉴욕 텐셀 혼방 스트링 롱 니트 스커트 RUCWSK010",
+    "brand": "리안뉴욕",
+    "item_name": "상의"
+  },
+  "RUAWSK010": {
+    "style_name": "리안뉴욕 리안플리츠스커트 RUAWSK010",
+    "brand": "리안뉴욕",
+    "item_name": "상의"
+  },
+  "S262MSD135": {
+    "style_name": "모조에스핀 플리츠 쉬폰 스커트 S262MSD135",
+    "brand": "모조에스핀"
+  },
+  "S262MSC135": {
+    "style_name": "모조 소량재고 모조에스핀 핀턱 슬리브리스 블라우스 S262MSC135",
+    "brand": "모조에스핀"
+  },
+  "S262MSF132": {
+    "style_name": "모조에스핀 팬시 스퀘어넥 페플럼 재킷 S262MSF132 66",
+    "brand": "모조에스핀"
+  },
+  "S262MSF136": {
+    "style_name": "모조에스핀 모조 팬시 숏재킷 S262MSF136 P003814227",
+    "brand": "모조에스핀"
+  },
+  "S262MSA125": {
+    "style_name": "모조에스핀 와이드 핏 투버튼 팬츠  s262msa1270_DG 모다아울렛 대구점",
+    "brand": "모조에스핀"
+  },
+  "S262MSA142": {
+    "style_name": "모조에스핀 와이드 핏 투버튼 팬츠  s262msa1270_DG 모다아울렛 대구점",
+    "brand": "모조에스핀"
+  },
+  "S262MSE022": {
+    "style_name": "모조에스핀 사이드 주름 카라 원피스 S262MSE022",
+    "brand": "모조에스핀"
+  },
+  "S262MSE025": {
+    "style_name": "모조에스핀 스카프 패턴 슬리브리스 원피스 S262MSE025",
+    "brand": "모조에스핀"
+  },
+  "S262MSE134": {
+    "style_name": "모조에스핀 모조 진주장식 트위드 원피스 S262MSE134",
+    "brand": "모조에스핀"
+  },
+  "S262MSE136": {
+    "style_name": "모조에스핀 모조 A라인 팬시 원피스 S262MSE136",
+    "brand": "모조에스핀"
+  },
+  "WSZ2KT49A": {
+    "style_name": "바쏘옴므 화이트 블랙 베이지 그린 이중넥 라운드 반팔 티셔츠 WSZ2GK10 123",
+    "brand": "바쏘옴므"
+  },
+  "BSZ2TT65A": {
+    "style_name": "[바쏘옴므] 쿨 린넨 체크 반팔 셔츠(WSY2TT65A) 5008533842",
+    "brand": "바쏘옴므"
+  },
+  "WSZ2KT48A": {
+    "style_name": "바쏘옴므25SS 베이지 COOL 오픈카라 PK 반팔 티셔츠 WSZ2GK04",
+    "brand": "바쏘옴므"
+  },
+  "WSZ2GK04A": {
+    "style_name": "바쏘옴므25SS 베이지 COOL 오픈카라 PK 반팔 티셔츠 WSZ2GK04",
+    "brand": "바쏘옴므"
+  },
+  "WSA2GW01A": {
+    "style_name": "바쏘옴므 블랙 엠보 와플 조직 면스판 반팔 카라 니트 WSA2WT05ABK",
+    "brand": "바쏘옴므"
+  },
+  "BSZ2TT64A": {
+    "style_name": "바쏘 네이비 강연사 폴리 스판 반팔 셔츠 BSZ2TT21ANY",
+    "brand": "바쏘옴므"
+  },
+  "WSZ2WT01A": {
+    "style_name": "바쏘옴므25SS 베이지 COOL 오픈카라 PK 반팔 티셔츠 WSZ2GK04",
+    "brand": "바쏘옴므"
+  },
+  "WSA2PS49A": {
+    "style_name": "바쏘옴므26SS 그레이 쿨맥스 스판 히든밴딩 슬랙스 바지 WSA2PS32",
+    "brand": "바쏘옴므"
+  },
+  "BSZ2JS61A": {
+    "style_name": "바쏘 블랙 솔리드 울스판 슬림핏 정장 BSZ1JQ52ABK",
+    "brand": "바쏘옴므"
+  },
+  "WSZ2GK10A": {
+    "style_name": "바쏘옴므25SS 베이지 COOL 오픈카라 PK 반팔 티셔츠 WSZ2GK04",
+    "brand": "바쏘옴므"
+  },
+  "E262MSF134": {
+    "style_name": "씨씨콜렉트 루즈핏 빅 포켓 싱글 자켓 E262MSF143",
+    "brand": "씨씨콜렉트"
+  },
+  "E262PSC145": {
+    "style_name": "씨씨콜렉트 프릴 카라 블라우스 E262PSC166_CA 모다아울렛 천안아산점",
+    "brand": "씨씨콜렉트"
+  },
+  "E262PSC163": {
+    "style_name": "씨씨콜렉트 라운드 플랩 포인트 블라우스 E262PSC163",
+    "brand": "씨씨콜렉트"
+  },
+  "E262MSD131": {
+    "style_name": "씨씨콜렉트 뒷밴딩 A라인 플레어 스커트 E262MSD131",
+    "brand": "씨씨콜렉트"
+  },
+  "E262MSF129": {
+    "style_name": "씨씨콜렉트 썸머 싱글 자켓 E262MSF129",
+    "brand": "씨씨콜렉트"
+  },
+  "E262MSF132": {
+    "style_name": "씨씨콜렉트 루즈핏 빅 포켓 싱글 자켓 E262MSF143",
+    "brand": "씨씨콜렉트"
+  },
+  "E262KSK133": {
+    "style_name": "씨씨콜렉트 볼륨소매 라운드 반팔 니트 E244KSK133",
+    "brand": "씨씨콜렉트",
+    "item_name": "스커트"
+  },
+  "E262KST131": {
+    "style_name": "씨씨콜렉트 베이직 민소매 니트 E262KST131",
+    "brand": "씨씨콜렉트",
+    "item_name": "스커트"
+  },
+  "E262MSC139": {
+    "style_name": "씨씨콜렉트 스트라이프 오픈 카라 블라우스 E262MSC143",
+    "brand": "씨씨콜렉트"
+  },
+  "E262MSD132": {
+    "style_name": "씨씨콜렉트 뒷밴딩 셔링 스커트 E262MSD135",
+    "brand": "씨씨콜렉트"
+  },
+  "BS4B0SL621": {
+    "style_name": "[아이잗바바(OUTLET)] 린넨 자수 와이드 크롭 팬츠 (LIGHT BEIGE) BS4B0SL621",
+    "brand": "아이잗바바",
+    "item_name": "하의"
+  },
+  "BP5A0JP791": {
+    "style_name": "아이잗바바 스트링 디테일 후드 점퍼 BP5A0JP791",
+    "brand": "아이잗바바",
+    "item_name": "아우터"
+  },
+  "BS4B0SL372": {
+    "style_name": "아이잗바바 잔조직 슬림 세미 부츠컷 팬츠 BS4B0SL372",
+    "brand": "아이잗바바",
+    "item_name": "하의"
+  },
+  "BS4B0JK372": {
+    "style_name": "아이잗바바 슬림핏 잔조직 싱글 원버튼 재킷 BS4B0JK372",
+    "brand": "아이잗바바",
+    "item_name": "아우터"
+  },
+  "BR7A0BL361": {
+    "style_name": "아이잗바바 스트링 프린트 블라우스 BR7A0BL361",
+    "brand": "아이잗바바",
+    "item_name": "상의"
+  },
+  "BS4B0BL621": {
+    "style_name": "[아이잗바바(OUTLET)] 배색 캡 슬리브 블라우스 (IVORY) BS4B0BL621",
+    "brand": "아이잗바바",
+    "item_name": "상의"
+  },
+  "BS5B0JK052": {
+    "style_name": "아이잗바바 슬림핏 싱글 테일러드 재킷 BS5B0JK052",
+    "brand": "아이잗바바",
+    "item_name": "아우터"
+  },
+  "BR4A0SL431": {
+    "style_name": "아이잗바바 밴딩배기팬츠 BR4A0SL431",
+    "brand": "아이잗바바",
+    "item_name": "하의"
+  },
+  "BR4A1PO141": {
+    "style_name": "아이잗바바 샤이닝 웨이브 글리터 니트 BR4A1PO141",
+    "brand": "아이잗바바",
+    "item_name": "상의"
+  },
+  "BS4B0JK162": {
+    "style_name": "아이잗바바 베이직 싱글 원버튼 재킷 BS4B0JK162",
+    "brand": "아이잗바바",
+    "item_name": "아우터"
+  },
+  "AK2JP5380": {
+    "style_name": "안지크 프리드로우 스트링 점퍼 ak2jp5380",
+    "brand": "안지크",
+    "item_name": "아우터"
+  },
+  "AH2BR5100": {
+    "style_name": "안지크 라운드집업점퍼 ah2br5100",
+    "brand": "안지크",
+    "item_name": "상의"
+  },
+  "AK2JP5370": {
+    "style_name": "안지크 7부 슬리브 버튼 점퍼 AK2JP5370",
+    "brand": "안지크",
+    "item_name": "아우터"
+  },
+  "AK2DL5950": {
+    "style_name": "아디다스 남녀공용 3 패널 클라이마쿨 캡 모자 JG5859",
+    "brand": "안지크"
+  },
+  "AH2OP5140": {
+    "style_name": "안지크 페이즐리 셔츠 원피스 ah2op5140",
+    "brand": "안지크",
+    "item_name": "원피스"
+  },
+  "AK2JP5360": {
+    "style_name": "안지크 재킷형 7부 소매점퍼(AK2JP5360)",
+    "brand": "안지크",
+    "item_name": "아우터"
+  },
+  "AK2JP5390": {
+    "style_name": "안지크 빅카라 버튼업 점퍼 AK2JP5390",
+    "brand": "안지크",
+    "item_name": "아우터"
+  },
+  "AI1BR1110": {
+    "style_name": "안지크 캐쥬얼트렌치 AI1BR1110",
+    "brand": "안지크",
+    "item_name": "상의"
+  },
+  "BLG2PP1002": {
+    "style_name": "앤드지 남성 COOLMAX 스탠다드핏 슬랙스_BLG2PP1002BK",
+    "brand": "앤드지",
+    "item_name": "상의"
+  },
+  "BLG2ER1001": {
+    "style_name": "앤드지 남성 머신워셔블 솔리드 카라넥 반팔티_BLG2ET1004BR",
+    "brand": "앤드지"
+  },
+  "BLG2ET1002": {
+    "style_name": "앤드지 남성 슬럽조직 카라넥 스웨터_BLG2ET1002WT",
+    "brand": "앤드지"
+  },
+  "BLG2TT1003": {
+    "style_name": "앤드지 남성 슬럽 라운드넥 반팔티_BLG2ER1001GR",
+    "brand": "앤드지"
+  },
+  "BZG2KG1101": {
+    "style_name": "앤드지 남성아티산 CANONICO 정장 자켓_BZG2SB1202GR",
+    "brand": "앤드지"
+  },
+  "BZG5WD1204": {
+    "style_name": "앤드지 남성 트리코트 반팔 셔츠_BZG2WD1251WT",
+    "brand": "앤드지"
+  },
+  "NEG2TR1923": {
+    "style_name": "에디션 남성 에센셜 쿨 반팔티 NEG2TR1923",
+    "brand": "에디션",
+    "item_name": "하의"
+  },
+  "NEG2WC1931": {
+    "style_name": "에디션 시어서커 마이크로패턴 셔츠 NEG2WC1931",
+    "brand": "에디션"
+  },
+  "NEG2TR1622": {
+    "style_name": "에디션 라운드 솔리드 반팔티 NEG2TR1622",
+    "brand": "에디션",
+    "item_name": "하의"
+  },
+  "NEG2ET1921": {
+    "style_name": "에디션 텍스쳐드 카라넥 반팔 스웨터 NEG2ET1921",
+    "brand": "에디션"
+  },
+  "C62T022": {
+    "style_name": "엠씨 시원한라운드티셔츠 C62T022 993778",
+    "brand": "엠씨"
+  },
+  "C62T023": {
+    "style_name": "엠씨 라운드티셔츠 C62T023 LE1221798626",
+    "brand": "엠씨"
+  },
+  "C62B054": {
+    "style_name": "엠씨 여름면혼방블라우스 C62B054",
+    "brand": "엠씨"
+  },
+  "C62B055": {
+    "style_name": "엠씨 여름면혼방블라우스 C62B055",
+    "brand": "엠씨"
+  },
+  "C62J082": {
+    "style_name": "엠씨 여름점퍼 C62J082",
+    "brand": "엠씨"
+  },
+  "C62K001": {
+    "style_name": "엠씨 스트라이프 라운드 니트C62K001",
+    "brand": "엠씨"
+  },
+  "C62K002": {
+    "style_name": "엠씨 스트라이프니트캡소매 C62K002",
+    "brand": "엠씨"
+  },
+  "C62T021": {
+    "style_name": "엠씨 라운드티셔츠 C62T021",
+    "brand": "엠씨"
+  },
+  "C62B053": {
+    "style_name": "엠씨 시원한 지지미블라우스 C62B053",
+    "brand": "엠씨"
+  },
+  "C62B088": {
+    "style_name": "엠씨 쉬폰 블라우스 C62B088",
+    "brand": "엠씨"
+  },
+  "ZBG2TR1211": {
+    "style_name": "올젠 분또 그래픽 라운드 티셔츠 ZBG2TR1211",
+    "brand": "올젠",
+    "item_name": "하의"
+  },
+  "ZBG2TR1213": {
+    "style_name": "[롯데백화점] 올젠 [정상가 79,000]소로나 그래픽 라운드 티셔츠 ZBG2TR1213 LE1221349091",
+    "brand": "올젠",
+    "item_name": "하의"
+  },
+  "ZBG2JJ1201": {
+    "style_name": "올젠 모크넥 바람막이 점퍼 ZBG2JJ1201",
+    "brand": "올젠",
+    "item_name": "아우터"
+  },
+  "ZBG2TR1214": {
+    "style_name": "[롯데백화점] 올젠 [정상가 98,000]멜란지칼라 가슴포켓 카라 티셔츠 ZBG2TT1204 LE1221447618",
+    "brand": "올젠",
+    "item_name": "하의"
+  },
+  "ZBG2TT1205": {
+    "style_name": "올젠 에어 도트 티에리 ZBG2TT1205",
+    "brand": "올젠"
+  },
+  "ZBG2TR1212": {
+    "style_name": "[롯데백화점] 올젠 [정상가 98,000]멜란지칼라 가슴포켓 카라 티셔츠 ZBG2TT1204 LE1221447618",
+    "brand": "올젠",
+    "item_name": "하의"
+  },
+  "ZOG1TT1301": {
+    "style_name": "올젠 olzen 남성 스판 긴팔 티에리 ZOG1TT1301",
+    "brand": "올젠"
+  },
+  "MIEDL6M2301": {
+    "style_name": "인디안 남성용 아스킨 무지 바지 34 MIEDL6M2301 76",
+    "brand": "인디안"
+  },
+  "MUOBS4M2441": {
+    "style_name": "인디안 모던한 체크패턴 면혼방여름니트 모스그린 84 110 777-MUOBS4M2441",
+    "brand": "인디안"
+  },
+  "MIECL6M2401": {
+    "style_name": "인디안 INDIAN 솔리드 베이직 점퍼_MIECL3M3101",
+    "brand": "인디안"
+  },
+  "MUEDL6M3101": {
+    "style_name": "인디안 [하프클럽]여름 면 혼방 팬츠_MUEDL6M3101",
+    "brand": "인디안"
+  },
+  "MUOFA4M3211": {
+    "style_name": "인디안 더레이블 프리미엄 린넨 터치 블레이저 자켓 MUOFA4M3211",
+    "brand": "인디안"
+  },
+  "MIUDL6M3191": {
+    "style_name": "인디안 INDIAN 린넨라이크 팬츠 _MIUDL4M3161",
+    "brand": "인디안"
+  },
+  "MIEDL6M2311": {
+    "style_name": "인디안 26 아스킨 원턱 팬츠 MIEDL6M2311",
+    "brand": "인디안"
+  },
+  "MITAS5M3131": {
+    "style_name": "인디안 원포인트 프린트 반팔 티셔츠 MITAS5M3131",
+    "brand": "인디안",
+    "item_name": "하의"
+  },
+  "MAVFA6M4126": {
+    "style_name": "인디안 MAVFA4S2311",
+    "brand": "인디안"
+  },
+  "MIEBS5M2301": {
+    "style_name": "인디안 면혼방 솔리드 폴로 니트 MIEBS5M2301 13",
+    "brand": "인디안"
+  },
+  "V262MSM938": {
+    "style_name": "ZOOC 스카프 레이어드 티셔츠 V262MSM938",
+    "brand": "주크",
+    "item_name": "상의"
+  },
+  "V262MSF940": {
+    "style_name": "현대김포주크 ZOOC 싱글 투버튼 린넨 하프 자켓 CG V262MSF940",
+    "brand": "주크"
+  },
+  "V262PSA949": {
+    "style_name": "ZOOC 사선절개라인 세미 부츠컷 와이드 데님 팬츠 V262PSA949",
+    "brand": "주크"
+  },
+  "V262MSA952": {
+    "style_name": "ZOOC 뒷밴딩 핀턱9부 치마바지 V262MSA952",
+    "brand": "주크"
+  },
+  "V262PSM939": {
+    "style_name": "ZOOC 보트넥 셔링포인트 슬림핏 반팔 티셔츠 V262PSM939",
+    "brand": "주크",
+    "item_name": "상의"
+  },
+  "V262MSA940": {
+    "style_name": "zooc 주크 허리니트밴딩 핀턱와이드 팬츠 v262msa940",
+    "brand": "주크"
+  },
+  "V262MSA931": {
+    "style_name": "ZOOC 사이드포켓 와이드팬츠 V262MSA931",
+    "brand": "주크"
+  },
+  "V262MSF942": {
+    "style_name": "ZOOC ZOOC주크 루즈핏 원버튼 린넨 자켓 V262MSF942",
+    "brand": "주크"
+  },
+  "V262MSM936": {
+    "style_name": "잔여소량 (주크/ZOOC)V262MSM936 자수포인트 라운드넥 반팔 티셔츠",
+    "brand": "주크",
+    "item_name": "상의"
+  },
+  "V242MSC946": {
+    "style_name": "주크 ZOOC 퍼프 소매 반팔 블라우스 V242MSC946",
+    "brand": "주크"
+  },
+  "JR5A0OP922": {
+    "style_name": "지고트 디테쳐블 케이프 시폰 원피스 JR5A0OP922",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR2A0OP832": {
+    "style_name": "지고트 플레어 원피스 재킷 셋업 JR2A0OP832",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR7A0OP862": {
+    "style_name": "지고트 셔츠 배색 머메이드 원피스 JR7A0OP862",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR6A0OP822": {
+    "style_name": "지고트 린넨 스트라이프 테일러드 원피스 JR6A0OP822",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR4A0SLJ33": {
+    "style_name": "지고트 스판 슬림 일자핏 데님 팬츠 JR4A0SLJ33",
+    "brand": "지고트",
+    "item_name": "하의"
+  },
+  "JR6A1PO593": {
+    "style_name": "지고트 미니멀 슬림 스트레이트 슬랙스 JS5A0SL391BK LE1221899332",
+    "brand": "지고트",
+    "item_name": "상의"
+  },
+  "JS5B0JK312": {
+    "style_name": "지고트 슬림 싱글 벨티드 재킷 JS5B0JK312",
+    "brand": "지고트",
+    "item_name": "아우터"
+  },
+  "JP7A0VT011": {
+    "style_name": "지고트 미니멀 슬림 스트레이트 슬랙스 JS5A0SL391BK LE1221899332",
+    "brand": "지고트",
+    "item_name": "아우터"
+  },
+  "JR3A0BL913": {
+    "style_name": "지고트 배색 디테일 리본 블라우스 JR3A0BL913",
+    "brand": "지고트",
+    "item_name": "상의"
+  },
+  "JR3A0BL923": {
+    "style_name": "지고트 플리츠 타이 장식 블라우스 JR3A0BL923",
+    "brand": "지고트",
+    "item_name": "상의"
+  },
+  "AAF2PP1601": {
+    "style_name": "[지오지아] 울 스판 다크네이비 정장팬츠 (AAE2SP1301_DNV)",
+    "brand": "지오지아",
+    "item_name": "상의"
+  },
+  "AAF2KG1601": {
+    "style_name": "지오지아 카치온 셋업 자켓 AAF2KG1601",
+    "brand": "지오지아"
+  },
+  "ABF3ER1102": {
+    "style_name": "지오지아 미라쿨 반팔 라운드 티셔츠 베이지 ABF2TR1902BE",
+    "brand": "지오지아"
+  },
+  "ABF5AY1101": {
+    "style_name": "지오지아 중장목 드레스 양말 abf5ay1101",
+    "brand": "지오지아"
+  },
+  "AAF5AT1132": {
+    "style_name": "지오지아 레지멘탈 스마트 넥타이 네이비 AAF5AT1141NV",
+    "brand": "지오지아"
+  },
+  "ABF3TR1101": {
+    "style_name": "[국내정품] 지오지아 손 세탁이 가능 루즈핏 반팔 라운드 티셔츠ABF3TR1101",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ACF5SP1301": {
+    "style_name": "[지오지아] 슬림 그레이 쿨맥스 스트레치 정장팬츠 (AAA5SP1301_CGR)",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "AAF2KG1602": {
+    "style_name": "[지오지아] 베이직 썸머 다크네이비 셋업 수트 (AAE2KG1602_AAE2PP1602_DNV)",
+    "brand": "지오지아"
+  },
+  "AAF2PP1602": {
+    "style_name": "[지오지아] 울 스판 다크네이비 정장팬츠 (AAE2SP1301_DNV)",
+    "brand": "지오지아",
+    "item_name": "상의"
+  },
+  "AAF5AT1103": {
+    "style_name": "지오지아 레지멘탈 스마트 넥타이 네이비 AAF5AT1141NV",
+    "brand": "지오지아"
+  },
+  "MKG2TS2101": {
+    "style_name": "[신세계백화점]26년 SS(여아)코튼 그래픽 T (더블시퀸)MKG2TS2101",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKG2PH3012": {
+    "style_name": "[신세계백화점]26년 SS 공용) 수퍼스트레치 쇼츠 5부 MKG2PS3491",
+    "brand": "탑텐키즈"
+  },
+  "MKG2UI3001": {
+    "style_name": "[신세계백화점]26년 신상품 공용) [쿄니] 뱀부 라운지세트 (반소매)MKG2UI3002",
+    "brand": "탑텐키즈"
+  },
+  "MKG2PP3013": {
+    "style_name": "탑텐키즈 리넨블렌드 팬츠 MKG2PP3013",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKG2TS3803": {
+    "style_name": "[롯데백화점] 탑텐 키즈 남아) 매쉬 매치 반팔티셔츠 MKF2TS1404 LE1221385893",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKG2TS3804": {
+    "style_name": "[신세계백화점]26년 SS 공용)카카오 COOL Air 코튼 T MKG2TS3804",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKG2PT2001": {
+    "style_name": "[신세계백화점]26년 SS 여아)플리츠 팬츠MKG2PT2001",
+    "brand": "탑텐키즈",
+    "item_name": "하의"
+  },
+  "211F2TO803": {
+    "style_name": "[팬텀] 남성 베이직 서커 카라 반팔 티셔츠 211F2TO803_BL",
+    "brand": "팬텀"
+  },
+  "211F1AC203": {
+    "style_name": "팬텀 남성 패턴 폴리머 스카프(211F1AC203_BK)",
+    "brand": "팬텀"
+  },
+  "211F1JP102": {
+    "style_name": "PHANTOM 팬텀- 남성 펀칭 홑겹 점퍼 BR 211F1JP102",
+    "brand": "팬텀",
+    "item_name": "아우터"
+  },
+  "211E2PT802": {
+    "style_name": "[팬텀] 남성 백포켓 포인트 스판 팬츠 211E2PT802_NA",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "221F1TI101": {
+    "style_name": "PHANTOM 패턴 물결 반목 긴팔 이너 티셔츠 221f1ti101b",
+    "brand": "팬텀"
+  },
+  "221F2JP201": {
+    "style_name": "[팬텀] 여성 로고 펀칭 후드 반팔 점퍼 221F2JP201_BR",
+    "brand": "팬텀",
+    "item_name": "아우터"
+  },
+  "PKG2PT3041": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 쿨텐션 5부 반바지 PKG2PT3041 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "하의"
+  },
+  "PKG2PH3033": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 컴포트 5부 반바지 PKG2PH3033 뉴코아 울산점",
+    "brand": "폴햄키즈"
+  },
+  "PKG2TS3031": {
+    "style_name": "[롯데백화점] 폴햄 키즈 시원한 여름룩 기능성 반팔티  PKF2TS3012PKF3TS2210(6종택1) LE1221743889",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PKG2PP2712": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 스트레이트핏 파라슈트 팬츠 PKG2PP2712 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PKG2PT3031": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 아이차 카고 5부 반바지 PKG2PT3031 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "하의"
+  },
+  "PKG2PT2041": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 여아 쿨텐션 4부 반바지 PKG2PT2041 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "하의"
+  },
+  "PKG2TS2210": {
+    "style_name": "[롯데백화점] 폴햄 키즈 시원한 여름룩 기능성 반팔티  PKF2TS3012PKF3TS2210(6종택1) LE1221743889",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PKG2UI3810": {
+    "style_name": "NC 구로점 폴햄키즈 공용 냉감  5부 라운지웨어 상하셋트4color(택1) G-2UI3810A",
+    "brand": "폴햄키즈"
+  },
+  "PKG2PH3013": {
+    "style_name": "[롯데백화점] 폴햄 키즈 시원한 여름 베스트템 반바지 8종택 1  PKF2PH3013,PKF2PH3523 LE1221709077",
+    "brand": "폴햄키즈"
+  },
+  "PKG2TS3042": {
+    "style_name": "[롯데백화점] 폴햄 키즈 시원한 여름룩 기능성 반팔티  PKF2TS3012PKF3TS2210(6종택1) LE1221743889",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PS2KV061": {
+    "style_name": "[플라스틱아일랜드] 라글란소매 하이넥 점퍼 (PS2WZ481)",
+    "brand": "플라스틱아일랜드",
+    "item_name": "상의"
+  },
+  "PR2CH361": {
+    "style_name": "플라스틱아일랜드 크롭 프린팅 티셔츠 PR2CH361",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PR2CH562": {
+    "style_name": "플라스틱아일랜드 프린트 트임 크롭 티셔츠 PR2CH562",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PS2CH931": {
+    "style_name": "[플라스틱아일랜드] 라글란소매 하이넥 점퍼 (PS2WZ481)",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PS2KH963": {
+    "style_name": "[플라스틱아일랜드] V넥 프릴 원피스 (PS2WO532)",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS2WP982": {
+    "style_name": "[플라스틱아일랜드] 허리스트링 릴렉스 팬츠 PS2WP564",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PR2WS561": {
+    "style_name": "플라스틱아일랜드 플레어 셔링 체크 스커트 PR2WS561",
+    "brand": "플라스틱아일랜드",
+    "item_name": "상의"
+  },
+  "PS2KH020": {
+    "style_name": "[플라스틱아일랜드] 라글란소매 하이넥 점퍼 (PS2WZ481)",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS2WO063": {
+    "style_name": "[플라스틱아일랜드] 배색 스트링 투인원 원피스 (PS2WO565)",
+    "brand": "플라스틱아일랜드"
+  },
+  "GP5A0OP801": {
+    "style_name": "제이제이지고트 프리미엄 볼륨 슬리브 플리츠 원피스 GP5A0OP801",
+    "brand": "JJ지고트",
+    "item_name": "원피스"
+  },
+  "GR5A0OP561": {
+    "style_name": "JJ지고트 케이프 스퀘어넥 플레어 원피스 GR5A0OP561",
+    "brand": "JJ지고트",
+    "item_name": "원피스"
+  },
+  "GR5A0BL541": {
+    "style_name": "JJ지고트 퍼프 슬리브 하트넥 블라우스 GR5A0BL541",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "GR5A0OP581": {
+    "style_name": "JJ지고트 오간자 원피스 케이프 GR5A0OP581",
+    "brand": "JJ지고트",
+    "item_name": "원피스"
+  },
+  "GP6M0OP941": {
+    "style_name": "JJ지고트 정상가259000 배색 스티치 플레어 원피스GP6M0OP941  77  (BE1)베이지",
+    "brand": "JJ지고트",
+    "item_name": "원피스"
+  },
+  "GR4A0BL811": {
+    "style_name": "JJ지고트 타이 포인티드 칼라 블라우스 GR4A0BL811",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "GR5A0OP571": {
+    "style_name": "JJ지고트 퍼프 슬리브 H라인 원피스 GR5A0OP571",
+    "brand": "JJ지고트",
+    "item_name": "원피스"
+  },
+  "GR5M0BL901": {
+    "style_name": "JJ지고트 아웃 포켓 오픈 칼라 블라우스 GR5M0BL901",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "GP6M0BL901": {
+    "style_name": "JJ지고트 퍼프 슬리브 오픈 칼라 블라우스 GP6M0BL901",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "IR5A0JK201": {
+    "style_name": "더아이잗 라이트 백 슬릿 싱글 투버튼 재킷 IR5A0JK201",
+    "brand": "더아이잗",
+    "item_name": "아우터"
+  },
+  "IR4A0OP061": {
+    "style_name": "더아이잗 자카드 오픈 칼라 플레어 원피스 IR4A0OP061",
+    "brand": "더아이잗",
+    "item_name": "원피스"
+  },
+  "IR4A0JK061": {
+    "style_name": "[더아이잗] 코튼 펀칭 자수 라운드넥 재킷 (JAQUARD IVORY) IR4A0JK061",
+    "brand": "더아이잗",
+    "item_name": "아우터"
+  },
+  "IR5A0JK161": {
+    "style_name": "더아이잗 린넨 체크 싱글 투버튼 재킷 IR5A0JK161",
+    "brand": "더아이잗",
+    "item_name": "아우터"
+  },
+  "IR5M0BL861": {
+    "style_name": "더아이잗 스트링 셔츠 블라우스 ir5m0bl861",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "IR5M0SL861": {
+    "style_name": "더아이잗 탭 장식 백 밴딩 와이드 팬츠 IR5M0SL861",
+    "brand": "더아이잗",
+    "item_name": "하의"
+  },
+  "IS3M1PO851": {
+    "style_name": "[더아이잗] 하프 슬리브 브이넥 풀오버 니트 (LIGHT GREY) IS3M1PO851",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "IR4M0BL791": {
+    "style_name": "더아이잗 퍼프 7부 슬리브 블라우스 IR4M0BL791",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "IR6M0BL961": {
+    "style_name": "더아이잗 오버핏 오픈 칼라 블라우스 IR6M0BL961",
+    "brand": "더아이잗",
+    "item_name": "상의"
+  },
+  "IR5M0JK851": {
+    "style_name": "더아이잗 루즈핏 반팔 청 재킷 IR5M0JK851",
+    "brand": "더아이잗",
+    "item_name": "아우터"
+  },
+  "D242MSM056": {
+    "style_name": "듀엘 펄 비딩 프린트 티셔츠 D242MSM056",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L242PSE056": {
+    "style_name": "듀엘 크롭 셔츠 셋업 원피스 L242PSE056",
+    "brand": "듀엘"
+  },
+  "L242PSF045": {
+    "style_name": "듀엘 싱글 숏 반팔 재킷 L242PSF045",
+    "brand": "듀엘"
+  },
+  "L242PSC073": {
+    "style_name": "듀엘 스퀘어넥 퍼프 블라우스 L242PSC073",
+    "brand": "듀엘"
+  },
+  "L243PSE005": {
+    "style_name": "듀엘 브이넥 벨티드 점프수트 BR_L243PSE005",
+    "brand": "듀엘"
+  },
+  "L242PSF044": {
+    "style_name": "듀엘 린넨 크롭 셋업 자켓 L242PSF044",
+    "brand": "듀엘"
+  },
+  "L262MSE036": {
+    "style_name": "듀엘 스쿱넥 셔링 디테일 원피스 L262MSE036",
+    "brand": "듀엘"
+  },
+  "D223MSE011": {
+    "style_name": "임박 듀엘 밴딩 셔링 벨티드 롱 원피스 D223MSE011",
+    "brand": "듀엘"
+  },
+  "D233MSE012": {
+    "style_name": "듀엘 벨티드 셔츠 원피스 D233MSE012",
+    "brand": "듀엘"
+  },
+  "D242MSD049": {
+    "style_name": "듀엘 리본 언밸런스 롱 스커트 D242MSD049",
+    "brand": "듀엘"
+  },
+  "RSJPSJ57A": {
+    "style_name": "레노마옴므 멜란지그레이 모혼방 봄,여름 스판정장 RSJPSJ57A/SP57A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSIPSP26A": {
+    "style_name": "레노마 옴므 S/S 다크그레이 정장(QPSJ26A)",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "RSFPCJ51A": {
+    "style_name": "레노마 옴므 23SS 레귤러핏  캐쥬얼 여름 셋업 세트RPBMCJ51CP51A 다크그레이S08_KJ 모다아울렛 경주포항점",
+    "brand": "레노마옴므"
+  },
+  "RSFPKT60A": {
+    "style_name": "[레노마옴므] 26SS 남성 블랙 기본 카라 반팔 니트 티셔츠 RSFPKT60A",
+    "brand": "레노마옴므"
+  },
+  "S252MSF016": {
+    "style_name": "모조에스핀 배색 트위드 숏 자켓 s252msf016",
+    "brand": "모조에스핀"
+  },
+  "S242MSF011": {
+    "style_name": "모조에스핀 S/S 핫썸머 V넥 배색라인 루즈핏 린넨 재킷 S242MSF011-LE",
+    "brand": "모조에스핀"
+  },
+  "S244MSG401": {
+    "style_name": "모조에스핀 울 캐시미어 후디드 하프 코트 S244MSG401",
+    "brand": "모조에스핀"
+  },
+  "S252KSK008": {
+    "style_name": "모조에스핀 골지 반팔니트 풀오버 S252KSK008",
+    "brand": "모조에스핀",
+    "item_name": "스커트"
+  },
+  "S252KSL016": {
+    "style_name": "모조에스핀 지도리패턴 반팔 니트 가디건 S252KSL016",
+    "brand": "모조에스핀",
+    "item_name": "스커트"
+  },
+  "S242MSE026": {
+    "style_name": "[모조에스핀] 버튼 H라인 반팔 정장 원피스 S242MSE013  55  화이트",
+    "brand": "모조에스핀"
+  },
+  "S252MSA006": {
+    "style_name": "소량재고 모조에스핀 썸머 벨티드 일자핏 롱팬츠 S252MSA006",
+    "brand": "모조에스핀"
+  },
+  "S252MSA008": {
+    "style_name": "모조에스핀 프린트 리본 블라우스 S252MSC117",
+    "brand": "모조에스핀"
+  },
+  "S252MSA011": {
+    "style_name": "모조에스핀 체인 와이드 팬츠 S252MSA011",
+    "brand": "모조에스핀"
+  },
+  "WSA2JS64A": {
+    "style_name": "바쏘옴므 그레이 린넨 스판 경량 캐주얼 셋업 정장 WSA2JK PK06ALG",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JT14A": {
+    "style_name": "바쏘옴므 그레이 린넨 스판 경량 캐주얼 셋업 정장 WSA2JK PK06ALG",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "WSA1PV31A": {
+    "style_name": "바쏘옴므26SS 그레이 쿨맥스 스판 히든밴딩 슬랙스 바지 WSA2PS32",
+    "brand": "바쏘옴므"
+  },
+  "WSA2PT14A": {
+    "style_name": "바쏘옴므26SS 그레이 쿨맥스 스판 히든밴딩 슬랙스 바지 WSA2PS32",
+    "brand": "바쏘옴므",
+    "item_name": "하의"
+  },
+  "WSZ2UA50A": {
+    "style_name": "바쏘옴므 오버핏 청자켓 데님 셔츠형자켓 블루 WSZ3GU70",
+    "brand": "바쏘옴므"
+  },
+  "265MJ20C0": {
+    "style_name": "아디다스 벤토 XLG 디럭스 화이트 레드 JS1590",
+    "brand": "발렌시아"
+  },
+  "264FL11A0": {
+    "style_name": "알라이아 26SS 매쉬 피시넷 메리제인 발레 플랫슈즈 7색상",
+    "brand": "발렌시아"
+  },
+  "265GO52B0": {
+    "style_name": "발렌시아가 BA114K 24W 스퀘어 하금테 보잉 미러렌즈 명품선글라스",
+    "brand": "발렌시아"
+  },
+  "265MJ20A0": {
+    "style_name": "아디다스 벤토 XLG 디럭스 남녀공용 운동화 화이트 레드 JS1590",
+    "brand": "발렌시아"
+  },
+  "261GP24B0": {
+    "style_name": "발렌시아가 프론트 로고 코튼 드릴 볼 캡 블랙 / BALENCIAGA FRONT LOGO COTTON DRILL BALL CAP BLACK [673319 410B2]",
+    "brand": "발렌시아",
+    "item_name": "하의"
+  },
+  "265MC30B1": {
+    "style_name": "발렌시아가선글라스 BA138-K (65mm) 28A 오버사이즈 시크한블랙 변정수 슬기",
+    "brand": "발렌시아"
+  },
+  "266GC92A0": {
+    "style_name": "발렌시아가 일본 재팬 BALENCIAGA BB0134SA 001 Made In Italy",
+    "brand": "발렌시아"
+  },
+  "266MK37B0": {
+    "style_name": "직수입정품 알마니시계 AR1688 AR1763",
+    "brand": "발렌시아"
+  },
+  "264GP65B0": {
+    "style_name": "[발렌시아]윙 스타일 선글라스(245MQ12)",
+    "brand": "발렌시아",
+    "item_name": "하의"
+  },
+  "SWWBLQ22140": {
+    "style_name": "쉬즈미스 타이넥 칠부 블라우스 SWWBLQ22140",
+    "brand": "쉬즈미스",
+    "item_name": "상의"
+  },
+  "SWWSTP22190": {
+    "style_name": "쉬즈미스 스티치 오픈 카라 자켓 SWWSTP22190",
+    "brand": "쉬즈미스",
+    "item_name": "상의"
+  },
+  "SWWJKQ22040": {
+    "style_name": "쉬즈미스 프리미엄 원 버튼 싱글 브레스티드 자켓 SWWJKQ22040",
+    "brand": "쉬즈미스",
+    "item_name": "스커트"
+  },
+  "SWWBLQ22120": {
+    "style_name": "[쉬즈미스] 라운드넥 슬리브리스 블라우스_SWWBLQ22120  SWWBLQ22120",
+    "brand": "쉬즈미스",
+    "item_name": "상의"
+  },
+  "SWWSLP22010": {
+    "style_name": "쉬즈미스 베이직 스트레이트 팬츠 SWSSLP22010",
+    "brand": "쉬즈미스",
+    "item_name": "상의"
+  },
+  "SSMSLP22050": {
+    "style_name": "쉬즈미스 뒷밴딩 원턱 와이드 데님 팬츠_SSMSLP22130",
+    "brand": "쉬즈미스",
+    "item_name": "하의"
+  },
+  "SWWSTP22060": {
+    "style_name": "쉬즈미스 코튼 혼방 카라 셔츠_SWWSTP32040",
+    "brand": "쉬즈미스",
+    "item_name": "상의"
+  },
+  "SWWBLP22020": {
+    "style_name": "쉬즈미스 베이직 부츠컷 팬츠 SWWSLP22020",
+    "brand": "쉬즈미스",
+    "item_name": "상의"
+  },
+  "SWWJKQ22050": {
+    "style_name": "쉬즈미스 프리미엄 린넨 싱글 원 버튼 자켓 SWWJKQ22050",
+    "brand": "쉬즈미스",
+    "item_name": "스커트"
+  },
+  "SWSJKQ22060": {
+    "style_name": "쉬즈미스 프리미엄 클래식 싱글 테일러드 셋업 자켓_SWSJKQ22060",
+    "brand": "쉬즈미스",
+    "item_name": "아우터"
+  },
+  "SPPPG25KU3": {
+    "style_name": "[스파오키즈][키즈] (포켓몬) 반짝이는 반팔 파자마 SPPPG25KU4",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPJJG25KU2": {
+    "style_name": "[스파오키즈][판매베스트] [키즈] 라이트 후드 윈드브레이커 SPJJG25KU2",
+    "brand": "스파오키즈",
+    "item_name": "아우터"
+  },
+  "SPAYGA9KU2": {
+    "style_name": "[스파오키즈][키즈] [5PACK] 라이트 미들 삭스 SPAYGA9KU0",
+    "brand": "스파오키즈"
+  },
+  "SPPPG25KU1": {
+    "style_name": "[스파오키즈][키즈] (산리오캐릭터즈) 반팔 파자마(WHITE) SPPPG25KU1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPTNG25KU1": {
+    "style_name": "[스파오키즈][키즈] 쿨 경량 5부 데님 쇼츠(LIGHT INDIGO) SPTNG25KU1",
+    "brand": "스파오키즈",
+    "item_name": "하의"
+  },
+  "SPSMG25KU3": {
+    "style_name": "[스파오키즈][키즈] (산리오캐릭터즈) 스커트 상하세트(LIGHT BLUE) SPSMG25KG1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPPPG25KU7": {
+    "style_name": "[스파오키즈][키즈] (산리오캐릭터즈) 잘 시간이야 프릴 파자마 SPPPG25KU7",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPSMG25KG3": {
+    "style_name": "[스파오키즈][키즈] (산리오캐릭터즈) 스커트 상하세트(LIGHT BLUE) SPSMG25KG1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPTMG37KU1": {
+    "style_name": "[스파오키즈][키즈][COOL] 카고 버뮤다 팬츠 SPTMG37KU1",
+    "brand": "스파오키즈",
+    "item_name": "하의"
+  },
+  "SPRSG24KG1": {
+    "style_name": "[스파오 키즈] [키즈] 여아 레이어드 헨리넥 반팔티_SPRSG24KG1 SPRSG24KG1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "NEF2WC1926": {
+    "style_name": "[롯데백화점] 에디션 여름 추연사 솔리드 긴팔 셔츠 5종 NEF2WC1926 LE1219466200",
+    "brand": "에디션"
+  },
+  "NEF2WC1921": {
+    "style_name": "[롯데백화점] 에디션 린넨 코튼 혼방 솔리드 셔츠 5종 NEF2WC1921 LE1219659629",
+    "brand": "에디션"
+  },
+  "NEF2WC1923": {
+    "style_name": "[롯데백화점] 에디션 여름 추연사 솔리드 긴팔 셔츠 5종 NEF2WC1926 LE1219466200",
+    "brand": "에디션"
+  },
+  "NEG2JJ1921": {
+    "style_name": "에디션 남성 스웨이드 트러커 점퍼_NEG1JJ1622SBL",
+    "brand": "에디션",
+    "item_name": "아우터"
+  },
+  "NEF2WC1922": {
+    "style_name": "[롯데백화점] 에디션 여름 추연사 솔리드 긴팔 셔츠 5종 NEF2WC1926 LE1219466200",
+    "brand": "에디션"
+  },
+  "NEF2PP1921": {
+    "style_name": "[롯데백화점] 에디션 스트레치 코튼 치노 팬츠 5종 NEF2PP1921 LE1219464593",
+    "brand": "에디션",
+    "item_name": "상의"
+  },
+  "NEG2PP1924": {
+    "style_name": "에디션 워시드 리넨 팬츠 NEF2PP1924",
+    "brand": "에디션",
+    "item_name": "상의"
+  },
+  "C62T004": {
+    "style_name": "엠씨 시원한 라운드 티셔츠 C62T004",
+    "brand": "엠씨"
+  },
+  "C52B158": {
+    "style_name": "엠씨 여름블라우스 C52B158BP",
+    "brand": "엠씨"
+  },
+  "C62Y080": {
+    "style_name": "엠씨 멋스러운트렌치코트 C62Y080",
+    "brand": "엠씨"
+  },
+  "C43P084": {
+    "style_name": "엠씨 캐쥬얼한 청바지 C43P084",
+    "brand": "엠씨"
+  },
+  "C52J162": {
+    "style_name": "엠씨 여름자켓 C52J162_BP_BP",
+    "brand": "엠씨"
+  },
+  "C52J280": {
+    "style_name": "엠씨 여름점퍼 C52J280",
+    "brand": "엠씨"
+  },
+  "M62K086": {
+    "style_name": "엠씨 스트라이프 니트 M62K086",
+    "brand": "엠씨"
+  },
+  "C41B050": {
+    "style_name": "엠씨 멋스러운블라우스 블라우스 C41B050",
+    "brand": "엠씨"
+  },
+  "VOBAS5M3331": {
+    "style_name": "앞판 주머니 디테일 티셔츠_VOBAS6M3311",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VOCCL5M4311": {
+    "style_name": "레이니 후드 점퍼____VOCCL4M5246",
+    "brand": "올리비아로렌"
+  },
+  "VVCAS5M6266": {
+    "style_name": "뷔스티에 레이어드 티셔츠_VVCAS6M4371",
+    "brand": "올리비아로렌"
+  },
+  "VVCNL5M3441": {
+    "style_name": "[현대울산점(동구)] [올리비아로렌] 올리비아로렌 NEW. 체크셔츠 (VVCNL4S2261) VVCNL4S2261",
+    "brand": "올리비아로렌"
+  },
+  "VOCNL5M4211": {
+    "style_name": "[현대울산점(동구)] [올리비아로렌]올리비아로렌 NEW. 볼륨소매 체크 블라우스 (VOCNL4M5VOCNL4M5336",
+    "brand": "올리비아로렌"
+  },
+  "VOPDL5M4211": {
+    "style_name": "올리비아로렌 린넨 와이드 캐주얼 팬츠 YS VOPDL5M4211",
+    "brand": "올리비아로렌",
+    "item_name": "아우터"
+  },
+  "VOBAL5M3121": {
+    "style_name": "[행복한백화점][올리비아로렌]여성케주얼 티셔츠 VOBAL5X3111",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VVCBN5M3471": {
+    "style_name": "명화 프린트 티셔츠_VVBAS5M3471",
+    "brand": "올리비아로렌",
+    "item_name": "상의"
+  },
+  "VVCNL5M4271": {
+    "style_name": "[현대울산점(동구)] [올리비아로렌] 올리비아로렌 NEW. 체크셔츠 (VVCNL4S2261) VVCNL4S2261",
+    "brand": "올리비아로렌"
+  },
+  "VVPDL5M3181": {
+    "style_name": "올리비아로렌 포인트 와이드 팬츠 VVPDL5M3181",
+    "brand": "올리비아로렌",
+    "item_name": "아우터"
+  },
+  "ZOF1FF1301": {
+    "style_name": "[신세계백화점][타임스퀘어점패션관] 워싱 라이크 스트레치 블루종 점퍼  ZOF2JJ1304 2종택1",
+    "brand": "올젠"
+  },
+  "ZOG5PP1302": {
+    "style_name": "[롯데백화점] 올젠 사이드밴딩 TR 슬랙스 팬츠 ZOG5PP1302 LE1221001207",
+    "brand": "올젠",
+    "item_name": "상의"
+  },
+  "ZOF2TT1302": {
+    "style_name": "올젠 믹셀 카라 반팔티 ZOF2TT1302",
+    "brand": "올젠"
+  },
+  "ZBG2PP1202": {
+    "style_name": "올젠 마이크로 써커 팬츠 ZBG2PP1202",
+    "brand": "올젠",
+    "item_name": "상의"
+  },
+  "ZOF5PP1301": {
+    "style_name": "[롯데백화점] 올젠 남자 사이드 밴딩 치노바지 5종 ZOF5PP1301 LE1216304681",
+    "brand": "올젠",
+    "item_name": "상의"
+  },
+  "B6B5NQ32-1": {
+    "style_name": "메쉬집업 가디건  B6B5NQ32-1-BKBP",
+    "brand": "요하넥스"
+  },
+  "B6B5TQ24-1": {
+    "style_name": "[요하넥스]라운드넥 5부티셔츠 Z6B5T504-1-BE_BP",
+    "brand": "요하넥스"
+  },
+  "B6B5BQ52-1": {
+    "style_name": "블라우스 (B6B5BQ52-1)DJ",
+    "brand": "요하넥스"
+  },
+  "ITQ5YBL730": {
+    "style_name": "잇미샤 플로럴 레이스 크롭 아웃 블라우스 ITQ5YBL730",
+    "brand": "잇미샤",
+    "item_name": "상의"
+  },
+  "ITQ4YBL710": {
+    "style_name": "[잇미샤] 잇미샤 사틴 레이스 블라우스 ITQ4BBL100",
+    "brand": "잇미샤",
+    "item_name": "상의"
+  },
+  "ITQ6YCD870": {
+    "style_name": "[잇미샤] [Exclusive]배색 웨이스트 랩 스커트 [ITQ6ZSK570]",
+    "brand": "잇미샤",
+    "item_name": "상의"
+  },
+  "ITQ6YJK970": {
+    "style_name": "잇미샤 수술 스퀘어넥 스트랩 트위드 자켓 ITQ6YJK970",
+    "brand": "잇미샤",
+    "item_name": "원피스"
+  },
+  "ITQ4YDP820": {
+    "style_name": "[잇미샤] 세미 와이드 데님 팬츠 [ITQ4DPT830]",
+    "brand": "잇미샤",
+    "item_name": "원피스"
+  },
+  "ITQ4YPT401": {
+    "style_name": "[잇미샤] 스트레이트 팬츠 [ITQ4BPT570]",
+    "brand": "잇미샤",
+    "item_name": "하의"
+  },
+  "ITQ4YPT412": {
+    "style_name": "[잇미샤] 스트레이트 팬츠 [ITQ4BPT570]",
+    "brand": "잇미샤",
+    "item_name": "하의"
+  },
+  "ITQ5YBL690": {
+    "style_name": "[잇미샤] 허리 스트링 플리츠 탑 [ITQ5YBL690]",
+    "brand": "잇미샤",
+    "item_name": "상의"
+  },
+  "ITQ5YCD930": {
+    "style_name": "[잇미샤] [Exclusive]오프숄더 셋업 블라우스 [ITQ5ZBL410]",
+    "brand": "잇미샤",
+    "item_name": "상의"
+  },
+  "ITQ5YDP430": {
+    "style_name": "[잇미샤] 버뮤다 데님 팬츠 [ITQ5DPT850]",
+    "brand": "잇미샤",
+    "item_name": "원피스"
+  },
+  "BF6-NRJP0210": {
+    "style_name": "제시뉴욕 테일러드 자켓 BF6NRJP0210",
+    "brand": "제시뉴욕",
+    "item_name": "아우터"
+  },
+  "BF5-NRJH0100": {
+    "style_name": "제시뉴욕 더블버튼 자켓 BF5NRJH0100",
+    "brand": "제시뉴욕",
+    "item_name": "아우터"
+  },
+  "DE6-NSOP1340": {
+    "style_name": "제시뉴욕 퍼프 슬리브 원피스 DE6NSOP1340",
+    "brand": "제시뉴욕",
+    "item_name": "원피스"
+  },
+  "JF55NSOH5760": {
+    "style_name": "제시뉴욕 린넨 와이드 점프슈트 JF55NSOH5760",
+    "brand": "제시뉴욕"
+  },
+  "DEM-NSWP1120": {
+    "style_name": "제시뉴욕 민소매 티셔츠 DEM-NSWP1120",
+    "brand": "제시뉴욕",
+    "item_name": "상의"
+  },
+  "JF4-NSBQ1180": {
+    "style_name": "제시뉴욕 프린트 블라우스 JF4NSBQ1180",
+    "brand": "제시뉴욕"
+  },
+  "ME2-NRJT0200": {
+    "style_name": "[AK분당점] 알렉시스엔 제시뉴욕 브이넥 페블럼자켓 ME2-NRJT0200",
+    "brand": "제시뉴욕",
+    "item_name": "아우터"
+  },
+  "ME4-NROP1520": {
+    "style_name": "[AK분당점] 알렉시스엔 제시뉴욕 퍼프소매 플라워 원피스 ME4-NROP1520",
+    "brand": "제시뉴욕",
+    "item_name": "원피스"
+  },
+  "MF25NRPC218R": {
+    "style_name": "제시뉴욕 빅포켓 와이드핏 카고팬츠 MF25NRPC218R",
+    "brand": "제시뉴욕",
+    "item_name": "상의"
+  },
+  "JR2A0BL643": {
+    "style_name": "지고트 드레이프 러플 프릴넥 블라우스 JR2A0BL643",
+    "brand": "지고트",
+    "item_name": "상의"
+  },
+  "JR4A0OP852": {
+    "style_name": "[지고트(OUTLET)] 플로럴 브이 칼라 플레어 원피스 (PRINT BLUE) JR4A0OP852",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR3A0OP912": {
+    "style_name": "지고트 플로럴 러플 플레어 원피스 JR3A0OP912",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR4A0OP962": {
+    "style_name": "[지고트(OUTLET)] 페미닌 브이넥 플레어 원피스 (PRINT YELLOW) JR4A0OP962",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR2A0OP862": {
+    "style_name": "[지고트(OUTLET)] 슬림핏 오픈 칼라 플레어 원피스 (BEIGE) JR2A0OP862",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR3A0OP922": {
+    "style_name": "[지고트(OUTLET)] 오간자 배색 플레어 원피스 (BEIGE) JR3A0OP922",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR4A0OP982": {
+    "style_name": "[지고트(OUTLET)] 플라워 자수 튤 플레어 원피스 (BLACK) JR4A0OP982",
+    "brand": "지고트",
+    "item_name": "원피스"
+  },
+  "JR2A0SLJ43": {
+    "style_name": "[지고트(OUTLET)] 커팅 부츠컷 데님 팬츠 (DARK BLUE) JR2A0SLJ43",
+    "brand": "지고트",
+    "item_name": "하의"
+  },
+  "JR3A0SL653": {
+    "style_name": "[지고트(OUTLET)] 더블 버튼 와이드 일자핏 팬츠 (BLACK) JR3A0SL653",
+    "brand": "지고트",
+    "item_name": "하의"
+  },
+  "ABF2TR1902": {
+    "style_name": "지오지아 남성 플리츠 오픈 카라티_ABF3TT1101BK",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ABF2TT1901": {
+    "style_name": "지오지아 미라쿨 반팔 카라 티셔츠 라이트그레이 ABF2TT1901LGR",
+    "brand": "지오지아"
+  },
+  "ABF2TR3201": {
+    "style_name": "지오지아 루즈핏 조인혁작가 콜라보 반팔티 ABF2TR3201",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ABF2ET1103": {
+    "style_name": "지오지아 워셔블 코튼 변형조직 카라 니트티 ABF2ET1103LBLDG",
+    "brand": "지오지아"
+  },
+  "ABF2TR1101": {
+    "style_name": "지오지아 솔리드 소로나 반팔티 ABF2TR1101",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ABF2WC1204": {
+    "style_name": "지오지아 미라쿨 크링클 루즈핏 반팔 카라셔츠 ABF2WC1204",
+    "brand": "지오지아"
+  },
+  "ABF2TR1103": {
+    "style_name": "지오지아 조직 라운드 반팔티 ABF2TR1103",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ABF2ET1102": {
+    "style_name": "지오지아 워셔블 미라쿨 반팔 티에리 ABF2ET1102",
+    "brand": "지오지아"
+  },
+  "CDAA6PT2Z11": {
+    "style_name": "크로커다일 줄 조직 여름바지 CDAA2PT2528",
+    "brand": "크로커다일",
+    "item_name": "하의"
+  },
+  "CDAA8PT2Z11": {
+    "style_name": "크로커다일 줄 조직 여름바지 CDAA2PT2528",
+    "brand": "크로커다일",
+    "item_name": "하의"
+  },
+  "CDAA7WS2Z11": {
+    "style_name": "[크로커다일] 울 모티브 글렌체크 남방 CDAA5WS3431",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA6JK2Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAA7TS2Z12": {
+    "style_name": "크로커다일 나일론 메쉬조직 카라 티셔츠 CDAA9TP2704",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA3KT2Z11": {
+    "style_name": "[크로커다일] 변형 조직 스트라이프 하프집업 니트 CDAA8KR4334",
+    "brand": "크로커다일"
+  },
+  "CDAA9JP2Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAA6PT1Z11": {
+    "style_name": "크로커다일 줄 조직 여름바지 CDAA2PT2528",
+    "brand": "크로커다일",
+    "item_name": "하의"
+  },
+  "MKG2DH2211": {
+    "style_name": "[신세계백화점]26년 SS 여아)데님쇼츠 (3부) MKG2DH2211",
+    "brand": "탑텐키즈"
+  },
+  "MKG5JJ2411": {
+    "style_name": "[탑텐키즈]NC강서점 공용) 라이트 윈드브레이커 MKG2JJ3911",
+    "brand": "탑텐키즈",
+    "item_name": "아우터"
+  },
+  "MKG2JJ3911": {
+    "style_name": "[탑텐키즈]NC강서점 공용) 라이트 윈드브레이커 MKG2JJ3911",
+    "brand": "탑텐키즈",
+    "item_name": "아우터"
+  },
+  "TS5M0JK111": {
+    "style_name": "더틸버리 린넨 라이크 스티치 셔츠 재킷 TS5M0JK111",
+    "brand": "틸버리",
+    "item_name": "아우터"
+  },
+  "TR6N0OP65W": {
+    "style_name": "더틸버리 언밸런스 스트링 티어드 원피스 TR6N0OP65W",
+    "brand": "틸버리",
+    "item_name": "원피스"
+  },
+  "TS4N8OP521": {
+    "style_name": "더틸버리 데님 칼라넥 플레어 투피스 ts4n8op521",
+    "brand": "틸버리",
+    "item_name": "원피스"
+  },
+  "TR5M0OP04W": {
+    "style_name": "더틸버리 더 틸버리 카라 집업 점프 수트 hd TR5M0OP04W",
+    "brand": "틸버리",
+    "item_name": "원피스"
+  },
+  "TS4N0JP541": {
+    "style_name": "더틸버리 빅 포켓 하이넥 크롭 점퍼 TS4N0JP541",
+    "brand": "틸버리",
+    "item_name": "아우터"
+  },
+  "TR5N0SL04W": {
+    "style_name": "더틸버리 베스트 레이어드 티셔츠 TR5NOTS03W",
+    "brand": "틸버리",
+    "item_name": "하의"
+  },
+  "TS4N0TS511": {
+    "style_name": "더틸버리 (더틸버리) 레터링 배색 링거 티셔츠 TS4N0TS511",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "TR5M0JK05W": {
+    "style_name": "더틸버리 롤업 하프 슬리브 싱글 재킷 TR5M0JK05W",
+    "brand": "틸버리",
+    "item_name": "아우터"
+  },
+  "TR7M0BL01W": {
+    "style_name": "더틸버리 스트라이프 레이어 롤업 블라우스 TR7M0BL01W",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "TR6N0BL60W": {
+    "style_name": "더틸버리 루즈핏 트위스트 롤업 블라우스 TR6N0BL60W",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "221F2PT101": {
+    "style_name": "[팬텀] 여성 밴딩 카고 와이드 팬츠 221F2PT101_BG",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "221E1PF351": {
+    "style_name": "팬텀골프 221E1PF351 여성 포켓 비조 밴딩 조거 팬츠  카키  64",
+    "brand": "팬텀"
+  },
+  "221E2TR320": {
+    "style_name": "PHANTOM 메쉬 조직 후드 오버핏 반팔티셔츠 221e2tr320",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "221F2TI807": {
+    "style_name": "[팬텀] 여성 냉감 반목 긴팔 이너 티셔츠 221F2TI807_BG",
+    "brand": "팬텀"
+  },
+  "211F2PT805": {
+    "style_name": "PHANTOM 골프바지 NQC NA 남성 베이직 에어홀 팬츠 211F2PT805",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "221F2PC804": {
+    "style_name": "PHANTOM 배색 플리츠 큐롯 스커트 221f2pc804",
+    "brand": "팬텀"
+  },
+  "PKG1PP3011": {
+    "style_name": "폴햄키즈 공용 카고 버뮤다 6부 숏츠_PKG2PH3013",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PKG2JJ3023": {
+    "style_name": "[신세계백화점][의정부점] 26년 신상! 공용 홑겹 바람막이 PKG2JJ3023",
+    "brand": "폴햄키즈",
+    "item_name": "아우터"
+  },
+  "PKG2TS3210": {
+    "style_name": "[롯데백화점] 폴햄 키즈 시원한 여름룩 기능성 반팔티  PKF2TS3012PKF3TS2210(6종택1) LE1221743889",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PKG2TS3041": {
+    "style_name": "폴햄키즈 공용 매직쿨 우븐믹스 반팔티_PKF2TS3571",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PQ3KG302": {
+    "style_name": "플라스틱아일랜드 스트라이프 니트가디건 SET PQ3KG302",
+    "brand": "플라스틱아일랜드"
+  },
+  "PQ2AG581": {
+    "style_name": "테온셀 플라스틱아일랜드 라탄백 (PQ2AG581)",
+    "brand": "플라스틱아일랜드"
+  },
+  "PR7CH302": {
+    "style_name": "플라스틱아일랜드 실켓터링 티셔츠 PR7CH302",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PQ2WO701": {
+    "style_name": "플라스틱아일랜드 스퀘어넥 배색 티어드 원피스 PQ2WO701",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS2CH962": {
+    "style_name": "[플라스틱아일랜드] 페플럼 볼륨 블라우스 (PS2WB583)",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PQ3WO831": {
+    "style_name": "플라스틱아일랜드 네크변형 원피스 PQ3WO831",
+    "brand": "플라스틱아일랜드"
+  },
+  "FK261CD01X003": {
+    "style_name": "[AK분당점] 휠라키즈 데이지런 KD FK261CD01X003(101/100/001)",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "FK262FS07X006": {
+    "style_name": "휠라키즈 미스터맨 리틀미스 바캉스 벤츄리 상하셋업 FK262FS07X006",
+    "brand": "휠라키즈"
+  },
+  "FK261CD01X004": {
+    "style_name": "휠라키즈 스키퍼 LCO KD FK261CD01X004",
+    "brand": "휠라키즈",
+    "item_name": "상의"
+  },
+  "RSIMSP18A": {
+    "style_name": "레노마옴므 SS정장 새트 상품RSIMSJ18A RSIMSP18A",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "RSIPSJ26A": {
+    "style_name": "[레노마옴므] 26SS 남성 다크그레이 시그니처 데일리 고급 정장세트 RSIPSJ26A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RQAISP71A": {
+    "style_name": "레노마 옴므 겨울 페딩 카키 코트 (BH71A)",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "RSIMSJ18A": {
+    "style_name": "레노마옴므 SS정장 새트 상품RSIMSJ18A RSIMSP18A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSIMSP06A": {
+    "style_name": "레노마옴므 26년 SS 허리밴딩 스판 면바지 네이비 RSBP06A-S59",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "RSIPSJ25A": {
+    "style_name": "[레노마옴므] 26SS 남성 네이비 시그니처 데일리 고급 정장세트 RSIPSJ25A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSJPDC51A": {
+    "style_name": "레노마옴므 베이지 케시미어 모혼방 점퍼 BU51A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RQAISJ71A": {
+    "style_name": "레노마 블랙 스판정장 RQAISJ71A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSIMSJ02A": {
+    "style_name": "레노마 레노마옴므 이태리 구아벨로 수입원단 봄 여름 순모 예복 정장 RSIMSJ02A SP02A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RMBLG26RT5": {
+    "style_name": "로엠 시스루 리본 타이 블라우스 RMBLG26RT5",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMTWG25R11": {
+    "style_name": "로엠 올데이 원턱 와이드 밴딩슬랙스(숏ver.) RMTWG25R11",
+    "brand": "로엠"
+  },
+  "RMTJG25G01": {
+    "style_name": "로엠 린넨 와이드 데님 RMTJG25G01",
+    "brand": "로엠",
+    "item_name": "하의"
+  },
+  "RMBLG26R11": {
+    "style_name": "로엠 반팔 뷔스티에 레이어드 블라우스 RMBLG26R11",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMCKG25R98": {
+    "style_name": "[로엠] [뉴미PICK]_올데이 린넨 긴팔 골지가디건 RMCKG25R98",
+    "brand": "로엠",
+    "item_name": "아우터"
+  },
+  "RMBLG26RT1": {
+    "style_name": "로엠 랩 타이 블라우스 RMBLG24R11",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMYWG26R11": {
+    "style_name": "[로엠] 올데이 시스루 백리본 셔츠 RMYWG26R11",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMBLG26RT4": {
+    "style_name": "로엠 [RE] 프릴넥 코튼 블라우스(RMBLG24R16) RMBLG26RT4",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "MIWHNG310A": {
+    "style_name": "미쏘 크롭탑 나시 티셔츠 MIWHNG310A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHNG510A": {
+    "style_name": "미쏘 캡내장 버튼업 슬리브리스 MIWHNG510A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHNG410A": {
+    "style_name": "미쏘 버튼 골지 슬리브리스 MIWHNG410A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHWG74QA": {
+    "style_name": "[미쏘]랩 반팔 티셔츠 MIWHWG602A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHWG502A": {
+    "style_name": "[미쏘]랩 반팔 티셔츠 MIWHWG602A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWCKG520T": {
+    "style_name": "[미쏘][에센셜] 썸머 시스루 가디건 MIWCKG520T",
+    "brand": "미쏘",
+    "item_name": "아우터"
+  },
+  "MIWTJG550J": {
+    "style_name": "[미쏘][쏘쿨데님] 핏업데님 와이드핏 Basic MIWTJG550J",
+    "brand": "미쏘",
+    "item_name": "하의"
+  },
+  "MIWHWG310A": {
+    "style_name": "미쏘 베이직 R넥 반팔 티셔츠 MIWHWG310A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHWG58QA": {
+    "style_name": "[미쏘]랩 반팔 티셔츠 MIWHWG602A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWTJG560J": {
+    "style_name": "[N배송][미쏘] [쏘쿨데님] 핏업데님 와이드핏_Long_MIWTJG560J",
+    "brand": "미쏘",
+    "item_name": "하의"
+  },
+  "BSA5TD01B": {
+    "style_name": "바쏘 린넨셔츠 마 100% 캐주얼 카라넥 남방 그린 BSA1TT37",
+    "brand": "바쏘옴므"
+  },
+  "WSA2KR05A": {
+    "style_name": "바쏘옴므 기능성 쿨링 피케이 반팔 카라 티셔츠 WSA2KT2",
+    "brand": "바쏘옴므",
+    "item_name": "상의"
+  },
+  "WSA2JW33A": {
+    "style_name": "바쏘옴므26SS 블루 슬럽 쿨맥스 스판 히든밴딩 캐주얼 셋업 정장 WSA2JK54-PK54",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "WSA2PV33A": {
+    "style_name": "바쏘옴므26SS 그레이 쿨맥스 스판 히든밴딩 슬랙스 바지 WSA2PS32",
+    "brand": "바쏘옴므"
+  },
+  "WSA1JW06A": {
+    "style_name": "바쏘옴므26SS 블루 슬럽 쿨맥스 스판 히든밴딩 캐주얼 셋업 정장 WSA2JK54-PK54",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "WSA1PV06A": {
+    "style_name": "바쏘옴므26SS 그레이 쿨맥스 스판 히든밴딩 슬랙스 바지 WSA2PS32",
+    "brand": "바쏘옴므"
+  },
+  "WSA2JK60A": {
+    "style_name": "바쏘옴므26SS 블루 슬럽 쿨맥스 스판 히든밴딩 캐주얼 셋업 정장 WSA2JK54-PK54",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "WSA2JK66A": {
+    "style_name": "바쏘옴므26SS 블루 슬럽 쿨맥스 스판 히든밴딩 캐주얼 셋업 정장 WSA2JK54-PK54",
+    "brand": "바쏘옴므",
+    "item_name": "아우터"
+  },
+  "622052": {
+    "style_name": "밸리걸 레이어드 골지 옆선스트링 반팔니트티셔츠 622052",
+    "brand": "밸리걸"
+  },
+  "826022": {
+    "style_name": "[밸리걸]브이넥 레터링 반팔셔링면티셔츠826022",
+    "brand": "밸리걸"
+  },
+  "912073": {
+    "style_name": "밸리걸 브이넥 크롭 가디건 230579",
+    "brand": "밸리걸"
+  },
+  "912061": {
+    "style_name": "[밸리걸]스카프 장식 와이드 팬츠 817220",
+    "brand": "밸리걸"
+  },
+  "622941": {
+    "style_name": "밸리걸 플리츠 퍼프 소매 블라우스 622941",
+    "brand": "밸리걸"
+  },
+  "912121": {
+    "style_name": "[AK수원점] 밸리걸 베이직 브이넥 티셔츠 912121",
+    "brand": "밸리걸"
+  },
+  "912112": {
+    "style_name": "[밸리걸]베이직 브이넥 티셔츠 912121",
+    "brand": "밸리걸"
+  },
+  "622161": {
+    "style_name": "밸리걸 사이드 스트링 레이어드 반팔니트티 622161",
+    "brand": "밸리걸"
+  },
+  "626080": {
+    "style_name": "밸리걸 스판 반짝 캡소매 니트 626080",
+    "brand": "밸리걸"
+  },
+  "622162": {
+    "style_name": "밸리걸 여름 레이어드 사이드 스트링 반팔 니트 622162",
+    "brand": "밸리걸"
+  },
+  "S262-K104A": {
+    "style_name": "샤틴 썸머 스트라이프 프린팅 원피스 S262S653",
+    "brand": "샤틴"
+  },
+  "S262-K204A": {
+    "style_name": "샤틴 레이스 카라 셔츠형 반소매 블라우스 S262K204A",
+    "brand": "샤틴"
+  },
+  "S262-C411A": {
+    "style_name": "샤틴 썸머 스트라이프 프린팅 원피스 S262S653",
+    "brand": "샤틴"
+  },
+  "S262-K103A": {
+    "style_name": "샤틴 라운드넥 진주포켓 5부 데님재킷 S262K103A",
+    "brand": "샤틴"
+  },
+  "S262-K111A": {
+    "style_name": "샤틴 썸머 스트라이프 프린팅 원피스 S262S653",
+    "brand": "샤틴"
+  },
+  "S262-K551A": {
+    "style_name": "샤틴 썸머 스트라이프 프린팅 원피스 S262S653",
+    "brand": "샤틴"
+  },
+  "S262-K650A": {
+    "style_name": "샤틴 헨리넥 포켓 벨티드 린넨 반소매 롱 원피스 S262K650A",
+    "brand": "샤틴"
+  },
+  "SPRPG37KU4": {
+    "style_name": "[스파오키즈][키즈][COOL] 쿠디 그래픽 반팔티 SPRPG37KU4",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPKWG24KU1": {
+    "style_name": "[스파오키즈][키즈] 코튼블렌드 스트라이프 칼라넥 스웨터 SPKWG11KU2",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPTHG37KU2": {
+    "style_name": "[스파오 키즈] [키즈] 카고 버뮤다 쇼츠 (나일론)_SPTHG37KU4 SPTHG37KU4",
+    "brand": "스파오키즈",
+    "item_name": "하의"
+  },
+  "SPRSG24KU2": {
+    "style_name": "[스파오키즈][키즈] (산리오캐릭터즈) 반팔티(RED) SPRLG24KU2",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPTNG25KG1": {
+    "style_name": "[스파오키즈][키즈] 여아 버뮤다 데님 쇼츠(LIGHT INDIGO) SPTNG25KG1",
+    "brand": "스파오키즈",
+    "item_name": "하의"
+  },
+  "SPRSG24KU1": {
+    "style_name": "[스파오키즈][키즈] 쿠디 시어서커 반팔 셔츠 SPYSF24KU1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPSMG24KU1": {
+    "style_name": "[스파오키즈][키즈][COOL] 스케이트보드 상하세트(DARK BLUE) SPSMG24KU1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "NEF2ET1921": {
+    "style_name": "에디션 베이직 반팔 티에리 NEF2ET1921",
+    "brand": "에디션"
+  },
+  "NEF2ET1625": {
+    "style_name": "에디션 센서빌리티 로고 맨투맨 티셔츠 5종 NEF5TR1901",
+    "brand": "에디션"
+  },
+  "NEF2PP1925": {
+    "style_name": "에디션 센서빌리티 에어로쿨 스트레치 슬랙스 4종 NEF2PP1925",
+    "brand": "에디션",
+    "item_name": "상의"
+  },
+  "NEF2TR1931": {
+    "style_name": "에디션 센서빌리티 로고 맨투맨 티셔츠 5종 NEF5TR1901",
+    "brand": "에디션",
+    "item_name": "하의"
+  },
+  "NEF2PP1922": {
+    "style_name": "에디션 남성 치노 팬츠_NEF3PP1621",
+    "brand": "에디션",
+    "item_name": "상의"
+  },
+  "SPLWE23KG3": {
+    "style_name": "에어워크주니어 나일론 사선 배색 여름 바람막이 점퍼 W232B0425A",
+    "brand": "에어워크주니어",
+    "item_name": "상의"
+  },
+  "ZBG2PP1201": {
+    "style_name": "[롯데백화점] 올젠 [정상가 : 128,000 원] 사이드밴딩 트윌조직 여름 치노 팬츠 ZBG2PP1201 LE1221387018",
+    "brand": "올젠",
+    "item_name": "상의"
+  },
+  "ZOG2PP1311": {
+    "style_name": "올젠 나일론 혼방 면 스판 셋업 팬츠 ZOF2PP1311",
+    "brand": "올젠",
+    "item_name": "상의"
+  },
+  "ZOG3TT1371": {
+    "style_name": "올젠 남성 린넨 스트라이프 티에리_ZOG2TT1313",
+    "brand": "올젠"
+  },
+  "ZOG2PP1301": {
+    "style_name": "올젠 CN 조직 팬츠 ZOG2PP1301",
+    "brand": "올젠",
+    "item_name": "상의"
+  },
+  "ZOG2WC1301": {
+    "style_name": "[이월][올젠] 솔리드 린넨 셔츠 I (ZOD2WC1301)",
+    "brand": "올젠"
+  },
+  "MIUCL6S1571": {
+    "style_name": "인디안 면 혼방 점퍼 miucl6s1571",
+    "brand": "인디안"
+  },
+  "MITCL6M3111": {
+    "style_name": "인디안 경량 조직감 점퍼 DG MITCL6M3111",
+    "brand": "인디안",
+    "item_name": "하의"
+  },
+  "MITDL6S1331": {
+    "style_name": "인디안 타소재 조직물 원턱 팬츠 MITDL6S1331",
+    "brand": "인디안"
+  },
+  "MITAL6S1141": {
+    "style_name": "인디안 코튼블렌드 컬러블록 티셔츠 MITAL4S1121 봄 티셔츠 긴팔",
+    "brand": "인디안",
+    "item_name": "하의"
+  },
+  "MIEAL6S1101": {
+    "style_name": "NC강남점 인디안 남성용 멜란지 티셔츠 MIEAL5S1101 NC강남점",
+    "brand": "인디안"
+  },
+  "MIEDL6M2421": {
+    "style_name": "인디안 폴리써커 원턱 팬츠 MIEDL6M2421",
+    "brand": "인디안"
+  },
+  "MIEDL6M2431": {
+    "style_name": "인디안 남성 여름 폴리써커 팬츠 88 35 MIEDL6M2431 56",
+    "brand": "인디안"
+  },
+  "MIECL6S1101": {
+    "style_name": "인디안 INDIAN 솔리드 베이직 점퍼_MIECL3M3101",
+    "brand": "인디안"
+  },
+  "MITDL6S1321": {
+    "style_name": "NC 구로점 웰메이드 인디안 분또 프린트 팬츠 MITDL4F8131",
+    "brand": "인디안"
+  },
+  "MIUCL5M3171": {
+    "style_name": "인디안 여름 린넨혼방 낮은 에리 점퍼 MIUCL5M3171",
+    "brand": "인디안"
+  },
+  "V262PSE944": {
+    "style_name": "ZOOC 벨티드 슬림 원피스 GR V262PSE944 404834",
+    "brand": "주크"
+  },
+  "V262KSK951": {
+    "style_name": "소량입고 [ZOOC] 골지 짜임 민소매 니트 V262KSK951",
+    "brand": "주크",
+    "item_name": "스커트"
+  },
+  "V262MSJ933": {
+    "style_name": "ZOOC주크 마혼방 소매롤업 셔츠형점퍼 V262MSJ933",
+    "brand": "주크",
+    "item_name": "아우터"
+  },
+  "V262PSC938": {
+    "style_name": "주크 플라워 레이스 블라우스 -OGW V262PSC938-OGW",
+    "brand": "주크"
+  },
+  "V252PSE936": {
+    "style_name": "ZOOC 허리밴딩 플레어 롱 원피스 V252PSE936",
+    "brand": "주크"
+  },
+  "V262KSL937": {
+    "style_name": "[주크] ZOOC 쉬어 스트라이프 슬림 가디건 V262KSL937",
+    "brand": "주크",
+    "item_name": "스커트"
+  },
+  "V262MSD935": {
+    "style_name": "ZOOC 주크 A라인 맥시 스커트 V262MSD935",
+    "brand": "주크"
+  },
+  "V262MSF937": {
+    "style_name": "ZOOC 주크 칼라넥 투버튼 루즈핏 반팔 자켓 V262MSF937",
+    "brand": "주크"
+  },
+  "AAG2PP1601": {
+    "style_name": "지오지아 카치온 테이퍼드 핏 셋업 팬츠 차콜그레이 AAG2PP1601CGR",
+    "brand": "지오지아",
+    "item_name": "상의"
+  },
+  "ABG2SP1202": {
+    "style_name": "지오지아 솔리드 미라클 정장 바지 ABG2SP1202",
+    "brand": "지오지아",
+    "item_name": "하의"
+  },
+  "ABG2WD1204": {
+    "style_name": "지오지아 논아이론 트리코트 정장반팔셔츠 ABG2WD1204",
+    "brand": "지오지아"
+  },
+  "AAG2KG1601": {
+    "style_name": "[지오지아] 데일리 베이지 캐주얼 셋업 수트 (AAE2KG1601_AAE2PP1601_BE)",
+    "brand": "지오지아"
+  },
+  "ABG2ET1101": {
+    "style_name": "지오지아 슬럽 반팔 카라 니트 ABG2ET1101",
+    "brand": "지오지아"
+  },
+  "CNEMJK001": {
+    "style_name": "[캐리스노트] 7부 소매 싱글 재킷 다크 네이비 CNFMJK001DN",
+    "brand": "캐리스노트",
+    "item_name": "아우터"
+  },
+  "CNFMBL004": {
+    "style_name": "[캐리스노트] 밑단 스트링 블라우스 블랙 CNEMBL004BK",
+    "brand": "캐리스노트",
+    "item_name": "상의"
+  },
+  "CNFMJK003": {
+    "style_name": "[캐리스노트] 7부 소매 싱글 재킷 다크 네이비 CNFMJK001DN",
+    "brand": "캐리스노트",
+    "item_name": "아우터"
+  },
+  "CNEMOP401": {
+    "style_name": "[캐리스노트] 플라워 프린트 원피스 CNEMOP502BK",
+    "brand": "캐리스노트",
+    "item_name": "원피스"
+  },
+  "CNFMBL011": {
+    "style_name": "[캐리스노트] 린넨 혼방 차이나카라 블라우스 화이트 CNFMBL401WH",
+    "brand": "캐리스노트",
+    "item_name": "상의"
+  },
+  "CNFMOP002": {
+    "style_name": "[캐리스노트] 포인트 버튼 카라 롱 원피스 네이비 CNFMOP005NY",
+    "brand": "캐리스노트",
+    "item_name": "원피스"
+  },
+  "CNFMPT004": {
+    "style_name": "[캐리스노트] 빅 밴딩 와이드 팬츠 베이지 CNFMPT403BE",
+    "brand": "캐리스노트",
+    "item_name": "하의"
+  },
+  "CNFMPT007": {
+    "style_name": "[캐리스노트] 빅 밴딩 와이드 팬츠 베이지 CNFMPT403BE",
+    "brand": "캐리스노트",
+    "item_name": "하의"
+  },
+  "CN4MBL304": {
+    "style_name": "[캐리스노트] 볼륨 소매 아우터형 셔츠 화이트 CN4MBL407WH",
+    "brand": "캐리스노트",
+    "item_name": "상의"
+  },
+  "CNEMJK401": {
+    "style_name": "[캐리스노트] 슬리브 체크 후드 점퍼 네이비 CNFMJP401NY",
+    "brand": "캐리스노트",
+    "item_name": "아우터"
+  },
+  "EVWSLQE840": {
+    "style_name": "[케네스레이디] 로키 투턱 슬랙스 EVWSLQE840",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EVWJKQE840": {
+    "style_name": "[케네스레이디] 로키 투턱 슬랙스 EVWSLQE840",
+    "brand": "케네스레이디",
+    "item_name": "스커트"
+  },
+  "EVWBLQE710": {
+    "style_name": "[케네스레이디]세르 하프소매 블라우스 EVWBLQE890",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EWOPPF0200": {
+    "style_name": "[현대스페이스원] [케네스레이디] 스트랩 셔링 롱원피스 EWOPPG0200 EWOPPG0200",
+    "brand": "케네스레이디",
+    "item_name": "원피스"
+  },
+  "EMKTPQD010": {
+    "style_name": "[케네스레이디] 멜로지 레이어드 원피스 EMWOPQE010",
+    "brand": "케네스레이디"
+  },
+  "EMWOPQE300": {
+    "style_name": "[케네스레이디]베리크 자켓 원피스 세트 EMWOPQE300",
+    "brand": "케네스레이디",
+    "item_name": "원피스"
+  },
+  "EVWSLQE990": {
+    "style_name": "[케네스레이디] 로키 투턱 슬랙스 EVWSLQE840",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EWTSPD0100": {
+    "style_name": "[현대미아점] [케네스레이디] (E332) 아쿠아즈 숄더 트임 티셔츠 (EWTSPD0101) EWTSPD0101",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "EVWBLQF980": {
+    "style_name": "[케네스레이디]퍼피 볼륨 블라우스 EVWBLQF970",
+    "brand": "케네스레이디",
+    "item_name": "상의"
+  },
+  "CDAA8JP1Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAA3TS2Z11": {
+    "style_name": "크로커다일 나일론 메쉬조직 카라 티셔츠 CDAA9TP2704",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA8JK2Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAABTP2701": {
+    "style_name": "크로커다일 여름 피케이 솔리드 요꼬에리 반팔 티셔츠 라이트핑크 CDAABTP2701",
+    "brand": "크로커다일"
+  },
+  "CDAABTS2456": {
+    "style_name": "크로커다일 서커조직 주름원단 핫맬트에리티 CDAABTS2456",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA7JP1Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAACTS2482": {
+    "style_name": "크로커다일 남성 다이아몬드 조직 냉감 반팔 카라 티셔츠 38네이비 95 CDAACTS2482",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAA6JP1Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CVYWG3703N": {
+    "style_name": "[클라비스][쿨찰랑셔츠] 민소매 세트 셔츠 _CVYWG3703N",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVYWG2503N": {
+    "style_name": "[클라비스][슬랙스닝] 쿨 와이드 CVTWG2502N",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVYWG2503I": {
+    "style_name": "[클라비스]린넨 셔츠 CVYWG2503I",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVYWG2502N": {
+    "style_name": "[클라비스][슬랙스닝] 쿨 와이드 CVTWG2502N",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "CVTJG2401M": {
+    "style_name": "CLOVIS 벨보텀 와이드 데님팬츠 CVTJG2401M",
+    "brand": "클라비스",
+    "item_name": "하의"
+  },
+  "CVYWG2501N": {
+    "style_name": "[클라비스][슬랙스닝] 쿨 부츠컷 CVTWG2501N",
+    "brand": "클라비스",
+    "item_name": "상의"
+  },
+  "MKG2PS3001": {
+    "style_name": "[신세계백화점]26년 SS 공용) 수퍼스트레치 쇼츠 5부 MKG2PS3491",
+    "brand": "탑텐키즈"
+  },
+  "MKG2TS3801": {
+    "style_name": "[롯데백화점] 탑텐 키즈 남아) 매쉬 매치 반팔티셔츠 MKF2TS1404 LE1221385893",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "MKG2TT3001": {
+    "style_name": "[탑텐키즈]NC강서점 공용) 피케 카라 T MKG2TT3001",
+    "brand": "탑텐키즈"
+  },
+  "MKG2PP3012": {
+    "style_name": "탑텐키즈 7부 배기 팬츠 MKF2PP3012",
+    "brand": "탑텐키즈",
+    "item_name": "상의"
+  },
+  "TRNYZ6X3501": {
+    "style_name": "트레몰로 S/S 여름 Y에리 솔리드 반팔 티셔츠 TRNAS6M3101-81",
+    "brand": "트레몰로"
+  },
+  "TRHAS6M3111": {
+    "style_name": "트레몰로 남성 S S 솔리드 카라 반팔 티셔츠 TRHAS6M3111-56",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRHAS5M2361": {
+    "style_name": "트레몰로 TREMOLO Y에리 패턴물 반팔 티셔츠 TRHAS5M2361",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRNAS5M2341": {
+    "style_name": "트레몰로 TREMOLO 라운드 솔리드 티셔츠_TRNAS4Y2471",
+    "brand": "트레몰로"
+  },
+  "TRHDL5M3231": {
+    "style_name": "트레몰로 데님 여름바지 TRHDL5M3231 (55)",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRHDA5M2401": {
+    "style_name": "트레몰로 트레몰로 HC09 25SS 네이비 여름 팬츠 TRHDA5M2401",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRHAS6M3141": {
+    "style_name": "트레몰로 NC경산점 Y에리 크리즈 반팔티셔츠 TRHAS6M3141 (06)  블랙  95",
+    "brand": "트레몰로",
+    "item_name": "상의"
+  },
+  "TRNBS5M2471": {
+    "style_name": "트레몰로 트레몰로 () 솔리드 고시감 헨리넥 면혼방 반팔 니트 TRNBS5M2471",
+    "brand": "트레몰로"
+  },
+  "TRNCL5M2511": {
+    "style_name": "트레몰로 HC09 26SS 봄 차콜그레이 26SS 봄 차콜그레이 점퍼 TRNCL6SC431 (S47365734)",
+    "brand": "트레몰로"
+  },
+  "TS4M0BL521": {
+    "style_name": "더틸버리 백 스트랩 셔츠 칼라 블라우스 TS4M0BL521",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "TS5N0SL011": {
+    "style_name": "[더틸버리] 벨티드 원 턱 숏 팬츠 TS5N0SL011",
+    "brand": "틸버리",
+    "item_name": "하의"
+  },
+  "TS6M0TS551": {
+    "style_name": "틸버리 프린팅 라운드넥 티셔츠 TS6M0TS551",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "TS5M0JKG12": {
+    "style_name": "더틸버리 히든 버튼 5부 레터링 자켓 TS5M0JKG12",
+    "brand": "틸버리",
+    "item_name": "아우터"
+  },
+  "TS5N1PO011": {
+    "style_name": "더틸버리 보트넥 언밸런스 풀오버 니트 ts5n1po011",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "TS6M0TS541": {
+    "style_name": "더틸버리 소량재고 틸버리 멀티 스트라이프 자수 티셔츠 TS6M0TS541",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "TS5M0SLG12": {
+    "style_name": "틸버리 베이직 버클 와이드 슬랙스 TS5M0SLG12",
+    "brand": "틸버리",
+    "item_name": "하의"
+  },
+  "TS5N0SL031": {
+    "style_name": "더틸버리 스커트형 랩 밴딩 와이드 팬츠 TS5N0SL031",
+    "brand": "틸버리",
+    "item_name": "하의"
+  },
+  "TR6N1PO55W": {
+    "style_name": "더틸버리 랩 버튼 장식 보트넥 풀오버 니트 TR6N1PO55W",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "TS4N0BL651": {
+    "style_name": "더틸버리 크링클 셔츠 칼라 블라우스 ts4n0bl651",
+    "brand": "틸버리",
+    "item_name": "상의"
+  },
+  "FMBAA53010": {
+    "style_name": "화이트 스판 버튼다운 카라 슬림핏 셔츠 FMBAA53010WH",
+    "brand": "파렌하이트",
+    "item_name": "상의"
+  },
+  "FMPAA22100": {
+    "style_name": "파렌하이트 스파이더 플러스 수트 정장 팬츠 FMPAA2230",
+    "brand": "파렌하이트",
+    "item_name": "하의"
+  },
+  "FMJAA23100": {
+    "style_name": "[신세계백화점][김해점] [FAHREN] [26S/S][GRANDCRU] 구아벨로 130수 수트 정장 세트 (FMJAA2137",
+    "brand": "파렌하이트",
+    "item_name": "아우터"
+  },
+  "FMPAA2230B": {
+    "style_name": "파렌하이트 스파이더 플러스 수트 정장 팬츠 FMPAA2230",
+    "brand": "파렌하이트",
+    "item_name": "하의"
+  },
+  "FMFAD42330": {
+    "style_name": "파렌하이트 폴리 투톤 캐주얼 셋업 팬츠 FMFAD4233",
+    "brand": "파렌하이트"
+  },
+  "FKPAD22380": {
+    "style_name": "그레이 멜란지 스탠다드핏 수트 정장 팬츠 FKPAD22380GYM",
+    "brand": "파렌하이트",
+    "item_name": "하의"
+  },
+  "FMUCD83110": {
+    "style_name": "파렌하이트 카프리 반팔 카라 니트 FMUCD83110",
+    "brand": "파렌하이트",
+    "item_name": "상의"
+  },
+  "FPJAH23300": {
+    "style_name": "파렌하이트 25SS 썸머 조직감 데님팬츠 FKFAA4253",
+    "brand": "파렌하이트",
+    "item_name": "아우터"
+  },
+  "FPPAH22300": {
+    "style_name": "파렌하이트 25S/S 라이트 써커 여름 캐주얼 셋업 FKEAD4333, FKFAD4233",
+    "brand": "파렌하이트",
+    "item_name": "하의"
+  },
+  "FMEAD43370": {
+    "style_name": "남자 파렌하이트 SS 특가 그레이 글렌체크 싱글 수트 그레이멜란지_FKJ37",
+    "brand": "파렌하이트"
+  },
+  "ADL26122": {
+    "style_name": "파크랜드 블루 도비 드레스 셔츠 ADL26122",
+    "brand": "파크랜드"
+  },
+  "ADL99501": {
+    "style_name": "파크랜드 슬림핏 긴팔 와이셔츠 ADL99501",
+    "brand": "파크랜드"
+  },
+  "APC26581": {
+    "style_name": "파크랜드 네이비 폴리 셋업 팬츠 APC26581",
+    "brand": "파크랜드"
+  },
+  "APC26182": {
+    "style_name": "파크랜드 가볍고 청량한 터치감 네이비 마이크로 패턴 셋업 팬츠 apc26182",
+    "brand": "파크랜드"
+  },
+  "APS260531": {
+    "style_name": "파크랜드 오스틴리드 스트레치 팬츠 APS25532",
+    "brand": "파크랜드"
+  },
+  "ATS26206": {
+    "style_name": "파크랜드 블 카라넥 티셔츠 ATS26206",
+    "brand": "파크랜드"
+  },
+  "ADL99101": {
+    "style_name": "파크랜드 긴팔 와이셔츠 ADL99101",
+    "brand": "파크랜드"
+  },
+  "ADS99601": {
+    "style_name": "파크랜드 by 오스틴리드 소프트한 터치감으로 착장감이 매우 좋은 이지케어 스트레치 드레스 셔츠 ADS99601",
+    "brand": "파크랜드"
+  },
+  "APS25633": {
+    "style_name": "파크랜드 오스틴리드 스트레치 팬츠 APS25532",
+    "brand": "파크랜드"
+  },
+  "APS26134": {
+    "style_name": "파크랜드 오스틴리드 스트레치 팬츠 APS25532",
+    "brand": "파크랜드"
+  },
+  "PKG2PT3011": {
+    "style_name": "뉴코아울산아울렛 폴햄키즈 버뮤다핏 더블니트 6부 카고 반바지 PKG2PT3011 뉴코아 울산점",
+    "brand": "폴햄키즈",
+    "item_name": "하의"
+  },
+  "PKG2TS3773": {
+    "style_name": "폴햄키즈 울트라 탄성 스판 반팔티셔츠 PKG2TS3773",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PKG2PT3771": {
+    "style_name": "폴햄키즈 울트라탄성 카고 조거 팬츠 PKG2PT3771",
+    "brand": "폴햄키즈",
+    "item_name": "하의"
+  },
+  "PKG2TS2832": {
+    "style_name": "폴햄키즈 시그니처유니 에어리쿨 워싱 루즈핏 반팔티_PKG2TS3022",
+    "brand": "폴햄키즈",
+    "item_name": "상의"
+  },
+  "PS7XB3B4": {
+    "style_name": "플라스틱아일랜드 시스루 루즈핏 블라우스 PS7XB3B4",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS2WJ022": {
+    "style_name": "[플라스틱아일랜드] 라글란소매 하이넥 점퍼 (PS2WZ481)",
+    "brand": "플라스틱아일랜드",
+    "item_name": "스커트"
+  },
+  "PS2WO101": {
+    "style_name": "플라스틱아일랜드 셔츠형 티어드 원피스 PS2WO101",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS2DP931": {
+    "style_name": "[플라스틱아일랜드] 와이드핏 경량 데님 PS2DP563",
+    "brand": "플라스틱아일랜드",
+    "item_name": "원피스"
+  },
+  "PS2WB832": {
+    "style_name": "[플라스틱아일랜드] 페플럼 볼륨 블라우스 (PS2WB583)",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS2WJ062": {
+    "style_name": "[플라스틱아일랜드] 라글란소매 하이넥 점퍼 (PS2WZ481)",
+    "brand": "플라스틱아일랜드",
+    "item_name": "스커트"
+  },
+  "PQ2CL362": {
+    "style_name": "플라스틱아일랜드 민소매 레이어드 시스루 티셔츠 PQ2CL362",
+    "brand": "플라스틱아일랜드"
+  },
+  "1M35142": {
+    "style_name": "[PAT 남성] 뎅깡 카라 티셔츠_1M35142",
+    "brand": "피에이티"
+  },
+  "9M35132": {
+    "style_name": "[PAT 남성] 카라 티셔츠_9M35132",
+    "brand": "피에이티"
+  },
+  "1L35106": {
+    "style_name": "[PAT 남성] 베이직 스트라이프 카라 티셔츠_1L35106",
+    "brand": "피에이티"
+  },
+  "1L35138": {
+    "style_name": "PAT 피에이티 남성 컬러 배색 나염 카라 반팔 티셔츠 1L35138",
+    "brand": "피에이티"
+  },
+  "1L35149": {
+    "style_name": "피에이티 트리코트 체크 프린트 티셔츠   1L35149-2_US 모다아울렛 울산점",
+    "brand": "피에이티"
+  },
+  "1M35138": {
+    "style_name": "[PAT 남성] 빅체크 프린트 카라 티셔츠_1M35138",
+    "brand": "피에이티"
+  },
+  "QL33601": {
+    "style_name": "[PAT 남성] 아가일 패턴 카라 스웨터_QL33601",
+    "brand": "피에이티"
+  },
+  "1L45384": {
+    "style_name": "[PAT 여성] 소로나 원포인트 티셔츠_1L45384",
+    "brand": "피에이티"
+  },
+  "L262MSE046": {
+    "style_name": "[듀엘] 여성 레이스 슬리브리스 레이어드 원피스 (L262MSE046)",
+    "brand": "듀엘"
+  },
+  "L243PSD005": {
+    "style_name": "듀엘 앞지퍼 볼륨 스커트 L243PSD005",
+    "brand": "듀엘"
+  },
+  "D252MSC233": {
+    "style_name": "[듀엘] 레터링 포켓 셔츠 WH_D252MSC333",
+    "brand": "듀엘"
+  },
+  "D252MSM058": {
+    "style_name": "임박 듀엘 프린트 린넨 티셔츠 D252MSM058",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L243PSJ007": {
+    "style_name": "듀엘 하이넥 밴딩 집업 롱 점퍼 L243PSJ007",
+    "brand": "듀엘",
+    "item_name": "아우터"
+  },
+  "L242PSJ033": {
+    "style_name": "듀엘 스탠카라 스트링 블루종 점퍼 L242PSJ033",
+    "brand": "듀엘",
+    "item_name": "아우터"
+  },
+  "L252MSM032": {
+    "style_name": "듀엘 여성 레이스 포인트 베이직 면티 L252MSM032",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L252PSM043": {
+    "style_name": "듀엘 레터링 프린팅 라운드 반팔티셔츠 L252PSM043",
+    "brand": "듀엘",
+    "item_name": "상의"
+  },
+  "L262PSE049": {
+    "style_name": "[현대아울렛김포점] [듀엘] [아울렛] 벌룬소매 벨티드 원피스  2color / 2size L262PSE039",
+    "brand": "듀엘"
+  },
+  "S252MSC117": {
+    "style_name": "모조에스핀 프린트 리본 블라우스 S252MSC117",
+    "brand": "모조에스핀"
+  },
+  "S252MSF123": {
+    "style_name": "모조에스핀 크롭 재킷 S252MSF123 77",
+    "brand": "모조에스핀"
+  },
+  "S252MSC022": {
+    "style_name": "모조에스핀 스트랩 탑 블라우스 BR S252MSC022",
+    "brand": "모조에스핀"
+  },
+  "S252MSA113": {
+    "style_name": "모조에스핀 S/S 썸머 하이웨스트 와이드 롱 팬츠 S252MSA113-CR  77  크림",
+    "brand": "모조에스핀"
+  },
+  "S252MSD123": {
+    "style_name": "모조에스핀 크롭재킷 스커트 정장세트 S252MSF123 S252MSD123 55",
+    "brand": "모조에스핀"
+  },
+  "S252MSE017": {
+    "style_name": "모조에스핀 더블버튼 체크 플레어 원피스 S252MSE017",
+    "brand": "모조에스핀"
+  },
+  "S252MSF113": {
+    "style_name": "모조에스핀 테일러드 슬림 정장 자켓 S252MSF113",
+    "brand": "모조에스핀"
+  },
+  "S252MSF131": {
+    "style_name": "모조에스핀 베이직 A라인스커트 S242MSD131BE",
+    "brand": "모조에스핀"
+  },
+  "S262MSC025": {
+    "style_name": "소량입고 모조에스핀 버튼포인트 블라우스 S262MSC025",
+    "brand": "모조에스핀"
+  },
+  "S262MSE026": {
+    "style_name": "모조에스핀 소매롤업 집업 점프수트 S262MSE026",
+    "brand": "모조에스핀"
+  },
+  "SATSA3341": {
+    "style_name": "시슬리/애플아울렛/모100% 베이직 라운드 티셔츠 SATSA3341",
+    "brand": "시슬리",
+    "item_name": "상의"
+  },
+  "SATSA2341": {
+    "style_name": "시슬리/애플아울렛/모100% 베이직 라운드 티셔츠 SATSA3341",
+    "brand": "시슬리",
+    "item_name": "상의"
+  },
+  "SAWSC5631": {
+    "style_name": "[시슬리] 훌카라 반팔 블라우스_SAWSZ5631WH 흰색 SAWSZ5631WH",
+    "brand": "시슬리",
+    "item_name": "상의"
+  },
+  "SCET01511": {
+    "style_name": "시슬리 안경 케이스 SCET01511",
+    "brand": "시슬리"
+  },
+  "SASKC2631": {
+    "style_name": "[시슬리] 슬릿 헴 밴딩 H라인 스커트_SASKE2631CG 회색(앤틱실버) SASKE2631CG",
+    "brand": "시슬리",
+    "item_name": "스커트"
+  },
+  "SAWSC1531": {
+    "style_name": "시슬리/애플아울렛/포켓 자수 린넨 셔츠 SAWSC1531",
+    "brand": "시슬리",
+    "item_name": "상의"
+  },
+  "SAWS04411": {
+    "style_name": "시슬리 메이플 오버핏 블라우스 SAWS04411",
+    "brand": "시슬리",
+    "item_name": "상의"
+  },
+  "SATSC2631": {
+    "style_name": "시슬리 에코 린넨 줄리엣 크롭 티셔츠 SATSC2631",
+    "brand": "시슬리",
+    "item_name": "상의"
+  },
+  "SATSC1631": {
+    "style_name": "시슬리 헤이니 포켓 린넨 티셔츠 SATSC1631",
+    "brand": "시슬리",
+    "item_name": "상의"
+  },
+  "V252MSJ931": {
+    "style_name": "ZOOC 주크 카라넥 언발 밑단스트링 셔츠형 점퍼 V252MSJ931",
+    "brand": "주크",
+    "item_name": "아우터"
+  },
+  "V252MSA945": {
+    "style_name": "ZOOC 포켓포인트 와이드 9부 팬츠 V252MSA945",
+    "brand": "주크"
+  },
+  "V252MSF948": {
+    "style_name": "V252MSF948 [ZOOC 주크] 싱글 버튼 로고 루즈핏 자켓",
+    "brand": "주크"
+  },
+  "V252KSL939": {
+    "style_name": "ZOOC 주크 V넥 포켓 가디건 V252KSL939",
+    "brand": "주크",
+    "item_name": "스커트"
+  },
+  "V252KSL940": {
+    "style_name": "ZOOC 케이프 펄사 가디건 V252KSL940",
+    "brand": "주크",
+    "item_name": "스커트"
+  },
+  "V252MSC951": {
+    "style_name": "ZOOC 칼라넥 퍼프소매 셔링 반팔 블라우스 V252MSC951",
+    "brand": "주크"
+  },
+  "Z241MSM006": {
+    "style_name": "[주크] 레이스 슬립 레이어드 레터링 티셔츠 MG_Z261MSM006",
+    "brand": "주크",
+    "item_name": "상의"
+  },
+  "V252PSE940": {
+    "style_name": "ZOOC 핀턱 셔츠형 롱 원피스 V252PSE940",
+    "brand": "주크"
+  },
+  "KE26MDFRTW6": {
+    "style_name": "호이스트무선리모컨 SWIKO SK-06BBB",
+    "brand": "기비키이스"
+  },
+  "GY26MDFRBW1": {
+    "style_name": "조지루시 오븐레인지 마호빈 오븐 에베리노 ES-GW26-WA",
+    "brand": "기비키이스",
+    "item_name": "상의"
+  },
+  "GY25M1FRD60": {
+    "style_name": "[롯데백화점] 키이스 GIVY  스트링 스트라이프 니트 원피스  GY24M1FRD60 LE1221248648",
+    "brand": "기비키이스"
+  },
+  "GY26MDFRMX1": {
+    "style_name": "MEIKI 메이키 미쓰비시 엔진 GB18GPN 정속수동",
+    "brand": "기비키이스"
+  },
+  "GY26SDFRBW7": {
+    "style_name": "조지루시 오븐레인지 마호빈 오븐 에베리노 ES-GW26-WA",
+    "brand": "기비키이스",
+    "item_name": "상의"
+  },
+  "KE26MDFRTW4": {
+    "style_name": "KYORITSU KEW 2060BT 전력계",
+    "brand": "기비키이스"
+  },
+  "GY25M1FRJ11": {
+    "style_name": "루이스미샤 키즈 니트 JUMPER ALICIA GRC-W24-J0026",
+    "brand": "기비키이스"
+  },
+  "GY25M1FRM06": {
+    "style_name": "키이스 GIVY 페이즐리 프린팅 반팔 니트 GY24M1FRPB6 428278",
+    "brand": "기비키이스"
+  },
+  "RMBLG25NT5": {
+    "style_name": "[온라인 단독] [N배송] 로엠 뷔스티에 매칭 반팔 블라우스 RMBLG25NT5",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMKAG25R11": {
+    "style_name": "[로엠]루즈핏 브이넥 스웨터 RMKAG23YT1",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMCKG26R14": {
+    "style_name": "로엠 시스루 긴팔 가디건 RMCKG26R14",
+    "brand": "로엠",
+    "item_name": "아우터"
+  },
+  "RMHWG25NT2": {
+    "style_name": "[온라인 단독] 로엠 모크넥 반팔 티셔츠 RMHWG25NT2",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMJKG24R13": {
+    "style_name": "로엠 베이직 셋업 자켓 (슬랙스) RMJKG24R02",
+    "brand": "로엠",
+    "item_name": "아우터"
+  },
+  "RMKAG25R13": {
+    "style_name": "[로엠]루즈핏 브이넥 스웨터 RMKAG23YT1",
+    "brand": "로엠",
+    "item_name": "상의"
+  },
+  "RMTWG24R11": {
+    "style_name": "[로엠]부츠컷 랩팬츠 RMTWG23YT2",
+    "brand": "로엠"
+  },
+  "MIWBWG510A": {
+    "style_name": "[미쏘]브이넥 반팔 블라우스 MIWBWG3B01",
+    "brand": "미쏘",
+    "item_name": "상의"
+  },
+  "MIWJKG52PB": {
+    "style_name": "미쏘 테일러드 벨티드 반팔자켓 MIWJKG52PB",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHWG521A": {
+    "style_name": "[미쏘]랩 반팔 티셔츠 MIWHWG602A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHWG510A": {
+    "style_name": "[미쏘]랩 반팔 티셔츠 MIWHWG602A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWHWG72QA": {
+    "style_name": "[미쏘]랩 반팔 티셔츠 MIWHWG602A",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWKAG520T": {
+    "style_name": "미쏘 린넨 시스루 긴팔 니트 MIWKAG520T",
+    "brand": "미쏘",
+    "item_name": "스커트"
+  },
+  "MIWCKG510T": {
+    "style_name": "미쏘 린넨 시스루 골지 가디건 MIWCKG510T",
+    "brand": "미쏘",
+    "item_name": "아우터"
+  },
+  "264MK12A0": {
+    "style_name": "호카 공용 런 햇 1164330-BLK",
+    "brand": "발렌시아"
+  },
+  "264MK12C2": {
+    "style_name": "SEALAKE 씨레이크 배터리 FM12220 12V22AH 20HR",
+    "brand": "발렌시아"
+  },
+  "265GJ47B0": {
+    "style_name": "BALENCIAGA 발렌시아가 선글라스 BB0368SK-001",
+    "brand": "발렌시아"
+  },
+  "265MK22A0": {
+    "style_name": "에이셉 라키 컬렉션 레이벤 메가 발로라마 RB2289 6826J5 63사이즈",
+    "brand": "발렌시아"
+  },
+  "266BC43C0": {
+    "style_name": "발렌시아가 일본 재팬 BALENCIAGA BB0134SA 001 Made In Italy",
+    "brand": "발렌시아"
+  },
+  "264GP17A1": {
+    "style_name": "발렌시아 스퀘어 볼드 선글라스 256mq11",
+    "brand": "발렌시아",
+    "item_name": "하의"
+  },
+  "264MP21A0": {
+    "style_name": "[헬렌카민스키]6S HAT52493 ECLIPSE MELANGE NATURAL 비앙카 12 이클립스 멜란지 내츄럴",
+    "brand": "발렌시아"
+  },
+  "265MB34A0": {
+    "style_name": "발렌시아가 일본 재팬 BALENCIAGA BB0134SA 001 Made In Italy",
+    "brand": "발렌시아",
+    "item_name": "상의"
+  },
+  "912071": {
+    "style_name": "밸리걸 베이직 무지 라운드 티셔츠 912071",
+    "brand": "밸리걸"
+  },
+  "622781": {
+    "style_name": "밸리걸 셔링 프릴 오프숄더 블라우스 622781",
+    "brand": "밸리걸"
+  },
+  "870261": {
+    "style_name": "밸리걸 스판 세미 와이드 데님 팬츠 870261",
+    "brand": "밸리걸"
+  },
+  "503261": {
+    "style_name": "밸리걸 무지 브이넥 면스판 반팔 티셔츠 503261",
+    "brand": "밸리걸"
+  },
+  "621593": {
+    "style_name": "밸리걸 바스락 집업 후드 점퍼 621593",
+    "brand": "밸리걸"
+  },
+  "620771": {
+    "style_name": "밸리걸 여름 스판 레이스 벨트 와이드 데님 팬츠 620771",
+    "brand": "밸리걸"
+  },
+  "SPRPG24KU1": {
+    "style_name": "[스파오키즈][키즈][COOL] 링거 반팔티 SPRPG24KU1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "SPSMG37KU1": {
+    "style_name": "[스파오키즈][키즈] (산리오캐릭터즈) 스커트 상하세트(LIGHT BLUE) SPSMG25KG1",
+    "brand": "스파오키즈",
+    "item_name": "상의"
+  },
+  "CDAA8WS2Z11": {
+    "style_name": "[크로커다일] 울 모티브 글렌체크 남방 CDAA5WS3431",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA3WS1Z11": {
+    "style_name": "[크로커다일] 울 모티브 글렌체크 남방 CDAA5WS3431",
+    "brand": "크로커다일",
+    "item_name": "상의"
+  },
+  "CDAA6JP2Z11": {
+    "style_name": "인조 스웨이드 점퍼 CDAA9JP3205",
+    "brand": "크로커다일",
+    "item_name": "아우터"
+  },
+  "CDAABTP2705": {
+    "style_name": "크로커다일 냉감 기능성 라운드 티셔츠 CDAABTP2705",
+    "brand": "크로커다일"
+  },
+  "CVTWG2504M": {
+    "style_name": "CLOVIS 라탄벨트 큐롯팬츠 CVTWG2504M",
+    "brand": "클라비스"
+  },
+  "211E2PT151": {
+    "style_name": "[팬텀] 남성 오비 테잎 멜란지 팬츠 211E2PT151_BL",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "221F2PT201": {
+    "style_name": "PHANTOM 백포켓 밑단트임 와이드 9부 팬츠 221f2pt201",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "211E2TO205": {
+    "style_name": "PHANTOM 라인포인트카라반팔티셔츠 211E2TO205",
+    "brand": "팬텀"
+  },
+  "211E2PT181": {
+    "style_name": "[팬텀] 남성 베이직 나일론 스트레치 팬츠 211E2PT181_GY",
+    "brand": "팬텀",
+    "item_name": "하의"
+  },
+  "211F2TO103": {
+    "style_name": "팬텀반팔티 NQC TQ 남성 잔패턴 카라 반팔 티셔츠 211F2TO103",
+    "brand": "팬텀"
+  },
+  "211E1JP101": {
+    "style_name": "PHANTOM 나일론 경량 스트레치 점퍼 211e1jp101",
+    "brand": "팬텀",
+    "item_name": "아우터"
+  },
+  "211F2TO204": {
+    "style_name": "[팬텀] 남성 조직감 배색 카라 반팔 티셔츠 211F2TO204_BG",
+    "brand": "팬텀"
+  },
+  "221F1JP206": {
+    "style_name": "[팬텀] 여성 후드 아노락 반팔 점퍼 221F1JP206_BK",
+    "brand": "팬텀",
+    "item_name": "아우터"
+  },
+  "PS2WZ901": {
+    "style_name": "[플라스틱아일랜드] 라글란소매 하이넥 점퍼 (PS2WZ481)",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS7XB3G0": {
+    "style_name": "플라스틱아일랜드 플라스틱아일랜드 기본라운드니트 PS7XB3G0 P003817842",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS2WP962": {
+    "style_name": "플라스틱아일랜드 밴딩 세미 와이드 팬츠 PS2WP962",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PS2CH013": {
+    "style_name": "플라스틱아일랜드 긴팔 스트라이프 티셔츠 PS2CH013",
+    "brand": "플라스틱아일랜드",
+    "item_name": "하의"
+  },
+  "PS2WO065": {
+    "style_name": "플라스틱아일랜드 허리밴딩지지미 원피스 PS2WO065",
+    "brand": "플라스틱아일랜드"
+  },
+  "PS7XB0G2": {
+    "style_name": "플라스틱아일랜드 브이넥 니트 가디건 PS7XB0G2",
+    "brand": "플라스틱아일랜드"
+  },
+  "PGPC4Z01": {
+    "style_name": "[피에르가르뎅] 슈트 팬츠/슬랙스 92 PGPC1501-092-38",
+    "brand": "피에르가르뎅"
+  },
+  "PJJP4Z01": {
+    "style_name": "피에르가르뎅 피에르가르뎅 캐주얼 PJJP3203퀼팅니트소매점퍼 (P000741692)",
+    "brand": "피에르가르뎅",
+    "item_name": "아우터"
+  },
+  "PLPC2Z01": {
+    "style_name": "피에르가르뎅 남성캐주얼 감량물잔조직팬츠 PLPC2511 그레이",
+    "brand": "피에르가르뎅"
+  },
+  "PJJK4Z01": {
+    "style_name": "피에르가르뎅 캐주얼 PJJK3112라이너탈부착 변형자켓 (P000741885)",
+    "brand": "피에르가르뎅",
+    "item_name": "아우터"
+  },
+  "PHPC4Z01": {
+    "style_name": "피에르가르뎅 TR체크 팬츠 PHPC3518",
+    "brand": "피에르가르뎅"
+  },
+  "PGPC3Z01": {
+    "style_name": "[피에르가르뎅] 슈트 팬츠/슬랙스 92 PGPC1501-092-38",
+    "brand": "피에르가르뎅"
+  },
+  "PLTS2Z01": {
+    "style_name": "피에르가르뎅 남성캐주얼 polypq타이다이프린트 티셔츠 PLTS2447",
+    "brand": "피에르가르뎅",
+    "item_name": "상의"
+  },
+  "PJPC4Z01": {
+    "style_name": "피에르가르뎅 라이크 아이스 청바지 PJPC1508",
+    "brand": "피에르가르뎅"
+  },
+  "PGPC1Z01": {
+    "style_name": "[피에르가르뎅] 슈트 팬츠/슬랙스 92 PGPC1501-092-38",
+    "brand": "피에르가르뎅"
+  },
+  "PKJP1Z01": {
+    "style_name": "[대구백화점] [피에르가르뎅캐주얼]크리즈 홑겹 점퍼(PQJP2207-95)",
+    "brand": "피에르가르뎅",
+    "item_name": "아우터"
+  },
+  "1L41508": {
+    "style_name": "PAT 요루폴리 셔츠 1L41508",
+    "brand": "피에이티"
+  },
+  "1L41638": {
+    "style_name": "PAT 여성 여름 나일론 혼방 잔스트라이프 8부 일자핏 팬츠 1L41638-820",
+    "brand": "피에이티"
+  },
+  "1K31632": {
+    "style_name": "스튜디오니콜슨 피우 티셔츠 PIUSNM1327 TP429013980",
+    "brand": "피에이티"
+  },
+  "1L45302": {
+    "style_name": "PAT 주름지 퍼프소매 스트라이프 티셔츠 1L45302",
+    "brand": "피에이티"
+  },
+  "1L41503": {
+    "style_name": "PAT 셔츠 1L41503",
+    "brand": "피에이티"
+  },
+  "1L41684": {
+    "style_name": "PAT 피에이티 여성 냉감 풀밴딩 9부 세미배기핏 바지 팬츠 1L41684",
+    "brand": "피에이티"
+  },
+  "1L31634": {
+    "style_name": "PAT 피에이티 남성 고욱 착용 잔조직 노턱 일자핏 바지 팬츠 1L31634",
+    "brand": "피에이티"
+  },
+  "1L32631": {
+    "style_name": "PAT 피에이티 남성 레귤러핏 저온스 데님 팬츠 캐주얼 봄 여름 청바지 인디고블루 76 1L32631 805",
+    "brand": "피에이티"
+  },
+  "HQ2JP1000": {
+    "style_name": "헤이린 헤이린뉴욕 스트링 후드 절개 점퍼 HPSJP5003",
+    "brand": "헤이린뉴욕",
+    "item_name": "아우터"
+  },
+  "HQ2SL1036": {
+    "style_name": "[헤이린뉴욕]NC경산점 밴딩 인조가죽 반바지",
+    "brand": "헤이린뉴욕",
+    "item_name": "하의"
+  },
+  "HQ2JP1003": {
+    "style_name": "헤이린 헤이린뉴욕 스트링 후드 절개 점퍼 HPSJP5003",
+    "brand": "헤이린뉴욕",
+    "item_name": "아우터"
+  },
+  "HQ2VT1000": {
+    "style_name": "헤이린뉴욕 체크나시롱원피스 HO2OP3013",
+    "brand": "헤이린뉴욕",
+    "item_name": "아우터"
+  },
+  "HQ2SL1043": {
+    "style_name": "[헤이린뉴욕]NC경산점 밴딩 인조가죽 반바지",
+    "brand": "헤이린뉴욕",
+    "item_name": "하의"
+  },
+  "HQ2JP1001": {
+    "style_name": "헤이린 헤이린뉴욕 스트링 후드 절개 점퍼 HPSJP5003",
+    "brand": "헤이린뉴욕",
+    "item_name": "아우터"
+  },
+  "HQ2BL1052": {
+    "style_name": "헤이린뉴욕 셔츠형 블라우스 HPMBL1025",
+    "brand": "헤이린뉴욕",
+    "item_name": "상의"
+  },
+  "HQ2BL1044": {
+    "style_name": "헤이린뉴욕 셔츠형 블라우스 HPMBL1025",
+    "brand": "헤이린뉴욕",
+    "item_name": "상의"
+  },
+  "HQ2SL1000": {
+    "style_name": "[헤이린뉴욕]NC경산점 밴딩 인조가죽 반바지",
+    "brand": "헤이린뉴욕",
+    "item_name": "하의"
+  },
+  "HQ2SL1055": {
+    "style_name": "[헤이린뉴욕]NC경산점 밴딩 인조가죽 반바지",
+    "brand": "헤이린뉴욕",
+    "item_name": "하의"
+  },
+  "72CPT2931": {
+    "style_name": "Mlb MLB 키즈 매쉬 와이어 캡 72CPT2931-07S",
+    "brand": "MLB키즈",
+    "item_name": "하의"
+  },
+  "72CPN3011": {
+    "style_name": "[엠엘비 키즈] MLB 키즈 캐논볼 올오버 메쉬캡 72CPN3931-11Y 72CPN3931-11Y_1",
+    "brand": "MLB키즈"
+  },
+  "72CPTB011": {
+    "style_name": "MLB 키즈 모노그램 블루 자카드 버킷 72CPHV011",
+    "brand": "MLB키즈",
+    "item_name": "하의"
+  },
+  "72CPN4911": {
+    "style_name": "[엠엘비 키즈] MLB 키즈 캐논볼 올오버 메쉬캡 72CPN3931-11Y 72CPN3931-11Y_1",
+    "brand": "MLB키즈"
+  },
+  "72CPM4931": {
+    "style_name": "MLB KIDS 귀여운 플라워 핑크 여름 양키즈 배색 모자 72CPM4611 (51)",
+    "brand": "MLB키즈"
+  },
+  "72CPML831": {
+    "style_name": "MLB KIDS 엠엘비 키즈 쿨필드 커브캡 모자 72CPCI831",
+    "brand": "MLB키즈"
+  },
+  "72CPN5011": {
+    "style_name": "[엠엘비 키즈] MLB 키즈 캐논볼 올오버 메쉬캡 72CPN3931-11Y 72CPN3931-11Y_1",
+    "brand": "MLB키즈"
+  },
+  "72CPTA011": {
+    "style_name": "MLB 키즈 모노그램 블루 자카드 버킷 72CPHV011",
+    "brand": "MLB키즈",
+    "item_name": "하의"
+  },
+  "72CPM3931": {
+    "style_name": "[엠엘비 키즈] MLB 키즈 캐논볼 올오버 메쉬캡 72CPN3931-11Y 72CPN3931-11Y_1",
+    "brand": "MLB키즈"
+  },
+  "72CPN7111": {
+    "style_name": "[엠엘비 키즈] MLB 키즈 캐논볼 올오버 메쉬캡 72CPN3931-11Y 72CPN3931-11Y_1",
+    "brand": "MLB키즈"
+  },
+  "RSIMSP17A": {
+    "style_name": "레노마옴므 [롯데백화점][레노마캐주얼](단독특_가)F/W 프리미엄 울 스판 정장바지(RPCMSP17A)",
+    "brand": "레노마옴므",
+    "item_name": "하의"
+  },
+  "RSIMSJ17A": {
+    "style_name": "레노마 레노마옴므 남성 다크네이비 품격 고급 정장세트 RSIMSJ17A SP17A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSFPKT58A": {
+    "style_name": "레노마옴므 26년 SS 마혼방셋업 정장바지 네이비 RSCP58A-S59",
+    "brand": "레노마옴므"
+  },
+  "M1AAWO208Z": {
+    "style_name": "미니멈 비즈넥 벨트 핀턱 원피스 M1AAWO208Z",
+    "brand": "미니멈"
+  },
+  "VB65TSM339Z": {
+    "style_name": "반에이크 캡프린팅 반팔티셔츠 VB65TSM339Z",
+    "brand": "반에이크",
+    "item_name": "상의"
+  },
+  "VB66KCM305Z": {
+    "style_name": "[반에이크] 세미스트라이프백트임셔츠 (VB66BLM305Z)",
+    "brand": "반에이크",
+    "item_name": "아우터"
   }
 }
