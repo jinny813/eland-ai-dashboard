@@ -286,12 +286,6 @@ class GSheetManager:
         if not os.path.exists(raw_path):
             logger.warning("[GSheet] data/storemaster_raw.txt 없음 — 빈 DataFrame 반환")
             return pd.DataFrame()
-        fixed_cols = [
-            '지점', '카테고리', '조닝', '브랜드', '매장유형', '평수',
-            '25_03', '25_04', 'x1', '25_05', 'x2', '25_06', 'x3',
-            '26_03', 'grow_03', '26_04', 'grow_04',
-            '목표_04', '목표_05', '목표_06',
-        ]
         for enc in ('utf-8', 'cp949', 'utf-8-sig', 'euc-kr', 'utf-16'):
             try:
                 with open(raw_path, 'r', encoding=enc, errors='strict') as f:
@@ -300,11 +294,22 @@ class GSheetManager:
                 with open(raw_path, 'r', encoding=enc, errors='ignore') as f_in:
                     df = pd.read_csv(f_in, sep=delim, header=0,
                                      dtype=str, on_bad_lines='skip')
-                actual = len(df.columns)
-                col_names = fixed_cols[:actual]
-                if actual > len(fixed_cols):
-                    col_names = list(fixed_cols) + [f'extra_{i}' for i in range(actual - len(fixed_cols))]
-                df.columns = col_names
+                
+                import re
+                new_cols = []
+                for col in df.columns:
+                    c = str(col).strip()
+                    m1 = re.match(r'^(\d{2})년\s*(\d{1,2})월\s*매출$', c)
+                    if m1:
+                        new_cols.append(f"{m1.group(1)}_{int(m1.group(2)):02d}")
+                        continue
+                    m2 = re.match(r'^(\d{2})년\s*(\d{1,2})월\s*목표$', c)
+                    if m2:
+                        new_cols.append(f"목표_{int(m2.group(2)):02d}")
+                        continue
+                    new_cols.append(c)
+                df.columns = new_cols
+                
                 logger.warning(f"[GSheet] storemaster_raw.txt 로드 완료: {len(df)}행 ({enc})")
                 return df
             except Exception:
