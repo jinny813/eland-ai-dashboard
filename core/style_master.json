@@ -1827,8 +1827,8 @@
     ]
   },
   "GSRA0BL071": {
-    "item_name": "블라우스",
-    "style_name": "시스루 건플랩 타이넥 블라우스",
+    "item_name": "상의",
+    "style_name": "JJ지고트 시스루 건플랩 타이넥 블라우스 GSRA0BL071",
     "brand": "JJ지고트",
     "keywords": [
       "블라우스"
@@ -6510,7 +6510,7 @@
     "item_name": "상의"
   },
   "SATSA2341": {
-    "style_name": "시슬리/애플아울렛/모100% 베이직 라운드 티셔츠 SATSA3341",
+    "style_name": "[시슬리] 시슬리 세린 스트라이프 버튼업 티셔츠 SATSA4511",
     "brand": "시슬리",
     "item_name": "상의"
   },
@@ -7037,5 +7037,73 @@
     "style_name": "[반에이크] 세미스트라이프백트임셔츠 (VB66BLM305Z)",
     "brand": "반에이크",
     "item_name": "아우터"
+  },
+  "S253MSC002": {
+    "style_name": "모조에스핀 벨티드 H라인 원피스 S253MSE002",
+    "brand": "모조에스핀"
+  },
+  "RSZPDC01A": {
+    "style_name": "레노마 레노마옴므 캐주얼 마 남방 L RQIMBC01A",
+    "brand": "레노마옴므",
+    "item_name": "아우터"
+  },
+  "RSJMBP51A": {
+    "style_name": "[레노마옴므] 레노마옴므 그레이 FW ZIGNONE 수입원단 스트레이트핏 보카시 슬렉스 RODMCP51A",
+    "brand": "레노마옴므",
+    "item_name": "상의"
+  },
+  "NK9YG2504U": {
+    "style_name": "[뉴발란스키즈] ALL PLAY_쿨터치 반팔티 + 우븐 스트레치 팬츠 셋업 NK9YG2504U(유아/아동)",
+    "brand": "뉴발란스키즈"
+  },
+  "NKPLGS240G": {
+    "style_name": "[뉴발란스키즈] 베이비 샌들 / K8809P6I NKPLGS200P(유아/아동)",
+    "brand": "뉴발란스키즈",
+    "item_name": "원피스"
+  },
+  "244FL15A0": {
+    "style_name": "[레페토] LILOUH 릴루 발레리나 플랫 슈즈 (V4096VE 410)",
+    "brand": "발렌시아"
+  },
+  "244MP28A0": {
+    "style_name": "[발렌시아] 가죽 심플 스니커트 244MN11",
+    "brand": "발렌시아"
+  },
+  "GS5M0OP921": {
+    "style_name": "JJ지고트 리본 장식 플랩 플레어 원피스 GS5M0OP921",
+    "brand": "JJ지고트",
+    "item_name": "원피스"
+  },
+  "GS6A0BL101": {
+    "style_name": "JJ지고트 배색 헴 슬리브 리스 블라우스 GS6A0BL101",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "NK9YGB215U": {
+    "style_name": "[뉴발란스키즈]EXCLUSIVE 카라 세트 NK9YGB219U59",
+    "brand": "뉴발란스키즈"
+  },
+  "NK9YGB217U": {
+    "style_name": "[뉴발란스키즈]EXCLUSIVE 카라 세트 NK9YGB219U59",
+    "brand": "뉴발란스키즈"
+  },
+  "X2ASW6926": {
+    "style_name": "제이디엑스 플라워 패턴 중목 양말 x2asw6926",
+    "brand": "제이디엑스",
+    "item_name": "상의"
+  },
+  "X2TSW6543": {
+    "style_name": "남성 기본핏 솔리드 카라 티셔츠(X2TSW2542TQ)",
+    "brand": "제이디엑스",
+    "item_name": "상의"
+  },
+  "GSRA0BL061": {
+    "style_name": "JJ지고트 시스루 벨티드 백 플랩 블라우스 GSRA0BL061",
+    "brand": "JJ지고트",
+    "item_name": "상의"
+  },
+  "1L31503": {
+    "style_name": "PAT 피에이티 남성 경량 슬럽 나염 카라 반팔 남방 셔츠 1L31503",
+    "brand": "PAT"
   }
 }

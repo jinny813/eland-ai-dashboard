@@ -697,7 +697,15 @@ def load_dashboard_data(
                 _active_mk = None
                 _active_sales = 0
                 if _cur_mk:
-                    _store_actuals = CURR_MONTH_ACTUALS.get(store, {})
+                    _norm_store = store
+                    for prefix in ["NC", "뉴코아", "동아", "2001"]:
+                        if _norm_store.startswith(prefix):
+                            _norm_store = _norm_store[len(prefix):].strip()
+                            break
+                    if '분당' in _norm_store: _norm_store = '분당점'
+                    elif '강남' in _norm_store: _norm_store = '강남점'
+                    
+                    _store_actuals = CURR_MONTH_ACTUALS.get(_norm_store, {})
                     for _try_mk in sorted(_store_actuals.keys(), reverse=True):
                         if _try_mk <= _cur_mk and isinstance(_store_actuals[_try_mk], dict):
                             v = _store_actuals[_try_mk].get(_b_norm, 0)
