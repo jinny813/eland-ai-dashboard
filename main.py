@@ -535,7 +535,7 @@ def main():
                             f'<script>window.__ALL_DATA__ = JSON.parse(atob(document.getElementById("__b64").textContent));</script>\n'
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
-                        st.components.v1.html(final_html, height=1600, scrolling=True)
+                        st.components.v1.html(final_html, height=3500, scrolling=True)
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
 
                         # [vMem] 메모리 즉각 반환 (Streamlit Cloud 1GB Limit 대응)
