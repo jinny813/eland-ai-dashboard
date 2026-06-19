@@ -69,8 +69,30 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str) -> str:
             if cleaned:
                 return cleaned
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f"Naver scrap failed for {query}: {e}")
+        pass
+        
+    # 브랜드 포함 검색이 실패했으면, 품번만으로 재시도
+    if brand_name and brand_name in query:
+        try:
+            enc = urllib.parse.quote(style_code)
+            url = f"https://search.naver.com/search.naver?query={enc}"
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                html = resp.read().decode('utf-8', errors='ignore')
+            matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
+            if matches:
+                raw_title = matches[0]
+                try:
+                    safe_s = raw_title.replace('"', '\\"')
+                    decoded = json.loads(f'"{safe_s}"')
+                except Exception:
+                    decoded = raw_title
+                cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
+                if cleaned:
+                    return cleaned
+        except Exception:
+            pass
+
     return ''
 
 
@@ -90,20 +112,34 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
         
     # 1. API 키가 있으면 OpenAPI 우선 시도
     if client_id and client_secret:
-        try:
-            enc = urllib.parse.quote(query)
-            url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=1"
-            req = urllib.request.Request(url)
-            req.add_header("X-Naver-Client-Id", client_id)
-            req.add_header("X-Naver-Client-Secret", client_secret)
-            resp = urllib.request.urlopen(req, timeout=5)
-            if resp.getcode() == 200:
-                data = json.loads(resp.read().decode('utf-8'))
-                items = data.get('items', [])
-                if items:
-                    title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
-        except Exception:
-            pass
+        def fetch_api(q):
+            try:
+                enc = urllib.parse.quote(q)
+                url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=5"
+                req = urllib.request.Request(url)
+                req.add_header("X-Naver-Client-Id", client_id)
+                req.add_header("X-Naver-Client-Secret", client_secret)
+                resp = urllib.request.urlopen(req, timeout=5)
+                if resp.getcode() == 200:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    return data.get('items', [])
+            except Exception:
+                pass
+            return []
+
+        items = fetch_api(query)
+        if not items and brand_name:
+            items = fetch_api(style_code)
+
+        if items:
+            if brand_name:
+                for item in items:
+                    t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
+                    if brand_name in t or brand_name in item.get('brand', '') or brand_name in item.get('mallName', ''):
+                        title = t
+                        break
+            if not title:
+                title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
 
     # 2. API 결과가 없거나 실패 시 웹 스크래핑 폴백 시도
     if not title:
