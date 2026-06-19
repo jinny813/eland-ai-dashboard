@@ -469,27 +469,6 @@ def main():
                 st.query_params.clear()
                 st.rerun()
 
-        # [v7.1] 캐시 강제 초기화 버튼 (모든 사용자에게 항시 노출)
-        if st.button("\U0001f504 캐시 초기화 (신규 지점 반영)", use_container_width=True):
-            st.cache_data.clear()
-            # [BUG-FIX] last_valid_all_dashboard_data_* 포함 모든 캐시 키 삭제
-            stale_keys = [k for k in list(st.session_state.keys()) if k.startswith('last_valid')]
-            for _k in stale_keys:
-                del st.session_state[_k]
-                
-            # [vMem] 파케이/피클 로컬 캐시 파일 강제 삭제 (리로드 강제)
-            import os
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            pkl_path = os.path.join(base_dir, "scratch", "final_db_cache.pkl")
-            if os.path.exists(pkl_path):
-                try:
-                    os.remove(pkl_path)
-                except Exception:
-                    pass
-                    
-            st.success("\u2705 캐시 초기화 완료! 페이지를 새로고침하세요.")
-            st.rerun()
-
         st.caption(f"DB Connected: {check_mgr.is_connected}")
 
 
@@ -502,6 +481,20 @@ def main():
             st.error("구글 시트 연동 오류입니다.")
         else:
             try:
+                col_title, col_btn = st.columns([8, 2])
+                with col_btn:
+                    if st.button("\U0001f504 데이터 캐시 새로고침", key="main_cache_clear_btn", use_container_width=True):
+                        st.cache_data.clear()
+                        stale_keys = [k for k in list(st.session_state.keys()) if k.startswith('last_valid')]
+                        for _k in stale_keys:
+                            del st.session_state[_k]
+                        import os
+                        base_dir = os.path.dirname(os.path.abspath(__file__))
+                        pkl_path = os.path.join(base_dir, "scratch", "final_db_cache.pkl")
+                        if os.path.exists(pkl_path):
+                            try: os.remove(pkl_path)
+                            except: pass
+                        st.rerun()
                 # [v183] 대시보드 로딩 속도를 SPA 급으로 개선하기 위해 모든 월 데이터를 한 번에 로드
                 max_no = _cached_get_max_no(check_mgr)
                 available_months = _cached_get_available_months(check_mgr, max_no)
@@ -527,12 +520,11 @@ def main():
                             html_template = f.read()
 
                         all_data_json = serialize_dashboard_json(all_months_data)
-                        # [v201] Base64 인코딩으로 HTML 파서 </script> 오인식 작동 완전 차단
-                        import base64
-                        b64_data = base64.b64encode(all_data_json.encode('utf-8')).decode('ascii')
+                        # [v202] Base64 (atob) 디코딩이 브라우저 렌더링을 심각하게 지연시키므로, 순수 JSON 삽입 방식으로 최적화
+                        safe_json = all_data_json.replace("</script>", "<\\/script>")
                         script_inject = (
-                            f'<script id="__b64" type="text/plain">{b64_data}</script>\n'
-                            f'<script>window.__ALL_DATA__ = JSON.parse(atob(document.getElementById("__b64").textContent));</script>\n'
+                            f'<script id="__data" type="application/json">{safe_json}</script>\n'
+                            f'<script>window.__ALL_DATA__ = JSON.parse(document.getElementById("__data").textContent);</script>\n'
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         st.components.v1.html(final_html, height=3500, scrolling=True)
