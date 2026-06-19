@@ -11,6 +11,7 @@ main.py — Streamlit 메인 앱 v2
 import streamlit as st
 import json
 import sys
+import gc
 import logging
 from datetime import datetime
 import pandas as pd
@@ -52,7 +53,7 @@ def serialize_dashboard_json(db_data: dict) -> str:
 
 
 
-@st.cache_data(ttl=600, max_entries=2, show_spinner="노출판 엑셀 생성 중...")
+@st.cache_data(ttl=600, max_entries=1, show_spinner="노출판 엑셀 생성 중...")
 def generate_optimized_excel(
     store_filter: str,
     cat_filter: str,
@@ -78,7 +79,7 @@ def generate_optimized_excel(
     )
 
 
-@st.cache_data(ttl=600, max_entries=2, show_spinner="영업 실행판 엑셀 생성 중...")
+@st.cache_data(ttl=600, max_entries=1, show_spinner="영업 실행판 엑셀 생성 중...")
 def generate_sales_execution_excel(
     store_filter: str,
     cat_filter: str,
@@ -101,7 +102,7 @@ def generate_sales_execution_excel(
     )
 
 
-@st.cache_data(ttl=3600, max_entries=2, show_spinner="구글 시트에서 데이터 로드 중...")
+@st.cache_data(ttl=3600, max_entries=1, show_spinner="구글 시트에서 데이터 로드 중...")
 def _cached_get_raw_records(_mgr, max_no: int):
     try:
         sheet = _mgr.spreadsheet.worksheet("Records")
@@ -111,7 +112,7 @@ def _cached_get_raw_records(_mgr, max_no: int):
         return []
 
 
-@st.cache_data(ttl=600, max_entries=2, show_spinner="데이터 전처리 중 (1회)...")
+@st.cache_data(ttl=600, max_entries=1, show_spinner="데이터 전처리 중 (1회)...")
 def _cached_preprocess(_mgr, max_no: int, report_version: str = REPORT_VERSION):
     """
     [Stage 1 캐시] 전처리.
@@ -126,7 +127,7 @@ def _cached_preprocess(_mgr, max_no: int, report_version: str = REPORT_VERSION):
     return preprocess_raw_records(_mgr, raw_recs)
 
 
-@st.cache_data(ttl=600, max_entries=3, show_spinner="월별 점수 산출 중...")
+@st.cache_data(ttl=600, max_entries=1, show_spinner="월별 점수 산출 중...")
 def _cached_build_month(_mgr, max_no: int, month: str, report_version: str = REPORT_VERSION):
     """
     [Stage 2 캐시] 월별 대시보드 빌드.
@@ -145,7 +146,7 @@ def _cached_build_month(_mgr, max_no: int, month: str, report_version: str = REP
     )
 
 
-@st.cache_data(ttl=600, max_entries=2, show_spinner=False)
+@st.cache_data(ttl=600, max_entries=1, show_spinner=False)
 def _cached_get_max_no(_mgr):
     try:
         val = _mgr._get_max_no()
@@ -154,7 +155,7 @@ def _cached_get_max_no(_mgr):
         return 1
 
 
-@st.cache_data(ttl=600, max_entries=2, show_spinner=False)
+@st.cache_data(ttl=600, max_entries=1, show_spinner=False)
 def _cached_get_available_months(_mgr, max_no: int):
     """캐시 키: max_no."""
     try:
@@ -491,6 +492,10 @@ def main():
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         st.components.v1.html(final_html, height=1600, scrolling=True)
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
+
+                        # [vMem] 메모리 즉각 반환 (Streamlit Cloud 1GB Limit 대응)
+                        del all_data_json, b64_data, final_html, script_inject
+                        gc.collect()
 
                     # ── 탭 2: 노출/측정판 다운로드 (가장자리 여백 2.5rem 추가 확보) ──
                     if tab_dl is not None:
