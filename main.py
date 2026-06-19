@@ -463,7 +463,10 @@ def main():
                 max_no = _cached_get_max_no(check_mgr)
                 available_months = _cached_get_available_months(check_mgr, max_no)
                 
-                all_months_data = cached_load_all_dashboard_data(check_mgr, available_months)
+                # [vMem] 전체 월 한꺼번에 로드 시 1GB 메모리 초과 발생. Streamlit 네이티브 선택으로 1개월씩만 로드
+                sel_month = st.selectbox("📅 대시보드 기준 데이터 월", available_months, key="main_month_selector")
+                db_data = _cached_build_month(check_mgr, max_no, sel_month, report_version=REPORT_VERSION)
+                all_months_data = {sel_month: db_data} if db_data and "error" not in db_data else {"error": db_data.get("error", "Unknown Error")}
 
                 if "error" in all_months_data:
                     st.error(f"❌ 데이터 빌드 실패: {all_months_data['error']}")
@@ -506,7 +509,8 @@ def main():
                             
                             # 다운로드용 기준 월 분리 선택
                             dl_month = st.selectbox("📅 다운로드 기준 데이터 월", available_months, key="tab_dl_month_selector")
-                            db_data = all_months_data.get(dl_month, {})
+                            db_data = _cached_build_month(check_mgr, max_no, dl_month, report_version=REPORT_VERSION)
+                            if not db_data or "error" in db_data: db_data = {}
                             data_fp = dashboard_fingerprint(db_data)
                             dashboard_json = serialize_dashboard_json(db_data)
                             
