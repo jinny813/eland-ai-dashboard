@@ -892,6 +892,10 @@ def load_dashboard_data(
                     new_scores.append(cat_score_map.get(cat, (0, 0.0))[0])
             score_data[store] = new_scores
 
+        import gc
+        del df, all_recs
+        gc.collect()
+
         return {
             "AVAILABLE_MONTHS": sorted_months,
             "CATS": cats, "STORES": stores, "scoreData": score_data, "BRANDS": brands_list,
@@ -902,5 +906,7 @@ def load_dashboard_data(
 
     except Exception as e:
         import traceback
+        import gc
+        gc.collect()
         logger.error(f"대시보드 로드 오류: {e}")
         return {"error": str(e), "traceback": traceback.format_exc()}

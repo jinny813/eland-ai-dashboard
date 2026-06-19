@@ -185,7 +185,7 @@ def _cached_get_available_months(_mgr, max_no: int):
 
 
 def cached_load_all_dashboard_data(mgr, available_months):
-    """모든 가용 월 데이터를 로드. GSheet 로드 실패 시 로컬 dashboard_backup.json 폴백 작동."""
+    """모든 가용 월 데이터를 로드. [vMem] Parquet/Pickle 정적 캐싱 도입으로 GSheet OOM 및 로딩 속도 최적화"""
     max_no = _cached_get_max_no(mgr)
     cache_key = f"last_valid_all_dashboard_data_{max_no}_{len(available_months)}_{REPORT_VERSION}"
 
@@ -193,6 +193,25 @@ def cached_load_all_dashboard_data(mgr, available_months):
     cached = st.session_state.get(cache_key)
     if cached and isinstance(cached, dict) and "error" not in cached:
         return cached
+
+    # [vMem] 1. 파케이/피클 로컬 정적 캐시 우선 로드 (GSheet API 및 DataFrame 파싱 전면 바이패스)
+    import os
+    import pickle
+    import gc
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    pkl_cache_path = os.path.join(base_dir, "scratch", "final_db_cache.pkl")
+    
+    if os.path.exists(pkl_cache_path):
+        try:
+            with open(pkl_cache_path, "rb") as f:
+                cached_data = pickle.load(f)
+            if cached_data and isinstance(cached_data, dict) and "error" not in cached_data:
+                # 안전 장치: 현재 GSheet에서 넘겨준 available_months가 pkl 캐시에 모두 있는지 확인
+                if all(m in cached_data for m in available_months):
+                    st.session_state[cache_key] = cached_data
+                    return cached_data
+        except Exception as e:
+            pass # 실패 시 GSheet 새로 로드 진행
 
     all_data = {}
     try:
@@ -203,11 +222,21 @@ def cached_load_all_dashboard_data(mgr, available_months):
             res = _cached_build_month(mgr, max_no, m, report_version=REPORT_VERSION)
             if res and isinstance(res, dict) and "error" not in res:
                 all_data[m] = res
+            gc.collect()
 
         if not all_data:
             raise ValueError("No valid dashboard data found for any month from GSheet")
 
         st.session_state[cache_key] = all_data
+        
+        # [vMem] 2. 연산 완료된 최종 데이터를 정적 피클 파일로 저장하여 다음 로딩을 번개처럼 빠르게 만듦
+        try:
+            os.makedirs(os.path.dirname(pkl_cache_path), exist_ok=True)
+            with open(pkl_cache_path, "wb") as f:
+                pickle.dump(all_data, f)
+        except Exception:
+            pass
+
         return all_data
     except Exception as e:
         logger.warning(f"[Cache] GSheet 로드 실패 ({e}) — 로컬 백업 파일 폴백 시도")
@@ -447,6 +476,17 @@ def main():
             stale_keys = [k for k in list(st.session_state.keys()) if k.startswith('last_valid')]
             for _k in stale_keys:
                 del st.session_state[_k]
+                
+            # [vMem] 파케이/피클 로컬 캐시 파일 강제 삭제 (리로드 강제)
+            import os
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            pkl_path = os.path.join(base_dir, "scratch", "final_db_cache.pkl")
+            if os.path.exists(pkl_path):
+                try:
+                    os.remove(pkl_path)
+                except Exception:
+                    pass
+                    
             st.success("\u2705 캐시 초기화 완료! 페이지를 새로고침하세요.")
             st.rerun()
 
