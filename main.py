@@ -531,7 +531,7 @@ def main():
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
 
                         # [vMem] 메모리 즉각 반환 (Streamlit Cloud 1GB Limit 대응)
-                        del all_data_json, b64_data, final_html, script_inject
+                        del all_data_json, final_html, script_inject
                         gc.collect()
 
                     # ── 탭 2: 노출/측정판 다운로드 (가장자리 여백 2.5rem 추가 확보) ──
