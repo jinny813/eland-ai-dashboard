@@ -65,12 +65,9 @@ def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool
     
     def check_text(text):
         if not text: return False
-        if target_brand not in text: return False
         if target_brand == '발렌시아':
-            total_matches = len(re.findall(r'발렌시아', text))
-            bad_matches = len(re.findall(r'발렌시아가', text))
-            if total_matches == bad_matches: return False
-        return True
+            return '발렌시아' in text.replace('발렌시아가', '')
+        return target_brand in text
         
     return check_text(title) or check_text(item_brand)
 
@@ -94,55 +91,31 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
             'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
             'Referer': 'https://search.naver.com/'
         }
+        
+        def check_brand(tb, txt):
+            tb = tb.strip()
+            if not tb: return True
+            if tb == '발렌시아': return '발렌시아' in txt.replace('발렌시아가', '')
+            return tb in txt
+
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=5) as resp:
             html = resp.read().decode('utf-8', errors='ignore')
             
         matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
         if matches:
-            best_cleaned = ''
             for raw_title in matches:
                 try:
                     safe_s = raw_title.replace('"', '\\"')
                     decoded = json.loads(f'"{safe_s}"')
                 except Exception:
-                    def replace_match(m):
-                        return chr(int(m.group(1), 16))
+                    def replace_match(m): return chr(int(m.group(1), 16))
                     try:
                         decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
                         decoded = decoded.replace('\\/', '/')
-                    except Exception:
-                        decoded = raw_title
+                    except Exception: decoded = raw_title
+                
                 cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
-                if cleaned:
-                    if brand_name and not _is_brand_match(brand_name, cleaned):
-                        continue
-                    if not best_cleaned: best_cleaned = cleaned
-                    if _is_valid_title(cleaned, keywords):
-                        return cleaned
-            if best_cleaned: return best_cleaned
-    except Exception as e:
-        pass
-        
-    # 브랜드 포함 검색이 실패했으면, 품번만으로 재시도
-    if brand_name and brand_name in query:
-        try:
-            enc = urllib.parse.quote(clean_style_code)
-            url = f"https://search.naver.com/search.naver?query={enc}"
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                html = resp.read().decode('utf-8', errors='ignore')
-            matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
-            if matches:
-                best_cleaned = ''
-                for raw_title in matches:
-                    try:
-                        safe_s = raw_title.replace('"', '\\"')
-                        decoded = json.loads(f'"{safe_s}"')
-                    except Exception:
-                        decoded = raw_title
-                    cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
-                    if cleaned:
                         if brand_name and not _is_brand_match(brand_name, cleaned):
                             continue
                         if not best_cleaned: best_cleaned = cleaned

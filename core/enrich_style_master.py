@@ -56,17 +56,25 @@ def search_naver_shopping(query, brand=""):
             if data['items']:
                 # 브랜드가 명시된 경우, 타이틀/브랜드/몰 이름 등에 포함되어 있는지 확인
                 if brand:
+                    def check_brand(tb, txt):
+                        if tb == '발렌시아': return '발렌시아' in txt.replace('발렌시아가', '')
+                        return tb in txt
+
                     for item in data['items']:
                         title = re.sub(r'<[^>]*>', '', item['title'])
-                        if brand in title or brand in item.get('brand', '') or brand in item.get('mallName', ''):
+                        item_brand = item.get('brand', '')
+                        mall = item.get('mallName', '')
+                        
+                        if check_brand(brand, title) or check_brand(brand, item_brand) or check_brand(brand, mall):
                             category = item.get('category3', item.get('category2', item.get('category1', '')))
                             return {"title": title, "category": category}
-                
-                # 브랜드가 없거나 매칭되는 항목이 없으면 최상단(첫 번째) 아이템 반환
-                item = data['items'][0]
-                title = re.sub(r'<[^>]*>', '', item['title'])
-                category = item.get('category3', item.get('category2', item.get('category1', '')))
-                return {"title": title, "category": category}
+                    # If brand is provided but none match, return None to prevent wrong brand association
+                    return None
+                else:
+                    item = data['items'][0]
+                    title = re.sub(r'<[^>]*>', '', item['title'])
+                    category = item.get('category3', item.get('category2', item.get('category1', '')))
+                    return {"title": title, "category": category}
     except Exception as e:
         print(f"API Error for {query}: {e}")
     return None

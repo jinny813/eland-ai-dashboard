@@ -49,25 +49,31 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str) -> str:
         with urllib.request.urlopen(req, timeout=5) as resp:
             html = resp.read().decode('utf-8', errors='ignore')
             
+        def check_brand(tb, txt):
+            tb = tb.strip()
+            if not tb: return True
+            if tb == '발렌시아': return '발렌시아' in txt.replace('발렌시아가', '')
+            return tb in txt
+
         matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
         if matches:
-            raw_title = matches[0]
-            # JSON escape decode
-            try:
-                safe_s = raw_title.replace('"', '\\"')
-                decoded = json.loads(f'"{safe_s}"')
-            except Exception:
-                def replace_match(m):
-                    return chr(int(m.group(1), 16))
+            for raw_title in matches:
+                # JSON escape decode
                 try:
-                    decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
-                    decoded = decoded.replace('\\/', '/')
+                    safe_s = raw_title.replace('"', '\\"')
+                    decoded = json.loads(f'"{safe_s}"')
                 except Exception:
-                    decoded = raw_title
-            
-            cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
-            if cleaned:
-                return cleaned
+                    def replace_match(m):
+                        return chr(int(m.group(1), 16))
+                    try:
+                        decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
+                        decoded = decoded.replace('\\/', '/')
+                    except Exception:
+                        decoded = raw_title
+                
+                cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
+                if cleaned and check_brand(brand_name, cleaned):
+                    return cleaned
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"Naver scrap failed for {query}: {e}")
@@ -90,9 +96,19 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
         
     # 1. API 키가 있으면 OpenAPI 우선 시도
     if client_id and client_secret:
+        def check_brand(tb, txt, bnd=''):
+            tb = tb.strip()
+            if not tb: return True
+            def _chk(s):
+                if not s: return False
+                if tb == '발렌시아':
+                    return '발렌시아' in s.replace('발렌시아가', '')
+                return tb in s
+            return _chk(txt) or _chk(bnd)
+
         try:
             enc = urllib.parse.quote(query)
-            url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=1"
+            url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=5"
             req = urllib.request.Request(url)
             req.add_header("X-Naver-Client-Id", client_id)
             req.add_header("X-Naver-Client-Secret", client_secret)
@@ -100,8 +116,12 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
             if resp.getcode() == 200:
                 data = json.loads(resp.read().decode('utf-8'))
                 items = data.get('items', [])
-                if items:
-                    title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
+                for item in items:
+                    t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
+                    mall = item.get('brand', '') + ' ' + item.get('mallName', '')
+                    if check_brand(brand_name, t, mall):
+                        title = t
+                        break
         except Exception:
             pass
 
