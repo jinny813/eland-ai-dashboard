@@ -78,7 +78,7 @@ def generate_optimized_excel(
     )
 
 
-@st.cache_data(ttl=3600, max_entries=2, show_spinner="구글 시트에서 데이터 로드 중...")
+@st.cache_data(ttl=600, max_entries=2, show_spinner="구글 시트에서 데이터 로드 중...")
 def _cached_get_raw_records(_mgr, max_no: int):
     try:
         sheet = _mgr.spreadsheet.worksheet("Records")
