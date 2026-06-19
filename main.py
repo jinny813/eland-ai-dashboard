@@ -184,6 +184,57 @@ def _cached_get_available_months(_mgr, max_no: int):
         return []
 
 
+# ── Option B: Scored_Cache + Pickle 계층 캐시 ────────────────────────────────
+
+import os as _c_os
+_PKL_PATH = _c_os.path.join(
+    _c_os.path.dirname(_c_os.path.abspath(__file__)), "scratch", "final_db_cache.pkl"
+)
+
+
+def _save_to_pkl(ts_str, data: dict) -> None:
+    """(timestamp, all_months_data) 튜플을 pickle로 저장. 다음 시작 시 즉시 로드 가능."""
+    import pickle
+    try:
+        _c_os.makedirs(_c_os.path.dirname(_PKL_PATH), exist_ok=True)
+        with open(_PKL_PATH, "wb") as _f:
+            pickle.dump((ts_str, data), _f)
+    except Exception as _e:
+        logger.warning(f"[pkl] 저장 실패: {_e}")
+
+
+def _load_from_pkl():
+    """(timestamp_or_None, data_or_None) 반환. 실패 시 (None, None)."""
+    import pickle
+    if not _c_os.path.exists(_PKL_PATH):
+        return None, None
+    try:
+        with open(_PKL_PATH, "rb") as _f:
+            raw = pickle.load(_f)
+        if isinstance(raw, tuple) and len(raw) == 2:
+            ts, d = raw
+        else:
+            ts, d = None, raw  # 구버전 호환 (timestamp 없는 dict)
+        if d and isinstance(d, dict) and "error" not in d:
+            return ts, d
+    except Exception as _e:
+        logger.warning(f"[pkl] 로드 실패: {_e}")
+    return None, None
+
+
+@st.cache_data(show_spinner="저장된 점수 결과 로드 중...", max_entries=1, ttl=3600)
+def _cached_load_scored_cache(_mgr):
+    """Scored_Cache GSheet 탭 → 사전 계산 결과 dict 반환. (timestamp, data) or (None, None)."""
+    ts, json_str = _mgr.read_scored_cache()
+    if json_str is None:
+        return None, None
+    try:
+        return ts, json.loads(json_str)
+    except Exception as _e:
+        logger.error(f"[ScoredCache] JSON 파싱 실패: {_e}")
+        return None, None
+
+
 def cached_load_all_dashboard_data(mgr, available_months):
     """모든 가용 월 데이터를 로드. [vMem] Parquet/Pickle 정적 캐싱 도입으로 GSheet OOM 및 로딩 속도 최적화"""
     max_no = _cached_get_max_no(mgr)
@@ -481,32 +532,97 @@ def main():
             st.error("구글 시트 연동 오류입니다.")
         else:
             try:
-                col_title, col_btn = st.columns([8, 2])
-                with col_btn:
-                    if st.button("\U0001f504 데이터 캐시 새로고침", key="main_cache_clear_btn", use_container_width=True):
-                        st.cache_data.clear()
-                        stale_keys = [k for k in list(st.session_state.keys()) if k.startswith('last_valid')]
-                        for _k in stale_keys:
-                            del st.session_state[_k]
-                        import os
-                        base_dir = os.path.dirname(os.path.abspath(__file__))
-                        pkl_path = os.path.join(base_dir, "scratch", "final_db_cache.pkl")
-                        if os.path.exists(pkl_path):
-                            try: os.remove(pkl_path)
-                            except: pass
-                        st.rerun()
-                # [v183] 대시보드 로딩 속도를 SPA 급으로 개선하기 위해 모든 월 데이터를 한 번에 로드
-                max_no = _cached_get_max_no(check_mgr)
-                available_months = _cached_get_available_months(check_mgr, max_no)
-                
-                # [vMem] 사용자의 요청으로 지연 로딩을 취소하고 SPA급 로딩을 위해 전체 월 데이터를 다시 로드합니다.
-                # (이전의 메모리 최적화로 인해 이제 전체 월을 로드해도 OOM이 발생하지 않습니다)
-                all_months_data = cached_load_all_dashboard_data(check_mgr, available_months)
+                # ── 헤더 버튼 레이아웃 ──
+                if st.session_state.admin_mode:
+                    col_title, col_refresh, col_admin = st.columns([5, 2, 2])
+                else:
+                    col_title = st.container()
+                    col_refresh = None
+                    col_admin = None
+
+                if col_refresh is not None:
+                    with col_refresh:
+                        if st.button("🔄 캐시 새로고침", key="main_cache_clear_btn", use_container_width=True,
+                                     help="Scored_Cache에서 최신 데이터를 다시 가져옵니다."):
+                            if _c_os.path.exists(_PKL_PATH):
+                                try: _c_os.remove(_PKL_PATH)
+                                except: pass
+                            st.cache_data.clear()
+                            for _k in [k for k in list(st.session_state.keys()) if k.startswith("last_valid")]:
+                                del st.session_state[_k]
+                            st.rerun()
+
+                if col_admin is not None:
+                    with col_admin:
+                        if st.button("⚡ 데이터 갱신", key="admin_data_refresh_btn", use_container_width=True,
+                                     help="Records 전체 재계산 → Scored_Cache 저장 (1~3분 소요)"):
+                            with st.spinner("📊 Records 전체 재계산 중... (1~3분 소요)"):
+                                # 모든 캐시 초기화 후 GSheet에서 강제 재계산
+                                st.cache_data.clear()
+                                for _k in [k for k in list(st.session_state.keys()) if k.startswith("last_valid")]:
+                                    del st.session_state[_k]
+                                if _c_os.path.exists(_PKL_PATH):
+                                    try: _c_os.remove(_PKL_PATH)
+                                    except: pass
+                                _ref_max = _cached_get_max_no(check_mgr)
+                                _ref_mons = _cached_get_available_months(check_mgr, _ref_max)
+                                _ref_data = cached_load_all_dashboard_data(check_mgr, _ref_mons)
+                                if _ref_data and isinstance(_ref_data, dict) and "error" not in _ref_data:
+                                    def _ref_ms(m):
+                                        try: return int(str(m).replace("월","").strip())
+                                        except: return 0
+                                    _ref_am = sorted(_ref_data.keys(), key=_ref_ms, reverse=True)
+                                    for _ref_m, _ref_d in _ref_data.items():
+                                        if isinstance(_ref_d, dict) and "error" not in _ref_d:
+                                            _ref_d["AVAILABLE_MONTHS"] = _ref_am
+                                            _ref_d["SELECTED_MONTH"] = _ref_m
+                                    _ref_json = serialize_dashboard_json(_ref_data)
+                                    _ref_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+                                    _ref_ok = check_mgr.write_scored_cache(_ref_json, _ref_ts, REPORT_VERSION)
+                                    _save_to_pkl(_ref_ts, _ref_data)
+                                    if _ref_ok:
+                                        st.success(f"✅ 갱신 완료! ({_ref_ts})")
+                                    else:
+                                        st.warning("⚠️ GSheet Scored_Cache 저장 실패 — 로컬 캐시만 갱신됨")
+                                else:
+                                    st.error("❌ 데이터 재계산 실패")
+                            st.rerun()
+
+                # ── 데이터 로드 우선순위: pickle(즉시) → Scored_Cache(1회 GSheet) → 전체 재계산 ──
+                cache_ts, all_months_data = _load_from_pkl()
+
+                if all_months_data is None:
+                    # pickle 없음 → Scored_Cache 시도 (GSheet 1회 호출, ~5~10초)
+                    cache_ts, all_months_data = _cached_load_scored_cache(check_mgr)
+                    if all_months_data is not None and isinstance(all_months_data, dict) and "error" not in all_months_data:
+                        _save_to_pkl(cache_ts, all_months_data)  # 로컬 pickle에 저장 → 다음 로딩 즉시화
+                    else:
+                        # Scored_Cache 없음 → 전체 재계산 (GSheet 다중 호출, 1~3분)
+                        cache_ts = None
+                        max_no = _cached_get_max_no(check_mgr)
+                        available_months = _cached_get_available_months(check_mgr, max_no)
+                        all_months_data = cached_load_all_dashboard_data(check_mgr, available_months)
+                        if all_months_data and isinstance(all_months_data, dict) and "error" not in all_months_data:
+                            _save_to_pkl(None, all_months_data)
+
+                if all_months_data is None:
+                    all_months_data = {"error": "데이터를 로드할 수 없습니다. 잠시 후 새로고침해 주세요."}
+
+                def _m_sort(m):
+                    try: return int(str(m).replace("월", "").strip())
+                    except: return 0
+                available_months = sorted(
+                    [k for k in all_months_data.keys() if k != "error"],
+                    key=_m_sort, reverse=True
+                )
+
+                with col_title:
+                    if cache_ts:
+                        st.caption(f"📅 최종 갱신: {cache_ts}")
 
                 if "error" in all_months_data:
                     st.error(f"❌ 데이터 빌드 실패: {all_months_data['error']}")
                 else:
-                    # ── [역할 분리] 일반 사용자는 대시보드 탭 자체를 노출하지 않고 즉시 렌더링 ──
                     if st.session_state.admin_mode:
                         tab_dash, tab_dl = st.tabs(["📊 대시보드", "📄 노출/측정판 다운로드"])
                     else:
@@ -518,6 +634,12 @@ def main():
                         template_path = "ui/dashboard_template.html"
                         with open(template_path, "r", encoding="utf-8") as f:
                             html_template = f.read()
+
+                        # 월 셀렉터 정상 동작: 각 월 데이터에 전체 월 목록 주입
+                        for _mi, _di in all_months_data.items():
+                            if isinstance(_di, dict) and "error" not in _di:
+                                _di["AVAILABLE_MONTHS"] = available_months
+                                _di["SELECTED_MONTH"] = _mi
 
                         all_data_json = serialize_dashboard_json(all_months_data)
                         # [v202] Base64 (atob) 디코딩이 브라우저 렌더링을 심각하게 지연시키므로, 순수 JSON 삽입 방식으로 최적화

@@ -413,15 +413,16 @@ def main():
                 st.query_params.clear()
                 st.rerun()
 
-        # [v7.1] 캐시 강제 초기화 버튼 (모든 사용자에게 항시 노출)
-        if st.button("🔄 캐시 초기화 (신규 지점 반영)", use_container_width=True):
-            st.cache_data.clear()
-            # [BUG-FIX] last_valid_all_dashboard_data_* 포함 모든 캐시 키 삭제
-            stale_keys = [k for k in list(st.session_state.keys()) if k.startswith('last_valid')]
-            for _k in stale_keys:
-                del st.session_state[_k]
-            st.success("✅ 캐시 초기화 완료! 페이지를 새로고침하세요.")
-            st.rerun()
+        # [v7.1] 캐시 강제 초기화 버튼 (관리자 모드에서만 노출)
+        if st.session_state.admin_mode:
+            if st.button("🔄 캐시 초기화 (신규 지점 반영)", use_container_width=True):
+                st.cache_data.clear()
+                # [BUG-FIX] last_valid_all_dashboard_data_* 포함 모든 캐시 키 삭제
+                stale_keys = [k for k in list(st.session_state.keys()) if k.startswith('last_valid')]
+                for _k in stale_keys:
+                    del st.session_state[_k]
+                st.success("✅ 캐시 초기화 완료! 페이지를 새로고침하세요.")
+                st.rerun()
         
         st.caption(f"DB Connected: {check_mgr.is_connected}")
 
