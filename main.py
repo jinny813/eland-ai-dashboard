@@ -754,15 +754,16 @@ def main():
                                         dl_p2_ppt = st.button("🚀 100점 PPT 생성", key="tab_dl_p3_p2_dash_ppt", use_container_width=True)
 
                                     if dl_p2_excel:
-                                        with st.spinner("브랜드 100점 대시보드 엑셀 생성 중..."):
-                                            import core.report_generator as rg
-                                            excel_data = rg.export_p2_dashboard_excel_bytes(db_data, sel_store, sel_cat, metrics_filter=sel_metrics)
+                                        with st.spinner("상품구색 실행판 엑셀 생성 중..."):
+                                            excel_data = generate_sales_execution_excel(
+                                                sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
+                                            )
                                             now_str = datetime.now().strftime("%Y%m%d_%H%M")
-                                            dl_filename = f"브랜드_100점대시보드_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                            dl_filename = f"상품구색실행판(영업)_{sel_store}_{sel_cat}_{now_str}.xlsx"
                                             if excel_data:
                                                 st.success(f"✅ {dl_filename} 생성 완료!")
                                                 st.download_button(
-                                                    label="📄 100점 엑셀 다운로드",
+                                                    label="📄 실행판 엑셀 다운로드",
                                                     data=excel_data,
                                                     file_name=dl_filename,
                                                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
