@@ -124,13 +124,23 @@ def _cached_build_month(_mgr, max_no: int, month: str, report_version: str = REP
             importlib.reload(sys.modules[_m])
     from core.data_loader import load_dashboard_data
 
+    import unicodedata
+
     # 전체 시트를 List[dict]로 로드 (Streamlit 1GB 제한 시 이 정도는 캐시 가능)
     raw_recs = _cached_get_raw_records(_mgr, max_no)
     if isinstance(raw_recs, dict) and "error" in raw_recs:
         return raw_recs
 
     # 선택된 달의 데이터만 필터링하여 DataFrame 변환 크기를 1/N로 축소
-    month_recs = [r for r in raw_recs if str(r.get('data_month', '')).strip() == month]
+    month_recs = []
+    for r in raw_recs:
+        m_val = str(r.get('data_month', '')).strip()
+        if m_val and unicodedata.normalize('NFC', m_val) == month:
+            month_recs.append(r)
+
+    # 데이터가 아예 없는 경우 (KeyError 방지)
+    if not month_recs:
+        return {"error": f"'{month}'에 해당하는 데이터를 찾을 수 없습니다."}
 
     return load_dashboard_data(
         mgr=_mgr,
