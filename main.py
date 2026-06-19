@@ -534,23 +534,10 @@ def main():
             try:
                 # ── 헤더 버튼 레이아웃 ──
                 if st.session_state.admin_mode:
-                    col_title, col_refresh, col_admin = st.columns([5, 2, 2])
+                    col_title, col_admin = st.columns([7, 2])
                 else:
                     col_title = st.container()
-                    col_refresh = None
                     col_admin = None
-
-                if col_refresh is not None:
-                    with col_refresh:
-                        if st.button("🔄 캐시 새로고침", key="main_cache_clear_btn", use_container_width=True,
-                                     help="Scored_Cache에서 최신 데이터를 다시 가져옵니다."):
-                            if _c_os.path.exists(_PKL_PATH):
-                                try: _c_os.remove(_PKL_PATH)
-                                except: pass
-                            st.cache_data.clear()
-                            for _k in [k for k in list(st.session_state.keys()) if k.startswith("last_valid")]:
-                                del st.session_state[_k]
-                            st.rerun()
 
                 if col_admin is not None:
                     with col_admin:
