@@ -1319,3 +1319,121 @@ def export_p2_dashboard_excel_bytes(data: dict, store_filter: str, cat_filter: s
     wb.save(buf)
     buf.seek(0)
     return buf.getvalue()
+
+
+def export_sales_execution_excel_bytes(data: dict, store_filter: str, cat_filter: str, metrics_filter=None):
+    """상품구색 실행판(영업) Excel: 100점 대시보드 양식에 빨간불 우선순위(부족재고액) 2개 추가."""
+    if metrics_filter is None:
+        metrics_filter = ALL_METRICS
+    metrics_filter = _normalize_metrics_filter(metrics_filter)
+
+    if not data or "error" in data:
+        return None
+
+    brands = data.get("BRANDS", [])
+    filtered = [
+        b for b in brands
+        if (store_filter in ("전체 지점", "전체") or b.get("store") == store_filter)
+        and (cat_filter in ("전체 카테고리", "전체") or b.get("category") == cat_filter)
+    ]
+    if not filtered:
+        return None
+
+    METRIC_KEYS = [
+        ("dis",    "할인율"),
+        ("best",   "BEST상품"),
+        ("fresh",  "신선도"),
+        ("season", "시즌"),
+    ]
+    active_metrics = [(k, l) for k, l in METRIC_KEYS if l in metrics_filter]
+
+    def _row_total(b):
+        scores = [min(100.0, float(b.get(mk, 0.0))) for mk, ml in METRIC_KEYS if ml in metrics_filter]
+        return sum(scores) / len(scores) if scores else 0.0
+
+    rows = sorted(filtered, key=_row_total, reverse=True)
+
+    styles = _STYLES
+    wb = Workbook()
+    ws = wb.active
+    ws.title = _sanitize_sheet_name(f"상품구색실행판_{store_filter}", set())
+
+    col_defs = [("랭크", 5), ("복종", 10), ("지점", 12), ("브랜드", 12), ("총점\n(100점)", 9)]
+    for _, m_label in active_metrics:
+        col_defs.append((f"{m_label}\n(100점)", 9))
+    col_defs.append(("빨간불\n우선순위①", 20))
+    col_defs.append(("빨간불\n우선순위②", 20))
+
+    for ci, (_, w) in enumerate(col_defs, 1):
+        ws.column_dimensions[get_column_letter(ci)].width = w
+
+    total_cols = len(col_defs)
+
+    title_cell = ws.cell(row=1, column=1,
+        value=f"[한국유통] 브랜드 100점 환산 대시보드 ({store_filter} / {cat_filter})")
+    title_cell.font = styles.font_title
+    title_cell.alignment = styles.align_center
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=total_cols)
+    ws.row_dimensions[1].height = 25
+
+    for ci, (hdr, _) in enumerate(col_defs, 1):
+        styles.apply_header_cell(ws.cell(row=2, column=ci), value=hdr)
+    ws.row_dimensions[2].height = 32
+
+    for rank, b in enumerate(rows, 1):
+        ri = 2 + rank
+        ws.row_dimensions[ri].height = 18
+        styles.apply_plain_cell(ws.cell(row=ri, column=1), rank)
+        styles.apply_plain_cell(ws.cell(row=ri, column=2), b.get("category", ""))
+        styles.apply_plain_cell(ws.cell(row=ri, column=3), b.get("store", ""))
+        styles.apply_plain_cell(ws.cell(row=ri, column=4), b.get("name", ""))
+        
+        col = 5
+        _apply_dashboard_score_cell(ws.cell(row=ri, column=col), _row_total(b), styles)
+        col += 1
+        
+        red_lights = []
+        tM = float(b.get("tM", 0.0))
+        weight_keys = {"dis": "dis", "best": "best", "fresh": "fresh", "season": "sea"}
+        weights = b.get("scoring_guide", {}).get("score_weights", {})
+        
+        for m_key, m_label in active_metrics:
+            score = min(100.0, float(b.get(m_key, 0.0)))
+            _apply_dashboard_score_cell(ws.cell(row=ri, column=col), score, styles)
+            col += 1
+            
+            if score < 60:
+                w_key = weight_keys.get(m_key, m_key)
+                m_weight = float(weights.get(w_key, 0.0)) / 100.0
+                if m_weight == 0.0:
+                    fallback_weights = {"dis": 0.3, "best": 0.35, "fresh": 0.2, "season": 0.15}
+                    m_weight = fallback_weights.get(m_key, 0.25)
+                target_inv = tM * m_weight
+                shortfall = target_inv * (1.0 - (score / 100.0))
+                red_lights.append({
+                    "label": m_label,
+                    "score": score,
+                    "shortfall": shortfall
+                })
+        
+        red_lights.sort(key=lambda x: x["score"])
+        
+        if len(red_lights) >= 1:
+            r1 = red_lights[0]
+            val1 = f"{r1['label']} {int(round(r1['score']))}점 (-{int(round(r1['shortfall']))}백)"
+            styles.apply_plain_cell(ws.cell(row=ri, column=col), val1)
+        else:
+            styles.apply_plain_cell(ws.cell(row=ri, column=col), "")
+        col += 1
+        
+        if len(red_lights) >= 2:
+            r2 = red_lights[1]
+            val2 = f"{r2['label']} {int(round(r2['score']))}점 (-{int(round(r2['shortfall']))}백)"
+            styles.apply_plain_cell(ws.cell(row=ri, column=col), val2)
+        else:
+            styles.apply_plain_cell(ws.cell(row=ri, column=col), "")
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
