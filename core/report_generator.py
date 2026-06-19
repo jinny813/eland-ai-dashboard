@@ -205,6 +205,7 @@ def _fill_exposure_sheet(
     show_store_col: bool = False,
     hide_brand_col: bool = False,
     score_mode: str = "weighted",
+    is_sales_execution: bool = False,
 ):
     styles = _STYLES
     if not filtered_brands:
@@ -456,6 +457,12 @@ def _fill_exposure_sheet(
 
         col_idx += colspan
 
+    if is_sales_execution:
+        total_cols += 1
+        ws.cell(row=ROW_H1, column=total_cols, value="개선필요항목")
+        ws.merge_cells(start_row=ROW_H1, start_column=total_cols, end_row=ROW_H3, end_column=total_cols)
+        ws.column_dimensions[get_column_letter(total_cols)].width = 25
+
     # H1, H2, H3 헤더 스타일 일괄 주입
     for r in (ROW_H1, ROW_H2, ROW_H3):
         for c in range(1, total_cols + 1):
@@ -525,6 +532,7 @@ def _fill_exposure_sheet(
         col += 1
 
         col_offset = col
+        red_lights = []
 
         for m_id, m_info in metrics_config.items():
             m_data = b_detail.get(m_id) or {}
@@ -661,10 +669,31 @@ def _fill_exposure_sheet(
 
             earned_score_rounded = _round1(earned_score)
             display_max_weight = 100.0 if score_mode == "100_percent" else global_m_weight
+            
+            if is_sales_execution:
+                score_str = _fmt_num(earned_score_rounded)
+            else:
+                score_str = _fmt_score(earned_score_rounded)
+                
             styles.apply_score_cell(
                 ws.cell(row=row_idx, column=col_offset),
-                _fmt_score(earned_score_rounded), earned_score_rounded, display_max_weight,
+                score_str, earned_score_rounded, display_max_weight,
             )
+            
+            if is_sales_execution:
+                fill = styles.fill_for_score(earned_score_rounded, display_max_weight)
+                if fill is styles.fill_red:
+                    tot_target = 0.0
+                    tot_val = 0.0
+                    for k in seg_keys:
+                        c_info = computed_seg_pts.get(k)
+                        if c_info and c_info['exists']:
+                            tot_target += float(seg_by_key.get(k, {}).get('targetM', 0.0))
+                            tot_val += float(c_info['valM'])
+                    shortage = tot_val - tot_target
+                    if shortage < 0:
+                        metric_title = m_info['title']
+                        red_lights.append(f"{metric_title} {score_str} ({int(shortage)}백)")
             if row_idx == ROW_DATA:
                 # 4행 합계 컬럼: 정상/상설 만점을 각각 표기
                 if score_mode == "100_percent":
@@ -795,6 +824,14 @@ def _fill_exposure_sheet(
                         )
                 col_offset += 1
 
+        if is_sales_execution:
+            txt = "\n".join(red_lights)
+            cell = ws.cell(row=row_idx, column=col_offset)
+            cell.value = txt
+            cell.alignment = styles.align_center
+            cell.border = styles.border_thin
+            col_offset += 1
+
         # [v177] 복사붙여넣기 시 PPT 슬라이드 비율에 맞춘 최적의 행높이(45)로 증대
         ws.row_dimensions[row_idx].height = 45
         row_idx += 1
@@ -865,6 +902,7 @@ def export_to_excel_bytes(
     cat_filter="전체 카테고리",
     metrics_filter=None,
     score_mode: str = "weighted",
+    is_sales_execution: bool = False,
 ):
     """하위 호환 — 단일 시트."""
     if metrics_filter is None:
@@ -891,6 +929,7 @@ def export_to_excel_bytes(
         metrics_filter=metrics_filter,
         show_store_col=(store_filter == "전체 지점"),
         score_mode=score_mode,
+        is_sales_execution=is_sales_execution,
     )
     buf = io.BytesIO()
     wb.save(buf)

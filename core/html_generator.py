@@ -28,12 +28,61 @@ def _item_code_to_ko(item_code: str) -> str:
     grp = _SCORER_GENERIC._get_item_group(item_code)
     return _ITEM_GROUP_KO.get(grp, '—')
 
+_ITEM_KEYWORDS = {
+    'Outer': ['자켓', '재킷', '점퍼', '코트', '패딩', '가디건', '바람막이', '아우터', '집업', '조끼', '베스트', '사파리', '블루종'],
+    'Top': ['티셔츠', '셔츠', '블라우스', '니트', '스웨터', '맨투맨', '후드', '상의', '탑', '풀오버', '카라티', '반팔', '긴팔'],
+    'Bottom': ['바지', '팬츠', '슬랙스', '데님', '청바지', '레깅스', '하의', '쇼츠', '반바지', '조거', '면바지'],
+    'Skirt': ['스커트', '치마'],
+    'Dress': ['원피스', '드레스'],
+    'Set': ['세트', '상하복', '수트', '정장', '투피스', '셋업'],
+    'Suits': ['정장', '수트', '셋업', '양복'],
+    'Shirts': ['셔츠', '남방', '블라우스'],
+    'Casual': ['캐주얼', '티셔츠', '바지'],
+    'Knit': ['니트', '스웨터', '가디건', '조끼'],
+    'RunningShoes': ['러닝화', '운동화', '런닝화', '스니커즈'],
+    'CasualShoes': ['스니커즈', '단화', '슬립온', '운동화'],
+    'OtherShoes': ['구두', '로퍼', '부츠', '샌들', '슬리퍼', '워커']
+}
 
-def _crawl_naver_shopping_title(brand_name: str, style_code: str) -> str:
+def _get_item_keywords(item_code: str) -> list:
+    if not item_code or item_code in ('—', '-', 'nan', 'None', ''):
+        return []
+    grp = _SCORER_GENERIC._get_item_group(item_code)
+    kw = _ITEM_KEYWORDS.get(grp, []).copy()
+    ko = _item_code_to_ko(item_code)
+    if ko != '—' and ko not in kw:
+        kw.append(ko)
+    return kw
+
+def _is_valid_title(title: str, keywords: list) -> bool:
+    if not keywords: return True
+    for k in keywords:
+        if k in title: return True
+    return False
+def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool:
+    target_brand = target_brand.strip()
+    if not target_brand: return True
+    
+    def check_text(text):
+        if not text: return False
+        if target_brand not in text: return False
+        if target_brand == '발렌시아':
+            total_matches = len(re.findall(r'발렌시아', text))
+            bad_matches = len(re.findall(r'발렌시아가', text))
+            if total_matches == bad_matches: return False
+        return True
+        
+    return check_text(title) or check_text(item_brand)
+
+
+
+def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str = None) -> str:
     """
     API 키가 없거나 실패한 경우, 네이버 통합 검색 쇼핑 영역 결과를 직접 파싱하여 상품명을 반환합니다.
     """
-    query = f"{brand_name} {style_code}".strip()
+    keywords = _get_item_keywords(item_code)
+    clean_style_code = style_code.replace('-', '')
+    query = f"{brand_name}{clean_style_code}".strip()
     if not query:
         return ''
     try:
@@ -51,52 +100,62 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str) -> str:
             
         matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
         if matches:
-            raw_title = matches[0]
-            # JSON escape decode
-            try:
-                safe_s = raw_title.replace('"', '\\"')
-                decoded = json.loads(f'"{safe_s}"')
-            except Exception:
-                def replace_match(m):
-                    return chr(int(m.group(1), 16))
+            best_cleaned = ''
+            for raw_title in matches:
                 try:
-                    decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
-                    decoded = decoded.replace('\\/', '/')
+                    safe_s = raw_title.replace('"', '\\"')
+                    decoded = json.loads(f'"{safe_s}"')
                 except Exception:
-                    decoded = raw_title
-            
-            cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
-            if cleaned:
-                return cleaned
+                    def replace_match(m):
+                        return chr(int(m.group(1), 16))
+                    try:
+                        decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
+                        decoded = decoded.replace('\\/', '/')
+                    except Exception:
+                        decoded = raw_title
+                cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
+                if cleaned:
+                    if brand_name and not _is_brand_match(brand_name, cleaned):
+                        continue
+                    if not best_cleaned: best_cleaned = cleaned
+                    if _is_valid_title(cleaned, keywords):
+                        return cleaned
+            if best_cleaned: return best_cleaned
     except Exception as e:
         pass
         
     # 브랜드 포함 검색이 실패했으면, 품번만으로 재시도
     if brand_name and brand_name in query:
         try:
-            enc = urllib.parse.quote(style_code)
+            enc = urllib.parse.quote(clean_style_code)
             url = f"https://search.naver.com/search.naver?query={enc}"
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=5) as resp:
                 html = resp.read().decode('utf-8', errors='ignore')
             matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
             if matches:
-                raw_title = matches[0]
-                try:
-                    safe_s = raw_title.replace('"', '\\"')
-                    decoded = json.loads(f'"{safe_s}"')
-                except Exception:
-                    decoded = raw_title
-                cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
-                if cleaned:
-                    return cleaned
+                best_cleaned = ''
+                for raw_title in matches:
+                    try:
+                        safe_s = raw_title.replace('"', '\\"')
+                        decoded = json.loads(f'"{safe_s}"')
+                    except Exception:
+                        decoded = raw_title
+                    cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
+                    if cleaned:
+                        if brand_name and not _is_brand_match(brand_name, cleaned):
+                            continue
+                        if not best_cleaned: best_cleaned = cleaned
+                        if _is_valid_title(cleaned, keywords):
+                            return cleaned
+                if best_cleaned: return best_cleaned
         except Exception:
             pass
 
     return ''
 
 
-def _naver_search_style_name(brand_name: str, style_code: str) -> str:
+def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = None) -> str:
     """
     네이버 쇼핑 API로 브랜드+품번 검색 → 상품명 반환.
     실패하거나 API 키가 없으면 직접 웹 스크래핑을 통한 폴백 시도.
@@ -106,7 +165,9 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
     client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
     
     title = ''
-    query = f"{brand_name} {style_code}".strip()
+    keywords = _get_item_keywords(item_code)
+    clean_style_code = style_code.replace('-', '')
+    query = f"{brand_name}{clean_style_code}".strip()
     if not query:
         return ''
         
@@ -129,21 +190,32 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
 
         items = fetch_api(query)
         if not items and brand_name:
-            items = fetch_api(style_code)
+            items = fetch_api(clean_style_code)
 
         if items:
-            if brand_name:
-                for item in items:
-                    t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
-                    if brand_name in t or brand_name in item.get('brand', '') or brand_name in item.get('mallName', ''):
-                        title = t
-                        break
-            if not title:
+            best_title = ''
+            for item in items:
+                t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
+                brand_context = item.get('brand', '') + ' ' + item.get('mallName', '')
+                
+                if brand_name and not _is_brand_match(brand_name, t, brand_context):
+                    continue
+                    
+                if not best_title: best_title = t
+                if _is_valid_title(t, keywords):
+                    title = t
+                    break
+
+            if not title and best_title:
+                title = best_title
+
+            if not title and not brand_name and items:
                 title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
+
 
     # 2. API 결과가 없거나 실패 시 웹 스크래핑 폴백 시도
     if not title:
-        title = _crawl_naver_shopping_title(brand_name, style_code)
+        title = _crawl_naver_shopping_title(brand_name, style_code, item_code)
 
     if title:
         # DB에 캐시
@@ -591,9 +663,12 @@ def _build_best_items(df) -> dict:
             else:
                 raw_item_name = ic
 
-        # ── 5) style_name: 네이버 쇼핑 검색 (API key 있을 때만)
+        # ── 5) style_name: 네이버 쇼핑 검색 (품번 + 아이템코드 검증 로직 적용)
         if raw_style_name in _EMPTY_VALS and brand_name:
-            found = _naver_search_style_name(brand_name, s)
+            ic = str(row.get('item_code', '') or '').strip()
+            if not ic or ic in _EMPTY_VALS:
+                ic = s
+            found = _naver_search_style_name(brand_name, s, item_code=ic)
             if found:
                 raw_style_name = found
 

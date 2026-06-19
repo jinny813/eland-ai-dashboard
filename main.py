@@ -23,7 +23,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.19"
+REPORT_VERSION = "v17.22"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -71,6 +71,29 @@ def generate_optimized_excel(
     data = json.loads(dashboard_json)
     metrics = [m.strip() for m in metrics_key.split(",") if m.strip()]
     return core.report_generator.export_to_excel_bytes(
+        data=data,
+        store_filter=store_filter,
+        cat_filter=cat_filter,
+        metrics_filter=metrics or None,
+    )
+
+
+@st.cache_data(ttl=600, max_entries=2, show_spinner="영업 실행판 엑셀 생성 중...")
+def generate_sales_execution_excel(
+    store_filter: str,
+    cat_filter: str,
+    metrics_key: str,
+    data_fingerprint: str,
+    dashboard_json: str,
+    report_version: str = REPORT_VERSION,
+):
+    del data_fingerprint, report_version
+    if not dashboard_json:
+        return None
+    importlib.reload(core.report_generator)
+    data = json.loads(dashboard_json)
+    metrics = [m.strip() for m in metrics_key.split(",") if m.strip()]
+    return core.report_generator.export_sales_execution_excel_bytes(
         data=data,
         store_filter=store_filter,
         cat_filter=cat_filter,
@@ -486,8 +509,8 @@ def main():
                             # [v172] 라디오 버튼 제거 및 공식 st.tabs 서브탭 레이아웃 적용
                             subtab_p1, subtab_p2, subtab_p3 = st.tabs([
                                 "🏬 지점별 상품 구색 점수판 다운로드",
-                                "🏷️ 브랜드별 비교 대시보드 다운로드",
-                                "👚 매장별 상세 현황판 다운로드"
+                                "👚 매장별 상세 현황판 다운로드",
+                                "📊 상품구색 실행판(영업)"
                             ])
 
                             with subtab_p1:
@@ -562,19 +585,14 @@ def main():
 
                             with subtab_p2:
                                 st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
-                                st.info("💡 브랜드별 비교 데이터는 실시간 대시보드(P2) 화면에서 제공되며, 엑셀/PPT 다운로드는 '지점별 상품 구색 점수판 다운로드' 또는 '매장별 상세 현황판 다운로드' 탭을 이용해 주세요.")
-                                st.markdown("</div>", unsafe_allow_html=True)
-
-                            with subtab_p3:
-                                st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
                                 stores = ["전체 지점"] + list(db_data.get("STORES", []))
                                 cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
 
                                 col1, col2 = st.columns(2)
                                 with col1:
-                                    sel_store = st.selectbox("🏬 지점 선택", stores, key="tab_dl_store")
+                                    sel_store = st.selectbox("🏬 지점 선택", stores, key="tab_dl_p2_store")
                                 with col2:
-                                    sel_cat = st.selectbox("👚 카테고리 선택", cats, key="tab_dl_cat")
+                                    sel_cat = st.selectbox("👚 카테고리 선택", cats, key="tab_dl_p2_cat")
 
                                 col_m, col_sc = st.columns([3, 2])
                                 with col_m:
@@ -582,13 +600,13 @@ def main():
                                         "📊 지표 선택",
                                         ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
                                         default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
-                                        key="tab_dl_metrics",
+                                        key="tab_dl_p2_metrics",
                                     )
                                 with col_sc:
                                     p2_score_mode_sel = st.selectbox(
                                         "⚖️ 환산 기준",
                                         ["지표별 가중치 반영", "지표별 100점 환산"],
-                                        key="tab_dl_p2_score_mode",
+                                        key="tab_dl_p2_p2_score_mode",
                                     )
                                 metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
 
@@ -596,9 +614,9 @@ def main():
                                 if p2_score_mode_sel == "지표별 100점 환산":
                                     col_p2_e, col_p2_p = st.columns(2)
                                     with col_p2_e:
-                                        dl_p2_excel = st.button("🚀 100점 엑셀 생성", key="tab_dl_p2_dash_excel", use_container_width=True)
+                                        dl_p2_excel = st.button("🚀 100점 엑셀 생성", key="tab_dl_p2_p2_dash_excel", use_container_width=True)
                                     with col_p2_p:
-                                        dl_p2_ppt = st.button("🚀 100점 PPT 생성", key="tab_dl_p2_dash_ppt", use_container_width=True)
+                                        dl_p2_ppt = st.button("🚀 100점 PPT 생성", key="tab_dl_p2_p2_dash_ppt", use_container_width=True)
 
                                     if dl_p2_excel:
                                         with st.spinner("브랜드 100점 대시보드 엑셀 생성 중..."):
@@ -636,7 +654,7 @@ def main():
                                             else:
                                                 st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
                                 else:
-                                    if st.button("🚀 상세 엑셀 파일 생성", key="tab_dl_gen", use_container_width=True):
+                                    if st.button("🚀 상세 엑셀 파일 생성", key="tab_dl_p2_gen", use_container_width=True):
                                         excel_data = generate_optimized_excel(
                                             sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
                                         )
@@ -658,6 +676,100 @@ def main():
 
 
 
+                            with subtab_p3:
+                                st.markdown("<div style='padding: 1rem 0;'>", unsafe_allow_html=True)
+                                stores = ["전체 지점"] + list(db_data.get("STORES", []))
+                                cats = ["전체 카테고리"] + list(db_data.get("CATS", []))
+
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    sel_store = st.selectbox("🏬 지점 선택", stores, key="tab_dl_p3_store")
+                                with col2:
+                                    sel_cat = st.selectbox("👚 카테고리 선택", cats, key="tab_dl_p3_cat")
+
+                                col_m, col_sc = st.columns([3, 2])
+                                with col_m:
+                                    sel_metrics = st.multiselect(
+                                        "📊 지표 선택",
+                                        ["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                        default=["할인율", "BEST상품", "신선도", "시즌", "아이템"],
+                                        key="tab_dl_p3_metrics",
+                                    )
+                                with col_sc:
+                                    p2_score_mode_sel = st.selectbox(
+                                        "⚖️ 환산 기준",
+                                        ["지표별 가중치 반영", "지표별 100점 환산"],
+                                        key="tab_dl_p3_p2_score_mode",
+                                    )
+                                metrics_key = ",".join(sel_metrics) if sel_metrics else "할인율,BEST상품,신선도,시즌,아이템"
+
+                                st.markdown("---")
+                                if p2_score_mode_sel == "지표별 100점 환산":
+                                    col_p2_e, col_p2_p = st.columns(2)
+                                    with col_p2_e:
+                                        dl_p2_excel = st.button("🚀 100점 엑셀 생성", key="tab_dl_p3_p2_dash_excel", use_container_width=True)
+                                    with col_p2_p:
+                                        dl_p2_ppt = st.button("🚀 100점 PPT 생성", key="tab_dl_p3_p2_dash_ppt", use_container_width=True)
+
+                                    if dl_p2_excel:
+                                        with st.spinner("브랜드 100점 대시보드 엑셀 생성 중..."):
+                                            import core.report_generator as rg
+                                            excel_data = rg.export_p2_dashboard_excel_bytes(db_data, sel_store, sel_cat, metrics_filter=sel_metrics)
+                                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                            dl_filename = f"브랜드_100점대시보드_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                            if excel_data:
+                                                st.success(f"✅ {dl_filename} 생성 완료!")
+                                                st.download_button(
+                                                    label="📄 100점 엑셀 다운로드",
+                                                    data=excel_data,
+                                                    file_name=dl_filename,
+                                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                                    use_container_width=True,
+                                                )
+                                            else:
+                                                st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+
+                                    if dl_p2_ppt:
+                                        with st.spinner("브랜드 100점 대시보드 PPT 생성 중..."):
+                                            import core.ppt_generator as ptg
+                                            ppt_data = ptg.export_p2_dashboard_ppt_bytes(db_data, sel_store, sel_cat, metrics_filter=sel_metrics)
+                                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                            dl_filename = f"브랜드_100점대시보드_{sel_store}_{sel_cat}_{now_str}.pptx"
+                                            if ppt_data:
+                                                st.success(f"✅ {dl_filename} 생성 완료!")
+                                                st.download_button(
+                                                    label="📄 100점 PPT 다운로드",
+                                                    data=ppt_data,
+                                                    file_name=dl_filename,
+                                                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                                    use_container_width=True,
+                                                )
+                                            else:
+                                                st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                                else:
+                                    if st.button("🚀 상세 엑셀 파일 생성", key="tab_dl_p3_gen", use_container_width=True):
+                                        excel_data = generate_sales_execution_excel(
+                                            sel_store, sel_cat, metrics_key, data_fp, dashboard_json, REPORT_VERSION
+                                        )
+                                        if excel_data:
+                                            now_str = datetime.now().strftime("%Y%m%d_%H%M")
+                                            dl_filename = f"상품구색_실행판(영업)_{sel_store}_{sel_cat}_{now_str}.xlsx"
+                                            st.success(f"✅ {dl_filename} 생성 완료!")
+                                            st.download_button(
+                                                label="📄 노출/측정판 엑셀 다운로드",
+                                                data=excel_data,
+                                                file_name=dl_filename,
+                                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                                use_container_width=True,
+                                            )
+                                        else:
+                                            st.warning("⚠️ 선택한 조건에 해당하는 데이터가 없습니다.")
+                                st.markdown("</div>", unsafe_allow_html=True)
+                            st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+                            st.markdown('</div>', unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"대시보드 생성 실패: {e}")
 

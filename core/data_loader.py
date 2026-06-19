@@ -306,7 +306,7 @@ def preprocess_raw_records(
     # ── year 필터 ──
     if 'year' in df.columns and 'store_type' in df.columns and 'category_group' in df.columns:
         is_normal = ~df['store_type'].apply(_is_outlet_type)
-        is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화'])
+        is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화', '신사'])
         bad_year = df['year'].astype(str).str.strip().eq("")
         is_fresh_new = (
             df['freshness_type'].astype(str).str.contains('신상', na=False)
