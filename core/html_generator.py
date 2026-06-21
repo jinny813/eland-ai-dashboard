@@ -82,6 +82,7 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
     query = f"{brand_name}{clean_style_code}".strip()
     if not query:
         return ''
+    best_cleaned = None
     try:
         enc = urllib.parse.quote(query)
         url = f"https://search.naver.com/search.naver?query={enc}"
@@ -116,14 +117,14 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
                     except Exception: decoded = raw_title
                 
                 cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
-                        if brand_name and not _is_brand_match(brand_name, cleaned):
-                            continue
-                        if not best_cleaned: best_cleaned = cleaned
-                        if _is_valid_title(cleaned, keywords):
-                            return cleaned
-                if best_cleaned: return best_cleaned
-        except Exception:
-            pass
+                if brand_name and not _is_brand_match(brand_name, cleaned):
+                    continue
+                if not best_cleaned: best_cleaned = cleaned
+                if _is_valid_title(cleaned, keywords):
+                    return cleaned
+            if best_cleaned: return best_cleaned
+    except Exception:
+        pass
 
     return ''
 

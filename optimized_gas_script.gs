@@ -13,7 +13,8 @@ function doPost(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(sheetName);
     
-    if (!sheet) {
+    // clear_sheet는 탭 생성도 담당하므로, 탭 없음 오류 체크를 건너뜀
+    if (!sheet && action !== "clear_sheet") {
       return ContentService.createTextOutput(JSON.stringify({
         status: "error",
         message: "Sheet not found: " + sheetName
@@ -89,6 +90,18 @@ function doPost(e) {
         status: "success",
         data: data
       })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // 5. 시트 초기화 (없으면 생성, 있으면 내용만 삭제)
+    else if (action === "clear_sheet") {
+      var targetSheet = ss.getSheetByName(sheetName);
+      if (!targetSheet) {
+        ss.insertSheet(sheetName);
+      } else {
+        targetSheet.clearContents();
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Unknown action: " + action }))

@@ -575,34 +575,19 @@ def main():
                                     st.error("❌ 데이터 재계산 실패")
                             st.rerun()
 
-                # ── 가용 월 목록 가져오기 ──
-                max_no = _cached_get_max_no(check_mgr)
-                available_months = _cached_get_available_months(check_mgr, max_no)
-
-                # ── 데이터 로드 우선순위: pickle(즉시, 가용월 검증) → Scored_Cache(1회 GSheet) → 전체 재계산 ──
+                # ── 데이터 로드 우선순위: pickle(즉시) → Scored_Cache(1회 GSheet) → 전체 재계산 ──
                 cache_ts, all_months_data = _load_from_pkl()
-                
-                # 로컬 캐시에 최신 가용 월이 모두 포함되어 있는지 검증 (일부라도 누락되면 캐시 파괴 후 재로드)
-                if all_months_data is not None and isinstance(all_months_data, dict) and "error" not in all_months_data:
-                    if not all(m in all_months_data for m in available_months):
-                        all_months_data = None
-                        cache_ts = None
 
                 if all_months_data is None:
-                    # pickle 없음/불완전 → Scored_Cache 시도 (GSheet 1회 호출, ~5~10초)
+                    # pickle 없음 → Scored_Cache 시도 (GSheet 1회 호출, ~5~15초)
                     cache_ts, all_months_data = _cached_load_scored_cache(check_mgr)
-                    
-                    # Scored_Cache 검증 (가용 월 모두 포함하는지 확인)
                     if all_months_data is not None and isinstance(all_months_data, dict) and "error" not in all_months_data:
-                        if not all(m in all_months_data for m in available_months):
-                            all_months_data = None
-                            cache_ts = None
-
-                    if all_months_data is not None and isinstance(all_months_data, dict) and "error" not in all_months_data:
-                        _save_to_pkl(cache_ts, all_months_data)  # 로컬 pickle에 저장
+                        _save_to_pkl(cache_ts, all_months_data)
                     else:
-                        # Scored_Cache 없음/불완전 → 전체 재계산 (GSheet 다중 호출, 1~3분)
+                        # Scored_Cache 없음 → 전체 재계산 (GSheet 다중 호출, 1~3분)
                         cache_ts = None
+                        max_no = _cached_get_max_no(check_mgr)
+                        available_months = _cached_get_available_months(check_mgr, max_no)
                         all_months_data = cached_load_all_dashboard_data(check_mgr, available_months)
                         if all_months_data and isinstance(all_months_data, dict) and "error" not in all_months_data:
                             _save_to_pkl(None, all_months_data)
