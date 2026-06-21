@@ -3649,10 +3649,10 @@
       overlay.classList.add('show');
       
       if (modal) {
-        modal.style.position = '';
-        modal.style.left = '';
-        modal.style.top = '';
-        modal.style.margin = '';
+        // 중앙 정렬 방식을 해제하고 마우스 클릭 좌표 기준 오프셋 렌더링
+        requestAnimationFrame(() => {
+          _repositionModal(modal, _lastClickClientX, _lastClickClientY);
+        });
       }
     }
 
