@@ -3613,23 +3613,24 @@
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // 클릭한 마우스 X좌표 기준 수평 중앙 배치, Y좌표 기준 아래로 15px 배치
+      // [수정] Streamlit iframe의 높이가 매우 길 수 있으므로, 하단 경계 플립(flip) 로직이 팝업을
+      // 현재 화면 밖으로 날려버리는 것을 방지하기 위해, 마우스 클릭 Y 좌표를 모달의 정중앙에 배치합니다.
       let left = clickX - (modalWidth / 2);
-      let top = clickY + 15;
+      let top = clickY - (modalHeight / 2);
 
-      // 1. 우측 경계 검사 (우측으로 삐져나가면 안쪽으로)
+      // 1. 우측 경계 검사
       if (left + modalWidth > viewportWidth - 20) {
         left = viewportWidth - modalWidth - 20;
       }
-      // 2. 좌측 경계 검사 (좌측으로 삐져나가면 안쪽으로)
+      // 2. 좌측 경계 검사
       if (left < 20) {
         left = 20;
       }
-      // 3. 하단 경계 검사 (아래로 삐져나가면 클릭 위치 위쪽으로 플립 배치)
+      // 3. 하단 경계 검사 (iframe을 넘어가지 않도록)
       if (top + modalHeight > viewportHeight - 20) {
-        top = clickY - modalHeight - 15;
+        top = viewportHeight - modalHeight - 20;
       }
-      // 4. 상단 경계 검사 (위로 삐져나가면 최소 20px 마진 유지)
+      // 4. 상단 경계 검사 (무조건 최소 20px 마진)
       if (top < 20) {
         top = 20;
       }
