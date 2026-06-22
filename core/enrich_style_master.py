@@ -62,10 +62,8 @@ def search_naver_shopping(query, brand=""):
 
                     for item in data['items']:
                         title = re.sub(r'<[^>]*>', '', item['title'])
-                        item_brand = item.get('brand', '')
-                        mall = item.get('mallName', '')
                         
-                        if check_brand(brand, title) or check_brand(brand, item_brand) or check_brand(brand, mall):
+                        if check_brand(brand, title):
                             category = item.get('category3', item.get('category2', item.get('category1', '')))
                             return {"title": title, "category": category}
                     # If brand is provided but none match, return None to prevent wrong brand association
