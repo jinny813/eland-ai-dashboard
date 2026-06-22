@@ -266,6 +266,117 @@ class GSheetManager:
         return self._append_chunks(brand_name, df.values.tolist())
 
 
+    # ── Scored_Cache 탭 관련 메서드 ──────────────────────────────────────────
+
+    def clear_sheet(self, sheet_name: str) -> bool:
+        """지정 탭 초기화 (없으면 생성)"""
+        result = self._get({"action": "clear_sheet", "sheetName": sheet_name})
+        return result is not None
+
+    def write_scored_cache(self, json_str: str, timestamp: str, version: str = "") -> bool:
+        """직렬화된 대시보드 JSON을 gzip 압축 후 Scored_Cache 탭에 청크 단위로 저장 (1회 POST)"""
+        import gzip as _gz
+        import time as _time
+
+        try:
+            # 1. 압축 → base64
+            compressed = _gz.compress(json_str.encode("utf-8"), compresslevel=6)
+            b64_str = base64.b64encode(compressed).decode("ascii")
+
+            # 2. 40,000자 청크 분할
+            chunk_size = 40000
+            chunks = [b64_str[i:i + chunk_size] for i in range(0, len(b64_str), chunk_size)]
+            total_chunks = len(chunks)
+
+            logger.info(
+                f"[ScoredCache] 저장 시작: {total_chunks}청크 / "
+                f"원본 {len(json_str) // 1024}KB → 압축 {len(b64_str) // 1024}KB"
+            )
+
+            # 3. 기존 시트 초기화 (없으면 생성)
+            self.clear_sheet("Scored_Cache")
+
+            # 4. 헤더 row + 데이터 rows 구성
+            all_rows = (
+                [[timestamp, version, str(total_chunks), "HEADER"]]
+                + [[str(i), chunk, "", ""] for i, chunk in enumerate(chunks)]
+            )
+
+            # 5. append_bulk_b64로 한 번에 전송 (기존 GAS 액션 재사용)
+            rows_json = json.dumps(all_rows, ensure_ascii=True)
+            b64_payload = base64.b64encode(rows_json.encode("utf-8")).decode("utf-8")
+
+            headers = {"Connection": "close", "User-Agent": "AI-Assortment-Agent"}
+            for attempt in range(1, 4):
+                try:
+                    resp = requests.post(
+                        self.gas_url,
+                        data={
+                            "action": "append_bulk_b64",
+                            "sheetName": "Scored_Cache",
+                            "brand_name": "cache",
+                            "payload_b64": b64_payload,
+                        },
+                        headers=headers,
+                        timeout=(10, 300),
+                        allow_redirects=True,
+                        verify=False,
+                    )
+                    if self._parse_response(resp) is not None:
+                        logger.info(f"[ScoredCache] 저장 완료: {timestamp}")
+                        return True
+                except Exception as e:
+                    logger.error(f"[ScoredCache] 저장 시도 {attempt}/3 실패: {e}")
+                if attempt < 3:
+                    _time.sleep(2)
+
+            logger.error("[ScoredCache] 저장 최종 실패")
+            return False
+
+        except Exception as e:
+            logger.error(f"[ScoredCache] 저장 전처리 실패: {e}")
+            return False
+
+    def read_scored_cache(self):
+        """Scored_Cache 탭에서 gzip 복원 후 JSON 문자열 반환 → (timestamp, json_str) or (None, None)"""
+        import gzip as _gz
+
+        res = self._get({"action": "read_raw", "sheetName": "Scored_Cache"}, timeout=60)
+        if not res or not isinstance(res, list) or len(res) < 2:
+            return None, None
+
+        try:
+            header = res[0]
+            if len(header) < 4 or str(header[3]).strip() != "HEADER":
+                logger.warning("[ScoredCache] 헤더 형식 불일치 — 캐시 없음으로 처리")
+                return None, None
+
+            timestamp = str(header[0])
+            total_chunks = int(float(str(header[2])))
+
+            chunks = {}
+            for row in res[1:]:
+                if len(row) >= 2 and row[1]:
+                    try:
+                        chunks[int(float(str(row[0])))] = str(row[1])
+                    except (ValueError, TypeError):
+                        continue
+
+            if len(chunks) != total_chunks:
+                logger.warning(f"[ScoredCache] 청크 불일치: 보유 {len(chunks)}/{total_chunks}")
+                return None, None
+
+            b64_full = "".join(chunks[i] for i in range(total_chunks))
+            json_str = _gz.decompress(base64.b64decode(b64_full)).decode("utf-8")
+            logger.info(f"[ScoredCache] 로드 완료: ts={timestamp}, {len(json_str) // 1024}KB")
+            return timestamp, json_str
+
+        except Exception as e:
+            logger.error(f"[ScoredCache] 로드 실패: {e}")
+            return None, None
+
+    # ─────────────────────────────────────────────────────────────────────────
+
     def load_office_master(self) -> pd.DataFrame:
         """구글 시트의 'officemaster' 탭 데이터 로드"""
         params = {"action": "read_all", "sheetName": "officemaster"}
@@ -284,7 +395,7 @@ class GSheetManager:
         base_dir = os.path.dirname(os.path.dirname(__file__))
         raw_path = os.path.join(base_dir, "data", "storemaster_raw.txt")
         if not os.path.exists(raw_path):
-            logger.warning("[GSheet] storemaster_raw.txt 없음 — 빈 DataFrame 반환")
+            logger.warning("[GSheet] data/storemaster_raw.txt 없음 — 빈 DataFrame 반환")
             return pd.DataFrame()
         for enc in ('utf-8', 'cp949', 'utf-8-sig', 'euc-kr', 'utf-16'):
             try:
