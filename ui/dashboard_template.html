@@ -4082,7 +4082,11 @@
                         // 요청한 timestamp와 일치하는지 확인 (다른 요청 방지)
                         if (parsed.ts === reqBody.ts) {
                             localStorage.removeItem("AI_DIAGNOSE_RES");
-                            resolve(parsed.result);
+                            if (parsed.error) {
+                                reject(new Error(parsed.error));
+                            } else {
+                                resolve(parsed.result);
+                            }
                         } else {
                             window.addEventListener("storage", handler); // 계속 대기
                         }

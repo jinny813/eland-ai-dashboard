@@ -18,7 +18,16 @@ class AIAgent:
             api_key = os.environ.get("GEMINI_API_KEY", "")
             
         if not api_key:
-            # 2. .env 파일 직접 파싱 폴백
+            # 2. st.secrets 조회 (Streamlit Cloud 대응)
+            try:
+                import streamlit as st
+                if "GEMINI_API_KEY" in st.secrets:
+                    api_key = st.secrets["GEMINI_API_KEY"]
+            except Exception:
+                pass
+                
+        if not api_key:
+            # 3. .env 파일 직접 파싱 폴백
             try:
                 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
                 if os.path.exists(env_path):

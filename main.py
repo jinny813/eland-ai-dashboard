@@ -675,6 +675,10 @@ def main():
                                         st.rerun()
                             except Exception as e:
                                 st.error(f"AI 진단 중 오류: {e}")
+                                # 프론트엔드의 30초 무한 대기(Timeout) 방지를 위해 에러 메시지도 브릿지로 반환
+                                err_payload = {"ts": req["ts"], "error": str(e)}
+                                st.session_state.ai_report_json = json.dumps(err_payload, ensure_ascii=False)
+                                st.rerun()
 
                         st.components.v1.html(final_html, height=3500, scrolling=True)
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
