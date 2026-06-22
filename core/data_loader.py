@@ -227,7 +227,10 @@ def preprocess_raw_records(
             # 브랜드/지점명 정형화 헬퍼
             def clean_brand_local(name: str) -> str:
                 if not name: return ""
-                return str(name).split('(')[0].strip()
+                res = str(name).split('(')[0].strip()
+                if res in ["기비/키이스", "키비/키이스"]:
+                    return "기비키이스"
+                return res
                 
             def clean_store_local(name: str) -> str:
                 if not name: return ""
