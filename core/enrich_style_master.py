@@ -81,7 +81,8 @@ def search_naver_shopping(query, brand=""):
                         norm_query = re.sub(r'[^a-zA-Z0-9]', '', query).upper()
                         norm_title = re.sub(r'[^a-zA-Z0-9]', '', title).upper()
                         
-                        if not norm_query or norm_query in norm_title or (len(norm_query) >= 6 and norm_query[:6] in norm_title):
+                        # [v3.0] 완벽하게 일치하는 품번만 수집하도록 엄격한 검증 (부분 일치로 인한 오작동 방지)
+                        if not norm_query or norm_query in norm_title:
                             category = item.get('category3', item.get('category2', item.get('category1', '')))
                             return {"title": title, "category": category}
                     return None
@@ -101,18 +102,13 @@ def main():
     cur = conn.cursor()
     
     # Drop existing products table and create new one with correct schema
-    cur.execute("DROP TABLE IF EXISTS products_best;")
+    cur.execute("DROP TABLE IF EXISTS products;")
     cur.execute('''
-        CREATE TABLE products_best (
-            item_code TEXT PRIMARY KEY,
+        CREATE TABLE products (
+            style_code TEXT PRIMARY KEY,
             product_name TEXT,
-            category TEXT,
-            fit TEXT,
-            material TEXT,
-            detail TEXT,
-            color TEXT,
-            is_best INTEGER,
-            old_name TEXT
+            brand TEXT,
+            updated_at DATETIME
         )
     ''')
     
@@ -135,27 +131,26 @@ def main():
         
         if api_data:
             product_name = api_data['title']
-            category = api_data['category'] if api_data['category'] else category
         else:
-            product_name = old_name
+            # 검색 실패 시, 이전 이름에 품번이 제대로 포함되어 있는지 검증
+            norm_item_code = re.sub(r'[^a-zA-Z0-9]', '', item_code).upper()
+            norm_old_name = re.sub(r'[^a-zA-Z0-9]', '', old_name).upper()
+            if norm_item_code in norm_old_name:
+                product_name = old_name
+            else:
+                product_name = item_code  # 오매칭된 이름 대신 깔끔하게 품번만 표기
             
         # 2. 스펙 추출
         specs = extract_specs(product_name)
         
-        # 3. DB 삽입
+        # 3. DB 삽입 (dashboard에서 참조하는 products 테이블 형식)
         cur.execute('''
-            INSERT INTO products_best (item_code, product_name, category, fit, material, detail, color, is_best, old_name)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO products (style_code, product_name, brand, updated_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         ''', (
             item_code,
             product_name,
-            category,
-            specs['fit'],
-            specs['material'],
-            specs['detail'],
-            specs['color'],
-            1, # is_best
-            old_name
+            brand
         ))
         
         migrated_count += 1

@@ -172,16 +172,18 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
                 if brand_name and not _is_brand_match(brand_name, t, brand_context):
                     continue
                     
-                if not best_title: best_title = t
-                if _is_valid_title(t, keywords):
-                    title = t
-                    break
+                norm_query = clean_style_code.upper()
+                norm_title = re.sub(r'[^a-zA-Z0-9]', '', t).upper()
+                
+                # [v3.0] 부분 일치(6글자 이상) 조건 제거하고, 오직 완벽하게 품번이 포함된 상품명만 수집
+                if not norm_query or norm_query in norm_title:
+                    if not best_title: best_title = t
+                    if _is_valid_title(t, keywords):
+                        title = t
+                        break
 
             if not title and best_title:
                 title = best_title
-
-            if not title and not brand_name and items:
-                title = re.sub(r'<[^>]*>', '', items[0].get('title', '')).strip()
 
 
     # 2. API 결과가 없거나 실패 시 웹 스크래핑 폴백 시도
