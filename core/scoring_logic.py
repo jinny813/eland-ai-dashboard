@@ -485,18 +485,12 @@ class AssortmentScorer:
             if not best_candidates.empty:
                 best_styles = best_candidates.groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
         
-        if not best_styles:
-            # [v4.2] 스타일별 판매 데이터 부재 시 전체 매출 실적을 기반으로 보정 점수 부여 (0점 방지)
-            brand_sales = df['brand_month_sales'].iloc[0] if 'brand_month_sales' in df.columns else 0.0
-            if brand_sales > 0:
-                overall_perf = (brand_sales / target_total) if target_total > 0 else 0
-                best_score = min(40.0, overall_perf * 100)  # [v4.3] 데이터 부족 시 보정 점수 대폭 축소 (0점 방지용 최소치)
-            else:
-                best_score = 0.0
-        else:
+        act_best = 0.0
+        if best_styles:
             act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
-            tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
-            best_score = (min(act_best, tgt_best) / tgt_best * 100.0) if tgt_best > 0 else 0.0
+            
+        tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
+        best_score = (min(act_best, tgt_best) / tgt_best * 100.0) if tgt_best > 0 else 0.0
 
         # 아이템 지표 내 명시적 구간별 가중 평균
         item_w = self._get_dynamic_item_weights(df)
