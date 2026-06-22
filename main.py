@@ -24,7 +24,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.24"
+REPORT_VERSION = "v17.25"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -188,7 +188,7 @@ def _cached_get_available_months(_mgr, max_no: int):
 
 import os as _c_os
 _PKL_PATH = _c_os.path.join(
-    _c_os.path.dirname(_c_os.path.abspath(__file__)), "scratch", "final_db_cache.pkl"
+    _c_os.path.dirname(_c_os.path.abspath(__file__)), "scratch", f"final_db_cache_{REPORT_VERSION}.pkl"
 )
 
 
@@ -250,7 +250,7 @@ def cached_load_all_dashboard_data(mgr, available_months):
     import pickle
     import gc
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    pkl_cache_path = os.path.join(base_dir, "scratch", "final_db_cache.pkl")
+    pkl_cache_path = os.path.join(base_dir, "scratch", f"final_db_cache_{REPORT_VERSION}.pkl")
     
     if os.path.exists(pkl_cache_path):
         try:

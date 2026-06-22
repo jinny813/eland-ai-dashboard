@@ -194,8 +194,12 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
         # DB에 캐시
         try:
             conn = sqlite3.connect(_DB_PATH)
+            # [v202.2] 별도 테이블(crawled_product_names)을 사용하여 기존 products 마스터 데이터가 덮어씌워지는 것을 방지
             conn.execute(
-                "INSERT OR REPLACE INTO products (style_code, product_name, brand, updated_at) "
+                "CREATE TABLE IF NOT EXISTS crawled_product_names (style_code TEXT PRIMARY KEY, product_name TEXT, brand TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            )
+            conn.execute(
+                "INSERT OR REPLACE INTO crawled_product_names (style_code, product_name, brand, updated_at) "
                 "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
                 (style_code, title, brand_name)
             )
@@ -262,7 +266,12 @@ def _safe_float(v) -> float:
 def _get_stock_ref_gen(df, outlet):
     """중복 제거된 고유 재고 레퍼런스 추출"""
     if df.empty: return df
+    has_valid_uid = False
     if 'inv_uid' in df.columns and df['inv_uid'].notna().any():
+        if not (df['inv_uid'].astype(str).str.strip().eq('') | df['inv_uid'].astype(str).str.strip().eq('nan')).all():
+            has_valid_uid = True
+            
+    if has_valid_uid:
         return df.drop_duplicates('inv_uid')
     if outlet: return df
     d_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
@@ -566,7 +575,14 @@ def _get_product_info(style_codes: list) -> dict:
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
-        query = f"SELECT * FROM products WHERE style_code IN ('{codes_str}')"
+        # [v202.3] crawled_product_names 테이블의 값이 있으면 우선적으로 사용하도록 JOIN 처리
+        query = f"""
+            SELECT p.style_code, p.category, p.keywords, p.normal_price,
+                   COALESCE(c.product_name, p.product_name) as product_name
+            FROM products p
+            LEFT JOIN crawled_product_names c ON p.style_code = c.style_code
+            WHERE p.style_code IN ('{codes_str}')
+        """
         df_p = pd.read_sql(query, conn)
         conn.close()
         
