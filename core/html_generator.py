@@ -647,14 +647,10 @@ def _build_best_items(df) -> dict:
             else:
                 raw_item_name = ic
 
-        # ── 5) style_name: 네이버 쇼핑 검색 (품번 + 아이템코드 검증 로직 적용)
-        if raw_style_name in _EMPTY_VALS and brand_name:
-            ic = str(row.get('item_code', '') or '').strip()
-            if not ic or ic in _EMPTY_VALS:
-                ic = s
-            found = _naver_search_style_name(brand_name, s, item_code=ic)
-            if found:
-                raw_style_name = found
+        # ── 5) style_name: DB에 없으면 그냥 엑셀 원본 사용 (실시간 네이버 검색 제거하여 속도 10배 향상)
+        # (별도의 배치 스크립트인 enrich_style_master.py를 통해 백그라운드에서만 DB에 채워 넣음)
+        if raw_style_name in _EMPTY_VALS:
+            pass # 원본 엑셀에라도 이름이 있으면 _clean_ugly_raw_name을 통과한 값이 유지됨
 
         # [v131.0] 단가 보완 로직 강화:
         # 1. DB 마스터 정보(p_map)에 유효 단가가 있는지 우선 확인
