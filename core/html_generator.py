@@ -63,13 +63,10 @@ def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool
     target_brand = target_brand.strip()
     if not target_brand: return True
     
-    def check_text(text):
-        if not text: return False
-        if target_brand == '발렌시아':
-            return '발렌시아' in text.replace('발렌시아가', '')
-        return target_brand in text
-        
-    return check_text(title) or check_text(item_brand)
+    if target_brand == '발렌시아':
+        return '발렌시아' in title.replace('발렌시아가', '')
+    
+    return target_brand in title
 
 
 

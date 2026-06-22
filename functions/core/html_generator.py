@@ -96,15 +96,14 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
         
     # 1. API 키가 있으면 OpenAPI 우선 시도
     if client_id and client_secret:
-        def check_brand(tb, txt, bnd=''):
-            tb = tb.strip()
-            if not tb: return True
-            def _chk(s):
-                if not s: return False
-                if tb == '발렌시아':
-                    return '발렌시아' in s.replace('발렌시아가', '')
-                return tb in s
-            return _chk(txt) or _chk(bnd)
+        def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool:
+            target_brand = target_brand.strip()
+            if not target_brand: return True
+            
+            if target_brand == '발렌시아':
+                return '발렌시아' in title.replace('발렌시아가', '')
+            
+            return target_brand in title
 
         try:
             enc = urllib.parse.quote(query)
@@ -119,7 +118,7 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
                 for item in items:
                     t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
                     mall = item.get('brand', '') + ' ' + item.get('mallName', '')
-                    if check_brand(brand_name, t, mall):
+                    if _is_brand_match(brand_name, t, mall):
                         title = t
                         break
         except Exception:
