@@ -35,7 +35,18 @@
                         }, "*");
                     }
                 } catch(e) {}
+                
+                try {
+                    localStorage.setItem("AI_DIAGNOSE_RES", args.ai_report_json);
+                } catch(e) {}
             }
+        }
+    });
+    
+    // JS -> Python (LocalStorage Event from sibling iframe)
+    window.addEventListener("storage", function(e) {
+        if (e.key === "AI_DIAGNOSE_REQ" && e.newValue) {
+            setComponentValue(e.newValue);
         }
     });
 

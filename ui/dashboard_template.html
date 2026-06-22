@@ -4077,31 +4077,46 @@
                 }, "*");
             }
         } catch(e) {}
+        
+        // [Fallback] iframe 샌드박스로 인해 postMessage가 막힐 경우 LocalStorage 우회
+        try {
+            localStorage.setItem("AI_DIAGNOSE_REQ", JSON.stringify(reqBody));
+        } catch(e) {}
 
         // 결과 대기 폴링 (브로드캐스트 메시지 수신 감지)
         const waitForResult = () => new Promise((resolve, reject) => {
             const handler = (e) => {
                 if (e.data && e.data.type === "AI_DIAGNOSE_RES" && e.data.payload) {
-                    window.removeEventListener("message", handler);
-                    try {
-                        const parsed = JSON.parse(e.data.payload);
-                        // 요청한 timestamp와 일치하는지 확인 (다른 요청 방지)
-                        if (parsed.ts === reqBody.ts) {
-                            if (parsed.error) {
-                                reject(new Error(parsed.error));
-                            } else {
-                                resolve(parsed.result);
-                            }
-                        } else {
-                            window.addEventListener("message", handler); // 계속 대기
-                        }
-                    } catch (err) { reject(err); }
+                    processPayload(e.data.payload);
                 }
             };
+            const storageHandler = (e) => {
+                if (e.key === "AI_DIAGNOSE_RES" && e.newValue) {
+                    processPayload(e.newValue);
+                }
+            };
+            
+            const processPayload = (payloadStr) => {
+                window.removeEventListener("message", handler);
+                window.removeEventListener("storage", storageHandler);
+                try {
+                    const parsed = JSON.parse(payloadStr);
+                    if (parsed.ts === reqBody.ts) {
+                        if (parsed.error) reject(new Error(parsed.error));
+                        else resolve(parsed.result);
+                    } else {
+                        window.addEventListener("message", handler);
+                        window.addEventListener("storage", storageHandler);
+                    }
+                } catch (err) { reject(err); }
+            };
+            
             window.addEventListener("message", handler);
+            window.addEventListener("storage", storageHandler);
             // 45초 타임아웃 (백엔드 API 및 Streamlit 재렌더링 대기 시간 감안)
             setTimeout(() => {
                 window.removeEventListener("message", handler);
+                window.removeEventListener("storage", storageHandler);
                 reject(new Error("AI 진단 시간이 초과되었습니다. (API 키 확인 필요)"));
             }, 45000);
         });
