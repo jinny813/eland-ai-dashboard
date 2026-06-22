@@ -69,7 +69,7 @@ class ActionAnalyzer:
                 if name: return name
             return str(row.get('style_name', row.get('product_name', row.get('item_name', sc))))
 
-        # 1. 자사 판매 BEST 10 추출 및 재고량별 액션 가이드 분류
+        # 1. 본 매장(자사) 판매 BEST 10 추출 (재고 확보 필요 상품)
         agg_dict = {
             'sales_qty': 'sum', 'stock_qty': 'sum', 'stock_amt': 'sum', 'normal_price': 'first'
         }
@@ -83,10 +83,9 @@ class ActionAnalyzer:
         push_list = []
 
         for sc, row in my_best.iterrows():
-            name = get_name(sc, row)
             stock_qty = int(row['stock_qty'])
-            
             if stock_qty <= 5:
+                name = get_name(sc, row)
                 # 5개 이하: 확보 필요
                 secure_list.append({
                     "rank": len(secure_list) + 1,
@@ -99,17 +98,26 @@ class ActionAnalyzer:
                     "keywords": ["재고부족", "인기상품", "추가입고"],
                     "sub_info": f"현재고 {stock_qty}EA / 2주 판매 {int(row['sales_qty'])}EA"
                 })
-            else:
-                # 5개 초과: 집중 판매 필요
-                push_list.append({
-                    "rank": len(push_list) + 1,
-                    "style_code": sc,
-                    "style_name": name,
-                    "sales_qty": int(row['sales_qty']),
-                    "stock_qty": stock_qty,
-                    "tag": "집중 판매 필요",
-                    "reason": f"<span style='color:#F97316; font-weight:800;'>집중 판매 필요 (재고 {stock_qty}개)</span>"
-                })
+
+        # 2. NC 전체 판매 BEST 10 추출 (집중 판매 필요 상품)
+        if bp_brand_df is not None and not bp_brand_df.empty:
+            nc_best = bp_brand_df.groupby('style_code').agg(agg_dict).sort_values('sales_qty', ascending=False).head(10)
+            for sc, row in nc_best.iterrows():
+                # 본 매장의 해당 품번 재고 조회
+                my_stock_series = b_df[b_df['style_code'] == sc]['stock_qty']
+                my_stock = int(my_stock_series.sum()) if not my_stock_series.empty else 0
+                
+                if my_stock > 5:
+                    name = get_name(sc, row)
+                    push_list.append({
+                        "rank": len(push_list) + 1,
+                        "style_code": sc,
+                        "style_name": name,
+                        "sales_qty": int(row['sales_qty']),
+                        "stock_qty": my_stock,
+                        "tag": "집중 판매 필요",
+                        "reason": f"<span style='color:#F97316; font-weight:800;'>집중 판매 필요 (재고 {my_stock}개)</span>"
+                    })
 
         return {
             "ai_unified": secure_list,

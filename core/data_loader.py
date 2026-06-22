@@ -838,18 +838,9 @@ def load_dashboard_data(
                 bp_detail[store][b_name][display_key] = _build_bp_detail(cfg, bp_df if not bp_df.empty else None)
                 best_items[store][b_name][display_key] = _build_best_items(b_df)
 
-                # [액션가이드] 벤치마크 매장: 재고 확보 필요(ai_unified)는 동일 로직, 집중판매(push)는 비움
-                # 관리 매장(신구로/부천): 재고 확보 + 벤치마크 1등 매장 기반 집중판매 모두 적용
-                if store not in _MANAGED_STORES:
-                    action_plan[store][b_name][display_key] = _build_action_plan(b_df, None)
-                else:
-                    bp_brand_df = bp_df[bp_df['brand_name'] == b_name].copy() if not bp_df.empty else pd.DataFrame()
-                    if bp_brand_df.empty:
-                        _top_benchmark = brand_top_benchmark.get(b_name)
-                        if _top_benchmark:
-                            bp_brand_df = df[(df['store_name'] == _top_benchmark) & (df['brand_name'] == b_name)].copy()
-                            bp_brand_df.attrs['top_store_name'] = _top_benchmark
-                    action_plan[store][b_name][display_key] = _build_action_plan(b_df, bp_brand_df)
+                # [액션가이드] 왼쪽(재고확보): 본 매장, 오른쪽(집중판매): NC전체 매장 기준
+                nc_brand_df = df[df['brand_name'] == b_name].copy()
+                action_plan[store][b_name][display_key] = _build_action_plan(b_df, nc_brand_df)
 
         # [v4.1] 할인율점수 0 브랜드: 카테고리 요약 점수 재계산에서 제외
         # [v4.2] '전체' 점수: 카테고리별 점수를 카테고리 매출 비중으로 가중평균 (2단계 집계)
