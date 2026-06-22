@@ -4099,11 +4099,11 @@
                 }
             };
             window.addEventListener("message", handler);
-            // 30초 타임아웃
+            // 45초 타임아웃 (백엔드 API 및 Streamlit 재렌더링 대기 시간 감안)
             setTimeout(() => {
                 window.removeEventListener("message", handler);
                 reject(new Error("AI 진단 시간이 초과되었습니다. (API 키 확인 필요)"));
-            }, 30000);
+            }, 45000);
         });
 
         const res = await waitForResult();

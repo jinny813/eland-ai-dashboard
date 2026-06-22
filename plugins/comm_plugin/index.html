@@ -24,13 +24,16 @@
     window.addEventListener("message", function(event) {
         if (event.data.type === "streamlit:render") {
             const args = event.data.args;
-            if (args.ai_report_json && dashboardWindow) {
-                // 파이썬 연산 결과를 받으면, 요청을 보냈던 대시보드 창(IFrame)으로 직접 응답 전송!
+            if (args.ai_report_json) {
+                // 파이썬 연산 결과를 받으면, 부모 창의 모든 자식 IFrame(대시보드 포함)으로 브로드캐스트 전송
+                // (Streamlit 렌더링 시 dashboardWindow 참조가 날아가는 현상 방지)
                 try {
-                    dashboardWindow.postMessage({
-                        type: "AI_DIAGNOSE_RES",
-                        payload: args.ai_report_json
-                    }, "*");
+                    for (let i = 0; i < window.parent.frames.length; i++) {
+                        window.parent.frames[i].postMessage({
+                            type: "AI_DIAGNOSE_RES",
+                            payload: args.ai_report_json
+                        }, "*");
+                    }
                 } catch(e) {}
             }
         }
