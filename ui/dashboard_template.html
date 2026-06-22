@@ -2905,13 +2905,7 @@
       const _wSea   = _sw.sea   || 15;
       const _wBest  = _sw.best  || 35;
 
-      // 총점수 및 등급 업데이트 (v105.5: 무조건 흰색 / v17.12: 4카드 합산 = 배너 총점)
-      const scoreVal = Math.round((b.dis||0)*_wDis/100) + Math.round((b.fresh||0)*_wFresh/100) + Math.round((b.season||0)*_wSea/100) + Math.round((b.best||0)*_wBest/100);
-      
-      const scoreElem = document.getElementById('h-score');
-      scoreElem.textContent = scoreVal;
-      scoreElem.style.color = '#FFFFFF';
-      scoreElem.nextElementSibling.style.color = '#FFFFFF'; 
+      // 총점수 DOM 업데이트는 d(detail) 로드 후 _bestActualPct 확정되면 실행
 
       // [v100.7] 네비게이터 드롭다운 동기화
       const sSel = document.getElementById('p2_store_sel');
@@ -2958,6 +2952,17 @@
       const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {
         item: { segs: [] }, dis: { segs: [] }, fresh: { segs: [] }, best: { segs: [] }, season: { segs: [] }
       };
+
+      // BEST 점수는 달성률(best_pct) 기반 — 보유재고 / 목표재고 비율로 산출
+      const _bestSegs = (d.best && d.best.segs) ? d.best.segs : [];
+      const _bestActualPct = _bestSegs.length > 0 ? Math.min(100, _bestSegs[0].pct || 0) : (b.best || 0);
+
+      // 총점수 및 등급 업데이트 (v17.12: 4카드 합산 = 배너 총점)
+      const scoreVal = Math.round((b.dis||0)*_wDis/100) + Math.round((b.fresh||0)*_wFresh/100) + Math.round((b.season||0)*_wSea/100) + Math.round(_bestActualPct*_wBest/100);
+      const scoreElem = document.getElementById('h-score');
+      scoreElem.textContent = scoreVal;
+      scoreElem.style.color = '#FFFFFF';
+      scoreElem.nextElementSibling.style.color = '#FFFFFF';
 
       const area = b.area || 0;
       const salesAmt = b.sales_amt || 0;
@@ -3068,7 +3073,7 @@
         { id: 'dis',    l: '할인율 점수', s: Math.round(b.dis    || 0), maxPt: 100, c: 'm-dis',    estimated: !!b.dis_estimated },
         { id: 'fresh',  l: '신선도 점수', s: Math.round(b.fresh  || 0), maxPt: 100, c: 'm-fresh',  estimated: false },
         { id: 'season', l: '시즌 점수',   s: Math.round(b.season || 0), maxPt: 100, c: 'm-season', estimated: false },
-        { id: 'best',   l: 'BEST 점수',   s: Math.round(b.best   || 0), maxPt: 100, c: 'm-best',   estimated: false }
+        { id: 'best',   l: 'BEST 점수',   s: Math.round(_bestActualPct), maxPt: 100, c: 'm-best',   estimated: false }
       ];
 
       function getRateColor(r) {

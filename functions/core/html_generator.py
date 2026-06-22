@@ -133,8 +133,12 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
         try:
             conn = sqlite3.connect(_DB_PATH)
             conn.execute(
-                "INSERT OR REPLACE INTO products (style_code, product_name, brand, updated_at) "
-                "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                """INSERT INTO products (style_code, product_name, brand, updated_at) 
+                   VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                   ON CONFLICT(style_code) DO UPDATE SET 
+                       product_name=excluded.product_name, 
+                       brand=excluded.brand, 
+                       updated_at=CURRENT_TIMESTAMP""",
                 (style_code, title, brand_name)
             )
             conn.commit()

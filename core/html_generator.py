@@ -79,6 +79,7 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
     query = f"{brand_name}{clean_style_code}".strip()
     if not query:
         return ''
+    norm_code = re.sub(r'[^a-zA-Z0-9]', '', clean_style_code).upper()
     best_cleaned = None
     try:
         enc = urllib.parse.quote(query)
@@ -89,17 +90,11 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
             'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
             'Referer': 'https://search.naver.com/'
         }
-        
-        def check_brand(tb, txt):
-            tb = tb.strip()
-            if not tb: return True
-            if tb == '발렌시아': return '발렌시아' in txt.replace('발렌시아가', '')
-            return tb in txt
 
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=5) as resp:
             html = resp.read().decode('utf-8', errors='ignore')
-            
+
         matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
         if matches:
             for raw_title in matches:
@@ -112,9 +107,12 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
                         decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
                         decoded = decoded.replace('\\/', '/')
                     except Exception: decoded = raw_title
-                
+
                 cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
                 if brand_name and not _is_brand_match(brand_name, cleaned):
+                    continue
+                # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
+                if norm_code and norm_code not in re.sub(r'[^a-zA-Z0-9]', '', cleaned).upper():
                     continue
                 if not best_cleaned: best_cleaned = cleaned
                 if _is_valid_title(cleaned, keywords):
@@ -175,8 +173,8 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
                 norm_query = clean_style_code.upper()
                 norm_title = re.sub(r'[^a-zA-Z0-9]', '', t).upper()
                 
-                # [v3.0] 부분 일치(6글자 이상) 조건 제거하고, 오직 완벽하게 품번이 포함된 상품명만 수집
-                if not norm_query or norm_query in norm_title:
+                # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
+                if norm_query and norm_query in norm_title:
                     if not best_title: best_title = t
                     if _is_valid_title(t, keywords):
                         title = t
@@ -194,13 +192,13 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
         # DB에 캐시
         try:
             conn = sqlite3.connect(_DB_PATH)
-            # [v202.2] 별도 테이블(crawled_product_names)을 사용하여 기존 products 마스터 데이터가 덮어씌워지는 것을 방지
             conn.execute(
-                "CREATE TABLE IF NOT EXISTS crawled_product_names (style_code TEXT PRIMARY KEY, product_name TEXT, brand TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
-            )
-            conn.execute(
-                "INSERT OR REPLACE INTO crawled_product_names (style_code, product_name, brand, updated_at) "
-                "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                """INSERT INTO products (style_code, product_name, brand, updated_at) 
+                   VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                   ON CONFLICT(style_code) DO UPDATE SET 
+                       product_name=excluded.product_name, 
+                       brand=excluded.brand, 
+                       updated_at=CURRENT_TIMESTAMP""",
                 (style_code, title, brand_name)
             )
             conn.commit()
@@ -575,14 +573,7 @@ def _get_product_info(style_codes: list) -> dict:
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
-        # [v202.3] crawled_product_names 테이블의 값이 있으면 우선적으로 사용하도록 JOIN 처리
-        query = f"""
-            SELECT p.style_code, p.category, p.keywords, p.normal_price,
-                   COALESCE(c.product_name, p.product_name) as product_name
-            FROM products p
-            LEFT JOIN crawled_product_names c ON p.style_code = c.style_code
-            WHERE p.style_code IN ('{codes_str}')
-        """
+        query = f"SELECT * FROM products WHERE style_code IN ('{codes_str}')"
         df_p = pd.read_sql(query, conn)
         conn.close()
         
@@ -645,14 +636,30 @@ def _build_best_items(df) -> dict:
                     raw_style_name = sn
                     break
 
-        # ── 3) DB 마스터 override
+        # ── 2.5) 원본 style_name 품번 검증: 다른 품번 코드가 섞여 있으면 잘못된 데이터
+        # 예) "s262msa1270_DG 모다아울렛 대구점" → 품번 S262M8A142 와 불일치 → 재검색
+        if raw_style_name not in _EMPTY_VALS:
+            _norm_s = re.sub(r'[^a-zA-Z0-9]', '', s).upper()
+            _code_tokens = re.findall(r'[a-zA-Z0-9]{6,}', raw_style_name)
+            _has_mismatch = _norm_s and any(
+                t.upper() not in _norm_s and _norm_s not in t.upper()
+                for t in _code_tokens
+            )
+            if _has_mismatch:
+                raw_style_name = ''  # step 5 네이버 재검색 대상
+
+        # ── 3) DB 마스터 override (품번이 상품명에 포함된 경우만 신뢰)
         if s in p_map:
             db_item = p_map[s].get('item_name') or ''
             db_style = p_map[s].get('style_name') or ''
             if db_item and db_item not in _EMPTY_VALS:
                 raw_item_name = db_item
             if db_style and db_style not in _EMPTY_VALS:
-                raw_style_name = db_style
+                norm_s = re.sub(r'[^a-zA-Z0-9]', '', s).upper()
+                norm_db = re.sub(r'[^a-zA-Z0-9]', '', db_style).upper()
+                if not norm_s or norm_s in norm_db:
+                    raw_style_name = db_style
+                # else: DB 이름에 품번이 없으므로 잘못된 데이터 → 무시하고 재검색
 
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:
@@ -665,10 +672,12 @@ def _build_best_items(df) -> dict:
             else:
                 raw_item_name = ic
 
-        # ── 5) style_name: DB에 없으면 그냥 엑셀 원본 사용 (실시간 네이버 검색 제거하여 속도 10배 향상)
-        # (별도의 배치 스크립트인 enrich_style_master.py를 통해 백그라운드에서만 DB에 채워 넣음)
+        # ── 5) style_name: DB에 유효값 없으면 네이버에서 품번 정확 매칭으로 검색
         if raw_style_name in _EMPTY_VALS:
-            pass # 원본 엑셀에라도 이름이 있으면 _clean_ugly_raw_name을 통과한 값이 유지됨
+            ic = str(row.get('item_code', '') or '').strip()
+            searched = _naver_search_style_name(brand_name, s, ic if ic not in _EMPTY_VALS else None)
+            if searched:
+                raw_style_name = searched
 
         # [v131.0] 단가 보완 로직 강화:
         # 1. DB 마스터 정보(p_map)에 유효 단가가 있는지 우선 확인

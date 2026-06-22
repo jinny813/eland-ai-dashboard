@@ -101,16 +101,9 @@ def main():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     
-    # Drop existing products table and create new one with correct schema
-    cur.execute("DROP TABLE IF EXISTS products;")
-    cur.execute('''
-        CREATE TABLE products (
-            style_code TEXT PRIMARY KEY,
-            product_name TEXT,
-            brand TEXT,
-            updated_at DATETIME
-        )
-    ''')
+    # [v202.4] 단일 products 테이블 구조 유지: 기존 마스터 데이터 보호를 위해 UPSERT 패턴 사용
+    # 테이블 생성 및 초기화 로직은 다른 DB 마이그레이션 모듈에 위임하거나, 
+    # 기본 스키마가 존재한다고 가정하여 생략합니다.
     
     migrated_count = 0
     samples = []
@@ -143,10 +136,14 @@ def main():
         # 2. 스펙 추출
         specs = extract_specs(product_name)
         
-        # 3. DB 삽입 (dashboard에서 참조하는 products 테이블 형식)
+        # 3. DB 삽입 (안정적인 1개 테이블 구조, UPSERT 패턴)
         cur.execute('''
             INSERT INTO products (style_code, product_name, brand, updated_at)
             VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(style_code) DO UPDATE SET 
+                product_name=excluded.product_name,
+                brand=excluded.brand,
+                updated_at=CURRENT_TIMESTAMP
         ''', (
             item_code,
             product_name,
