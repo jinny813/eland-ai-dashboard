@@ -64,15 +64,27 @@ def search_naver_shopping(query, brand=""):
                         title = re.sub(r'<[^>]*>', '', item['title'])
                         
                         if check_brand(brand, title):
-                            category = item.get('category3', item.get('category2', item.get('category1', '')))
-                            return {"title": title, "category": category}
-                    # If brand is provided but none match, return None to prevent wrong brand association
+                            # [v202.1] 품번(Style Code) 일치 검증 로직 추가
+                            # Naver 쇼핑에서 다른 품번(유사 상품)을 반환하는 오염(Hallucination) 방지
+                            norm_query = re.sub(r'[^a-zA-Z0-9]', '', query).upper()
+                            norm_title = re.sub(r'[^a-zA-Z0-9]', '', title).upper()
+                            
+                            # 검색 품번이 제목에 존재하거나, 적어도 앞의 6자리 이상(핵심 식별자)이 일치해야 허용
+                            if not norm_query or norm_query in norm_title or (len(norm_query) >= 6 and norm_query[:6] in norm_title):
+                                category = item.get('category3', item.get('category2', item.get('category1', '')))
+                                return {"title": title, "category": category}
+                    # If brand is provided but none match (or fail validation), return None to prevent wrong brand association
                     return None
                 else:
-                    item = data['items'][0]
-                    title = re.sub(r'<[^>]*>', '', item['title'])
-                    category = item.get('category3', item.get('category2', item.get('category1', '')))
-                    return {"title": title, "category": category}
+                    for item in data['items']:
+                        title = re.sub(r'<[^>]*>', '', item['title'])
+                        norm_query = re.sub(r'[^a-zA-Z0-9]', '', query).upper()
+                        norm_title = re.sub(r'[^a-zA-Z0-9]', '', title).upper()
+                        
+                        if not norm_query or norm_query in norm_title or (len(norm_query) >= 6 and norm_query[:6] in norm_title):
+                            category = item.get('category3', item.get('category2', item.get('category1', '')))
+                            return {"title": title, "category": category}
+                    return None
     except Exception as e:
         print(f"API Error for {query}: {e}")
     return None
