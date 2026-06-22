@@ -18,19 +18,19 @@
         sendMessageToStreamlitClient("setComponentValue", { value: value });
     }
 
+    let dashboardWindow = null;
+
     // Python -> JS (Streamlit Render Event)
     window.addEventListener("message", function(event) {
         if (event.data.type === "streamlit:render") {
             const args = event.data.args;
-            if (args.ai_report_json) {
-                // 파이썬 연산 결과를 받으면, 부모 윈도우의 모든 iframe(형제 컴포넌트)에 브로드캐스트!
+            if (args.ai_report_json && dashboardWindow) {
+                // 파이썬 연산 결과를 받으면, 요청을 보냈던 대시보드 창(IFrame)으로 직접 응답 전송!
                 try {
-                    for (let i = 0; i < window.parent.frames.length; i++) {
-                        window.parent.frames[i].postMessage({
-                            type: "AI_DIAGNOSE_RES",
-                            payload: args.ai_report_json
-                        }, "*");
-                    }
+                    dashboardWindow.postMessage({
+                        type: "AI_DIAGNOSE_RES",
+                        payload: args.ai_report_json
+                    }, "*");
                 } catch(e) {}
             }
         }
@@ -39,6 +39,10 @@
     // JS -> Python (postMessage Event from sibling iframe)
     window.addEventListener("message", function(e) {
         if (e.data && e.data.type === "AI_DIAGNOSE_REQ" && e.data.payload) {
+            // 보낸 쪽의 Window 객체를 저장해둠 (나중에 응답을 보내기 위해)
+            if (e.source) {
+                dashboardWindow = e.source;
+            }
             // 대시보드(IFrame)에서 보낸 요청 페이로드를 파이썬으로 전송!
             setComponentValue(e.data.payload);
         }
