@@ -4068,35 +4068,40 @@
             }
         }
 
-        // LocalStorage 브릿지 패턴을 통해 파이썬으로 진단 요청 전송
-        localStorage.setItem("AI_DIAGNOSE_REQ", JSON.stringify(reqBody));
+        // [v202.2] LocalStorage 브릿지 한계 극복 (Cross-origin 환경 대응 Broadcast)
+        try {
+            for (let i = 0; i < window.parent.frames.length; i++) {
+                window.parent.frames[i].postMessage({
+                    type: "AI_DIAGNOSE_REQ",
+                    payload: JSON.stringify(reqBody)
+                }, "*");
+            }
+        } catch(e) {}
 
-        // 결과 대기 폴링 (혹은 스토리지 이벤트 감지)
-        // [v202.1] Python의 LocalStorage Bridge 통신 대기
+        // 결과 대기 폴링 (브로드캐스트 메시지 수신 감지)
         const waitForResult = () => new Promise((resolve, reject) => {
             const handler = (e) => {
-                if (e.key === "AI_DIAGNOSE_RES" && e.newValue) {
-                    window.removeEventListener("storage", handler);
+                if (e.data && e.data.type === "AI_DIAGNOSE_RES" && e.data.payload) {
+                    window.removeEventListener("message", handler);
                     try {
-                        const parsed = JSON.parse(e.newValue);
+                        const parsed = JSON.parse(e.data.payload);
                         // 요청한 timestamp와 일치하는지 확인 (다른 요청 방지)
                         if (parsed.ts === reqBody.ts) {
-                            localStorage.removeItem("AI_DIAGNOSE_RES");
                             if (parsed.error) {
                                 reject(new Error(parsed.error));
                             } else {
                                 resolve(parsed.result);
                             }
                         } else {
-                            window.addEventListener("storage", handler); // 계속 대기
+                            window.addEventListener("message", handler); // 계속 대기
                         }
                     } catch (err) { reject(err); }
                 }
             };
-            window.addEventListener("storage", handler);
+            window.addEventListener("message", handler);
             // 30초 타임아웃
             setTimeout(() => {
-                window.removeEventListener("storage", handler);
+                window.removeEventListener("message", handler);
                 reject(new Error("AI 진단 시간이 초과되었습니다. (API 키 확인 필요)"));
             }, 30000);
         });
