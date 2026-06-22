@@ -48,14 +48,17 @@ class AIAgent:
             "best": "BEST 10 인기상품 재고"
         }.get(indicator_id, indicator_id)
 
+        past_summary = bp_summary.pop("__past_summary", {}) if bp_summary else {}
+
         # ── 프롬프트 조립 ──
         scores_txt = json.dumps(scores, ensure_ascii=False, indent=2)
         data_summary_txt = json.dumps(data_summary, ensure_ascii=False, indent=2)
         bp_summary_txt = json.dumps(bp_summary, ensure_ascii=False, indent=2) if bp_summary else "{}"
+        past_summary_txt = json.dumps(past_summary, ensure_ascii=False, indent=2) if past_summary else "{}"
 
         prompt = f"""
 너는 패션 의류 매장의 MD Assortment AI 분석가이다.
-아래 매장의 실시간 재고 데이터 및 1등 매장(BP) 데이터를 정밀 분석하여, 현재 이 매장의 '{indicator_name}' 상태를 진단하고 매장 매니저가 즉각 취해야 할 행동 가이드(Action Plan)를 도출해라.
+아래 매장의 실시간 재고 데이터, 지난달 판매추이, 그리고 1등 매장(BP) 데이터를 정밀 분석하여, 현재 이 매장의 '{indicator_name}' 상태를 진단하고 매장 매니저가 즉각 취해야 할 행동 가이드(Action Plan)를 도출해라.
 
 [분석 대상 매장 정보]
 - 브랜드: {brand_name}
@@ -64,17 +67,24 @@ class AIAgent:
 [점수 현황]
 {scores_txt}
 
-[본 지점의 세부 재고 데이터 요약]
+[본 지점의 현재 월 세부 재고/판매 요약]
 {data_summary_txt}
 
-[1등(BP) 지점의 세부 재고 데이터 요약]
+[본 지점의 직전 월(지난달) 세부 재고/판매 요약 - 판매 추이 파악용]
+{past_summary_txt}
+
+[1등(BP) 지점의 세부 재고/판매 요약 - 벤치마킹용]
 {bp_summary_txt}
 
 [행동 가이드 도출 규칙]
-1. 분석 대상 지표인 '{indicator_name}'에만 집중하여 구체적이고 실행 가능한 현장 조치 사항을 최소 3개 이상 제시할 것.
-2. 타 매장(BP)과의 비중 차이나 목표 대비 미달/초과액(백만원) 정보를 데이터 근거로 제시할 것.
-3. 추상적인 문구(예: '노력하십시오') 대신 구체적인 지침(예: '본사에 신상 점퍼 ... 추가 20장 출고 요청', '여름 아우터 진열 비중을 20%에서 35%로 확대', '이월 50% 할인 재고를 매장 전면에서 후면으로 이동 배치')을 포함할 것.
-4. 반드시 한국어로 답변할 것.
+1. 분석 대상 지표인 '{indicator_name}'에 집중하여 구체적이고 실행 가능한 현장 조치 사항을 최소 3개 이상 제시할 것.
+2. 타 매장(BP)과의 비중 차이, 혹은 지난달 대비 이번 달의 판매/재고 증감율을 근거로 활용할 것.
+3. 구체적인 지침의 예시:
+   - 과다 재고인 경우: '~~상품의 재고가 타 매장 대비 과도하므로, 매장 전면 배치 및 가격 인하(할인율 상향) 건의'
+   - 부족 재고인 경우: '지난달 판매 속도(Sell-through)가 빠르나 현재고가 부족하므로 추가 물량 ~~장 확보 요청'
+   - 밀어내기 필요: '재고는 충분하나 판매가 저조하므로 VMD 연출 변경 또는 층장 푸시 집중'
+4. 추상적인 문구(예: '노력하십시오')는 절대 금지.
+5. 반드시 한국어로 답변할 것.
 
 출력은 반드시 다음 JSON 스키마를 따르는 JSON 데이터 형태여야 하며, 추가적인 설명 텍스트나 markdown 코드 블록(```json 등) 없이 순수 JSON만 반환해야 한다:
 {{

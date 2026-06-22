@@ -636,6 +636,46 @@ def main():
                             f'<script>window.__ALL_DATA__ = JSON.parse(document.getElementById("__data").textContent);</script>\n'
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
+                        
+                        # [v202.1] AI 상세 진단 브릿지 연동
+                        import streamlit.components.v1 as components
+                        if "ai_report_json" not in st.session_state:
+                            st.session_state.ai_report_json = None
+                        if "last_ai_req_ts" not in st.session_state:
+                            st.session_state.last_ai_req_ts = None
+                            
+                        # Hidden Communication Bridge
+                        comm_plugin = components.declare_component("comm_plugin", path="plugins/comm_plugin")
+                        ai_req_raw = comm_plugin(key="comm_bridge", ai_report_json=st.session_state.ai_report_json)
+
+                        if ai_req_raw and isinstance(ai_req_raw, str):
+                            try:
+                                import json
+                                from core.ai_agent import AIAgent
+                                req = json.loads(ai_req_raw)
+                                if req.get("ts") and req["ts"] != st.session_state.last_ai_req_ts:
+                                    st.session_state.last_ai_req_ts = req["ts"]
+                                    
+                                    with st.spinner(f"🤖 {req.get('brand_name')} 상세 진단 중..."):
+                                        agent = AIAgent()
+                                        # past_summary가 있는 경우 이를 bp_summary에 포함시키거나 별도로 전달 (ai_agent 수정 필요)
+                                        bp_summary_enhanced = req.get("bp_summary", {})
+                                        bp_summary_enhanced["__past_summary"] = req.get("past_summary", {})
+                                        
+                                        report = agent.generate_report(
+                                            req.get("brand_name", ""),
+                                            req.get("scores", {}),
+                                            req.get("data_summary", {}),
+                                            bp_summary_enhanced,
+                                            req.get("indicator_id", "")
+                                        )
+                                        # 리턴값을 브릿지 컴포넌트로 전달하기 위해 session_state에 저장
+                                        res_payload = {"ts": req["ts"], "result": report}
+                                        st.session_state.ai_report_json = json.dumps(res_payload, ensure_ascii=False)
+                                        st.rerun()
+                            except Exception as e:
+                                st.error(f"AI 진단 중 오류: {e}")
+
                         st.components.v1.html(final_html, height=3500, scrolling=True)
                         st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
 

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+    <script>
+    // Streamlit Component Protocol
+    function sendMessageToStreamlitClient(type, data) {
+        var outData = Object.assign({
+            isStreamlitMessage: true,
+            type: type,
+        }, data);
+        window.parent.postMessage(outData, "*");
+    }
+
+    function setComponentValue(value) {
+        sendMessageToStreamlitClient("setComponentValue", { value: value });
+    }
+
+    // Python -> JS (Streamlit Render Event)
+    window.addEventListener("message", function(event) {
+        if (event.data.type === "streamlit:render") {
+            const args = event.data.args;
+            if (args.ai_report_json) {
+                // 파이썬 연산 결과를 받으면, 대시보드(IFrame)가 감지할 수 있도록 localStorage에 저장!
+                localStorage.setItem("AI_DIAGNOSE_RES", args.ai_report_json);
+            }
+        }
+    });
+
+    // JS -> Python (LocalStorage Event)
+    window.addEventListener("storage", function(e) {
+        if (e.key === "AI_DIAGNOSE_REQ" && e.newValue) {
+            // 대시보드(IFrame)에서 버튼 클릭 시 저장한 요청 페이로드를 파이썬으로 전송!
+            setComponentValue(e.newValue);
+        }
+    });
+
+    // Initialize Component
+    sendMessageToStreamlitClient("streamlit:componentReady", {apiVersion: 1});
+    sendMessageToStreamlitClient("streamlit:setFrameHeight", {height: 0});
+    </script>
+</body>
+</html>
