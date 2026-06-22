@@ -13,7 +13,7 @@ import json
 import sys
 import gc
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import pandas as pd
 import io
 
@@ -564,7 +564,7 @@ def main():
                                             _ref_d["AVAILABLE_MONTHS"] = _ref_am
                                             _ref_d["SELECTED_MONTH"] = _ref_m
                                     _ref_json = serialize_dashboard_json(_ref_data)
-                                    _ref_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+                                    _ref_ts = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M")
                                     _ref_ok = check_mgr.write_scored_cache(_ref_json, _ref_ts, REPORT_VERSION)
                                     _save_to_pkl(_ref_ts, _ref_data)
                                     if _ref_ok:
@@ -637,7 +637,11 @@ def main():
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         
-                        # [v202.1] AI 상세 진단 브릿지 연동
+                        # 대시보드를 먼저 그려서 상단 공백을 없앰
+                        st.components.v1.html(final_html, height=3500, scrolling=True)
+                        st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
+
+                        # [v202.1] AI 상세 진단 브릿지 연동 (대시보드 하단으로 이동해 상단 공백 방지)
                         import streamlit.components.v1 as components
                         if "ai_report_json" not in st.session_state:
                             st.session_state.ai_report_json = None
@@ -658,7 +662,6 @@ def main():
                                     
                                     with st.spinner(f"🤖 {req.get('brand_name')} 상세 진단 중..."):
                                         agent = AIAgent()
-                                        # past_summary가 있는 경우 이를 bp_summary에 포함시키거나 별도로 전달 (ai_agent 수정 필요)
                                         bp_summary_enhanced = req.get("bp_summary", {})
                                         bp_summary_enhanced["__past_summary"] = req.get("past_summary", {})
                                         
@@ -669,19 +672,14 @@ def main():
                                             bp_summary_enhanced,
                                             req.get("indicator_id", "")
                                         )
-                                        # 리턴값을 브릿지 컴포넌트로 전달하기 위해 session_state에 저장
                                         res_payload = {"ts": req["ts"], "result": report}
                                         st.session_state.ai_report_json = json.dumps(res_payload, ensure_ascii=False)
                                         st.rerun()
                             except Exception as e:
                                 st.error(f"AI 진단 중 오류: {e}")
-                                # 프론트엔드의 30초 무한 대기(Timeout) 방지를 위해 에러 메시지도 브릿지로 반환
                                 err_payload = {"ts": req["ts"], "error": str(e)}
                                 st.session_state.ai_report_json = json.dumps(err_payload, ensure_ascii=False)
                                 st.rerun()
-
-                        st.components.v1.html(final_html, height=3500, scrolling=True)
-                        st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
 
                         # [vMem] 메모리 즉각 반환 (Streamlit Cloud 1GB Limit 대응)
                         del all_data_json, final_html, script_inject
