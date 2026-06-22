@@ -602,14 +602,27 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 1) raw data에서 초기값 추출
+        # ── 1) raw data에서 초기값 추출 (지저분한 내부 품명 정제 로직 포함)
+        def _clean_ugly_raw_name(name_str: str) -> str:
+            import re
+            if not name_str: return ""
+            ns = str(name_str).strip()
+            # '대일)', 'FD장인)', '비노)' 같은 벤더명 접두사 제거
+            while True:
+                m = re.match(r'^[^()]*\)', ns)
+                if m: ns = ns[m.end():].strip()
+                else: break
+            # ◆, ※, # 등 내부 기호가 붙은 단어 제거
+            ns = re.sub(r'[◆※#][^\s]+', '', ns).strip()
+            return ns
+            
         raw_item_name = str(row.get('item_name', '') or '').strip()
-        raw_style_name = str(row.get('style_name', '') or '').strip()
+        raw_style_name = _clean_ugly_raw_name(row.get('style_name', ''))
 
         # ── 2) dedup으로 누락된 경우: 같은 style_code의 다른 행에서 탐색
         if raw_style_name in _EMPTY_VALS:
             for _, srow in df[df['style_code'] == s].iterrows():
-                sn = str(srow.get('style_name', '') or '').strip()
+                sn = _clean_ugly_raw_name(srow.get('style_name', ''))
                 if sn not in _EMPTY_VALS:
                     raw_style_name = sn
                     break
