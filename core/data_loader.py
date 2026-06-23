@@ -614,22 +614,22 @@ def load_dashboard_data(
                 if 'inv_uid' in b_df.columns and b_df['inv_uid'].notna().any():
                     b_df = b_df.drop_duplicates(subset=['inv_uid'])
                 else:
-                    # 1. 먼저 완전히 동일한 행 제거
+                    # 1. 완전히 동일한 행(엑셀 중복 업로드) 제거
                     b_df = b_df.drop_duplicates()
                     
-                    # [v122.0] 판매량이 있는 경우에만 스타일별 중복 제거 수행
-                    # 판매량이 0인 행들은 각각의 재고를 모두 합산해야 하므로 보존해야 함
+                    # [v202.4] 재고액 누락 방지 로직:
+                    # 판매량이 중복 기재된 경우 행을 삭제하지 않고, 중복된 행의 판매수량/매출액만 0으로 처리하여 재고를 보존함.
                     sales_mask = b_df['sales_qty'] > 0
-                    sales_df = b_df[sales_mask].copy()
-                    zero_df = b_df[~sales_mask].copy()
-                    
-                    if not sales_df.empty:
+                    if sales_mask.any():
                         subset_cols = ['style_code', 'sales_qty', 'sales_amt']
                         for c in ['color', 'size']:
                             if c in b_df.columns: subset_cols.append(c)
-                        sales_df = sales_df.drop_duplicates(subset=subset_cols, keep='first')
-                    
-                    b_df = pd.concat([sales_df, zero_df], ignore_index=True)
+                        
+                        dups = b_df[sales_mask].duplicated(subset=subset_cols, keep='first')
+                        if dups.any():
+                            dup_idx = b_df[sales_mask][dups].index
+                            b_df.loc[dup_idx, 'sales_qty'] = 0.0
+                            b_df.loc[dup_idx, 'sales_amt'] = 0.0
 
                 # 데이터가 있는 브랜드 처리
                 b_cat = str(b_df.iloc[0].get('category_group', '여성')).strip() or '여성'
@@ -663,7 +663,10 @@ def load_dashboard_data(
                 _b_area_for_cap = get_area(store, b_name)
                 tM_for_score = tM_won  # 채점에 사용할 tM (목표매출 기준)
 
-                if _b_area_for_cap > 0:
+                if _b_area_for_cap >= 50:
+                    tM_inv_won = _b_area_for_cap * 70_000.0 * 30.0 * 3.0   # 50평 이상: 평수 * 7만 * 30일 * 3배
+                    _tM_adjusted = 'cap'
+                elif _b_area_for_cap > 0:
                     tM_inv_won = _b_area_for_cap * 100_000.0 * 30.0 * 3.0  # 평수 * 10만 * 30일 * 3배
                     _tM_adjusted = 'cap'
                 else:
@@ -672,17 +675,13 @@ def load_dashboard_data(
 
                 b_df['tM'] = tM_for_score  # 채점 로직은 목표매출 기준 사용
 
-                # [v74.5] 중복 제거 로직 완화 (상설 매장은 inv_uid가 없으면 모든 행 합산)
-                is_outlet_b = _is_outlet_type(b_type)
+                # [v202.4] 재고 계산 시 중복 제거 제외:
+                # 이미 위에서 완전히 동일한 행(엑셀 중복 덧붙여넣기)은 drop_duplicates()로 제거되었으므로,
+                # 남은 데이터는 사이즈나 재고 수량이 다른 유효한 데이터임. 행 단위 drop 없이 무조건 합산하여 DB와 동기화.
                 if 'inv_uid' in b_df.columns and b_df['inv_uid'].notna().any():
                     stock_ref = b_df.drop_duplicates('inv_uid')
-                elif is_outlet_b:
-                    # 상설 매장: inv_uid가 없으면 모든 데이터 신뢰 (합산)
-                    stock_ref = b_df
                 else:
-                    # 정상 매장: 기존처럼 기준 컬럼으로 중복 제거
-                    dedup_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
-                    stock_ref = b_df.drop_duplicates(subset=[c for c in dedup_cols if c in b_df.columns])
+                    stock_ref = b_df
                 
                 stock_amt = stock_ref['stock_amt'].apply(lambda x: max(0.0, _try_float(x))).sum()
                 stock_qty = stock_ref['stock_qty'].apply(lambda x: max(0.0, _try_float(x))).sum()

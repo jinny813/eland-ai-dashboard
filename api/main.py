@@ -47,6 +47,33 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+@app.get("/api/product-image")
+async def get_product_image(brand: str = "", code: str = ""):
+    """버튼 클릭 시 on-demand로 네이버에서 상품 이미지 URL을 크롤링해 반환."""
+    if not code:
+        return JSONResponse({"image_url": "", "ok": False})
+    try:
+        from core.html_generator import _crawl_naver_shopping_title, _NAME_SEARCH_CACHE, _NAME_SEARCH_TTL
+        import time as _t
+
+        # 세션 캐시에 이미지가 이미 있으면 즉시 반환
+        cached = _NAME_SEARCH_CACHE.get(code)
+        if cached is not None and len(cached) == 3:
+            _, img, ts = cached
+            if _t.time() - ts < _NAME_SEARCH_TTL and img:
+                return JSONResponse({"image_url": img, "ok": True})
+
+        # 브랜드+품번으로 크롤링 시도
+        _, image_url = _crawl_naver_shopping_title(brand, code)
+        # 결과 없으면 품번만으로 재시도
+        if not image_url and brand:
+            _, image_url = _crawl_naver_shopping_title('', code)
+
+        return JSONResponse({"image_url": image_url, "ok": bool(image_url)})
+    except Exception:
+        return JSONResponse({"image_url": "", "ok": False})
+
+
 @app.get("/api/dashboard")
 async def get_dashboard():
     global _API_CACHE

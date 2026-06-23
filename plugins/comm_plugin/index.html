@@ -15,7 +15,7 @@
     }
 
     function setComponentValue(value) {
-        sendMessageToStreamlitClient("setComponentValue", { value: value });
+        sendMessageToStreamlitClient("streamlit:setComponentValue", { value: value });
     }
 
     let dashboardWindow = null;
@@ -25,16 +25,30 @@
         if (event.data.type === "streamlit:render") {
             const args = event.data.args;
             if (args.ai_report_json) {
-                // 파이썬 연산 결과를 받으면, 부모 창의 모든 자식 IFrame(대시보드 포함)으로 브로드캐스트 전송
-                // (Streamlit 렌더링 시 dashboardWindow 참조가 날아가는 현상 방지)
-                try {
-                    for (let i = 0; i < window.parent.frames.length; i++) {
-                        window.parent.frames[i].postMessage({
+                if (dashboardWindow) {
+                    try {
+                        dashboardWindow.postMessage({
                             type: "AI_DIAGNOSE_RES",
                             payload: args.ai_report_json
                         }, "*");
+                    } catch(e) {
+                        console.error("Direct postMessage failed", e);
                     }
-                } catch(e) {}
+                }
+                
+                // Fallback broadcast
+                try {
+                    for (let i = 0; i < window.parent.frames.length; i++) {
+                        try {
+                            window.parent.frames[i].postMessage({
+                                type: "AI_DIAGNOSE_RES",
+                                payload: args.ai_report_json
+                            }, "*");
+                        } catch(e) {}
+                    }
+                } catch(e) {
+                    console.error("Broadcast failed due to cross-origin restriction", e);
+                }
                 
                 try {
                     localStorage.setItem("AI_DIAGNOSE_RES", args.ai_report_json);

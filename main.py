@@ -19,12 +19,18 @@ import io
 
 import importlib
 
+# --- 로깅 설정 ---
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+fh = logging.FileHandler('app.log', encoding='utf-8')
+fh.setLevel(logging.INFO)
+logger.addHandler(fh)
+
 import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.25"
+REPORT_VERSION = "v17.30"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -655,15 +661,74 @@ def main():
                         if ai_req_raw and isinstance(ai_req_raw, str):
                             try:
                                 import json
+                                import importlib
+                                import core.ai_agent
+                                importlib.reload(core.ai_agent)
                                 from core.ai_agent import AIAgent
                                 req = json.loads(ai_req_raw)
+                                logger.info(f"[AI] Received request ts: {req.get('ts')}, last_ts: {st.session_state.last_ai_req_ts}")
                                 if req.get("ts") and req["ts"] != st.session_state.last_ai_req_ts:
                                     st.session_state.last_ai_req_ts = req["ts"]
+                                    logger.info(f"[AI] Starting diagnosis for {req.get('brand_name')}")
                                     
                                     with st.spinner(f"🤖 {req.get('brand_name')} 상세 진단 중..."):
                                         agent = AIAgent()
                                         bp_summary_enhanced = req.get("bp_summary", {})
                                         bp_summary_enhanced["__past_summary"] = req.get("past_summary", {})
+                                        
+                                        # [v202.3] 추가 다차원 비교 데이터 산출 (전년, NC 브랜드 전체, NC 카테고리 전체)
+                                        sel_month = req.get("month")
+                                        brand = req.get("brand_name")
+                                        t_label = req.get("type_label")
+                                        store_name = req.get("store_name")
+                                        
+                                        if sel_month and sel_month in all_months_data:
+                                            m_data = all_months_data[sel_month]
+                                            detail = m_data.get("DETAIL", {})
+                                            
+                                            # 1. 전년도 요약
+                                            if store_name in detail and brand in detail[store_name] and t_label in detail[store_name][brand]:
+                                                bp_summary_enhanced["__past_yr_summary"] = {
+                                                    "prev_yr_sales_amt": detail[store_name][brand][t_label].get("prev_yr_sales_amt", 0)
+                                                }
+                                                
+                                            # 2. 동일 브랜드 NC 전체 평균
+                                            nc_b_sales, nc_b_stock, nc_b_cnt = 0, 0, 0
+                                            for st_data in detail.values():
+                                                if brand in st_data and t_label in st_data[brand]:
+                                                    nc_b_sales += st_data[brand][t_label].get("sales_amt", 0)
+                                                    nc_b_stock += st_data[brand][t_label].get("stock_amt", 0)
+                                                    nc_b_cnt += 1
+                                            if nc_b_cnt > 0:
+                                                bp_summary_enhanced["__nc_brand_summary"] = {
+                                                    "avg_sales_amt": nc_b_sales / nc_b_cnt,
+                                                    "avg_stock_amt": nc_b_stock / nc_b_cnt
+                                                }
+                                                
+                                            # 3. 동일 카테고리(예: 여성) NC 전체 평균
+                                            brand_cat = None
+                                            for cat, brands in CATEGORY_BRAND_MAP.items():
+                                                for b in brands:
+                                                    if brand in b:
+                                                        brand_cat = cat
+                                                        break
+                                                if brand_cat: break
+                                                
+                                            if brand_cat:
+                                                nc_c_sales, nc_c_stock, nc_c_cnt = 0, 0, 0
+                                                for st_data in detail.values():
+                                                    for b_name, b_data in st_data.items():
+                                                        is_cat = any(b_name in b for b in CATEGORY_BRAND_MAP[brand_cat])
+                                                        if is_cat and t_label in b_data:
+                                                            nc_c_sales += b_data[t_label].get("sales_amt", 0)
+                                                            nc_c_stock += b_data[t_label].get("stock_amt", 0)
+                                                            nc_c_cnt += 1
+                                                if nc_c_cnt > 0:
+                                                    bp_summary_enhanced["__nc_category_summary"] = {
+                                                        "category_name": brand_cat,
+                                                        "avg_sales_amt": nc_c_sales / nc_c_cnt,
+                                                        "avg_stock_amt": nc_c_stock / nc_c_cnt
+                                                    }
                                         
                                         report = agent.generate_report(
                                             req.get("brand_name", ""),
@@ -673,12 +738,14 @@ def main():
                                             req.get("indicator_id", "")
                                         )
                                         res_payload = {"ts": req["ts"], "result": report}
-                                        st.session_state.ai_report_json = json.dumps(res_payload, ensure_ascii=False)
+                                        st.session_state.ai_report_json = json.dumps(res_payload)
+                                        logger.info(f"[AI] Diagnosis success. Triggering rerun.")
                                         st.rerun()
                             except Exception as e:
                                 st.error(f"AI 진단 중 오류: {e}")
+                                logger.error(f"[AI] Diagnosis outer exception: {e}")
                                 err_payload = {"ts": req["ts"], "error": str(e)}
-                                st.session_state.ai_report_json = json.dumps(err_payload, ensure_ascii=False)
+                                st.session_state.ai_report_json = json.dumps(err_payload)
                                 st.rerun()
 
                         # [vMem] 메모리 즉각 반환 (Streamlit Cloud 1GB Limit 대응)

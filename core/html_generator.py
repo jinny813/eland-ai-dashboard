@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import time as _time
 import sqlite3
 import urllib.parse
 import urllib.request
@@ -19,6 +20,9 @@ _ITEM_GROUP_KO = {
 
 _DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
 _SCORER_GENERIC = AssortmentScorer({})  # 아이템 코드 매핑용 (config 불필요)
+
+_NAME_SEARCH_CACHE: dict = {}   # {style_code: (result_str, timestamp)}
+_NAME_SEARCH_TTL: int = 3600 * 6  # 6시간 내 재시도 방지
 
 
 def _item_code_to_ko(item_code: str) -> str:
@@ -70,17 +74,19 @@ def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool
 
 
 
-def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str = None) -> str:
+def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str = None) -> tuple:
     """
-    API 키가 없거나 실패한 경우, 네이버 통합 검색 쇼핑 영역 결과를 직접 파싱하여 상품명을 반환합니다.
+    API 키가 없거나 실패한 경우, 네이버 통합 검색 쇼핑 영역 결과를 직접 파싱하여
+    (상품명, 이미지URL) 튜플을 반환합니다.
     """
     keywords = _get_item_keywords(item_code)
     clean_style_code = style_code.replace('-', '')
     query = f"{brand_name}{clean_style_code}".strip()
     if not query:
-        return ''
+        return ('', '')
     norm_code = re.sub(r'[^a-zA-Z0-9]', '', clean_style_code).upper()
     best_cleaned = None
+    best_img = ''
     try:
         enc = urllib.parse.quote(query)
         url = f"https://search.naver.com/search.naver?query={enc}"
@@ -96,8 +102,9 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
             html = resp.read().decode('utf-8', errors='ignore')
 
         matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
+        img_matches = re.findall(r'"imageUrl"\s*:\s*"([^"]+)"', html)
         if matches:
-            for raw_title in matches:
+            for i, raw_title in enumerate(matches):
                 try:
                     safe_s = raw_title.replace('"', '\\"')
                     decoded = json.loads(f'"{safe_s}"')
@@ -114,19 +121,23 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
                 # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
                 if norm_code and norm_code not in re.sub(r'[^a-zA-Z0-9]', '', cleaned).upper():
                     continue
-                if not best_cleaned: best_cleaned = cleaned
+                img_url = img_matches[i] if i < len(img_matches) else ''
+                if not best_cleaned:
+                    best_cleaned = cleaned
+                    best_img = img_url
                 if _is_valid_title(cleaned, keywords):
-                    return cleaned
-            if best_cleaned: return best_cleaned
+                    return (cleaned, img_url)
+            if best_cleaned:
+                return (best_cleaned, best_img)
     except Exception:
         pass
 
-    return ''
+    return ('', '')
 
 
-def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = None) -> str:
+def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = None) -> tuple:
     """
-    네이버 쇼핑 API로 브랜드+품번 검색 → 상품명 반환.
+    네이버 쇼핑 API로 브랜드+품번 검색 → (상품명, 이미지URL) 튜플 반환.
     실패하거나 API 키가 없으면 직접 웹 스크래핑을 통한 폴백 시도.
     결과를 product_master.db에 캐시하고 core/style_master.json 파일에 저장하여 재사용.
     """
@@ -134,12 +145,20 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
     client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
     
     title = ''
+    image_url = ''
     keywords = _get_item_keywords(item_code)
     clean_style_code = style_code.replace('-', '')
     query = f"{brand_name}{clean_style_code}".strip()
     if not query:
-        return ''
-        
+        return ('', '')
+
+    # 세션 내 캐시 확인 (성공/실패 모두 저장되어 있어 재시도 방지)
+    _cached = _NAME_SEARCH_CACHE.get(style_code)
+    if _cached is not None:
+        _result, _img, _ts = _cached
+        if _time.time() - _ts < _NAME_SEARCH_TTL:
+            return (_result, _img)
+
     # 1. API 키가 있으면 OpenAPI 우선 시도
     if client_id and client_secret:
         def fetch_api(q):
@@ -163,41 +182,52 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
 
         if items:
             best_title = ''
+            best_img = ''
             for item in items:
                 t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
                 brand_context = item.get('brand', '') + ' ' + item.get('mallName', '')
-                
+
                 if brand_name and not _is_brand_match(brand_name, t, brand_context):
                     continue
-                    
+
                 norm_query = clean_style_code.upper()
                 norm_title = re.sub(r'[^a-zA-Z0-9]', '', t).upper()
-                
+
                 # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
                 if norm_query and norm_query in norm_title:
-                    if not best_title: best_title = t
+                    if not best_title:
+                        best_title = t
+                        best_img = item.get('image', '')
                     if _is_valid_title(t, keywords):
                         title = t
+                        image_url = item.get('image', '')
                         break
 
             if not title and best_title:
                 title = best_title
+                image_url = best_img
 
-
-    # 2. API 결과가 없거나 실패 시 웹 스크래핑 폴백 시도
+    # 2. API 결과 없을 때 웹 스크래핑 폴백 (브랜드+품번)
     if not title:
-        title = _crawl_naver_shopping_title(brand_name, style_code, item_code)
+        title, image_url = _crawl_naver_shopping_title(brand_name, style_code, item_code)
+
+    # 3. 브랜드 없이 품번만으로 재시도 (더 넓은 검색)
+    if not title and brand_name:
+        title, image_url = _crawl_naver_shopping_title('', style_code, item_code)
+
+    # 결과 캐시 저장 (성공/실패 모두 — 재시도 방지)
+    _NAME_SEARCH_CACHE[style_code] = (title, image_url, _time.time())
 
     if title:
         # DB에 캐시
         try:
             conn = sqlite3.connect(_DB_PATH)
             conn.execute(
-                """INSERT INTO products (style_code, product_name, brand, updated_at) 
+                """INSERT INTO products (style_code, product_name, brand, updated_at)
                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                   ON CONFLICT(style_code) DO UPDATE SET 
-                       product_name=excluded.product_name, 
-                       brand=excluded.brand, 
+                   ON CONFLICT(style_code) DO UPDATE SET
+                       product_name=excluded.product_name,
+                       brand=excluded.brand,
                        updated_at=CURRENT_TIMESTAMP""",
                 (style_code, title, brand_name)
             )
@@ -225,8 +255,8 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
                 json.dump(master_data, jf, ensure_ascii=False, indent=2)
         except Exception:
             pass
-        return title
-    return ''
+        return (title, image_url)
+    return ('', '')
 
 # ── [v8.0] 다중 팔레트 기반 동적 색상 유틸리티
 def _get_dynamic_color(pct: float, p_type: str = "default") -> str:
@@ -573,10 +603,21 @@ def _get_product_info(style_codes: list) -> dict:
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
-        query = f"SELECT * FROM products WHERE style_code IN ('{codes_str}')"
+        # crawled_product_names 테이블이 있으면 우선 사용, 없으면 products만 조회
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if 'crawled_product_names' in tables:
+            query = f"""
+                SELECT p.style_code, p.category, p.keywords, p.normal_price,
+                       COALESCE(c.product_name, p.product_name) as product_name
+                FROM products p
+                LEFT JOIN crawled_product_names c ON p.style_code = c.style_code
+                WHERE p.style_code IN ('{codes_str}')
+            """
+        else:
+            query = f"SELECT style_code, category, keywords, normal_price, product_name FROM products WHERE style_code IN ('{codes_str}')"
         df_p = pd.read_sql(query, conn)
         conn.close()
-        
+
         res = {}
         for _, row in df_p.iterrows():
             res[row['style_code']] = {
@@ -611,55 +652,47 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 1) raw data에서 초기값 추출 (지저분한 내부 품명 정제 로직 포함)
+        # ── 내부 정제 함수
         def _clean_ugly_raw_name(name_str: str) -> str:
-            import re
             if not name_str: return ""
             ns = str(name_str).strip()
-            # '대일)', 'FD장인)', '비노)' 같은 벤더명 접두사 제거
             while True:
                 m = re.match(r'^[^()]*\)', ns)
                 if m: ns = ns[m.end():].strip()
                 else: break
-            # ◆, ※, # 등 내부 기호가 붙은 단어 제거
             ns = re.sub(r'[◆※#][^\s]+', '', ns).strip()
             return ns
-            
-        raw_item_name = str(row.get('item_name', '') or '').strip()
-        raw_style_name = _clean_ugly_raw_name(row.get('style_name', ''))
 
-        # ── 2) dedup으로 누락된 경우: 같은 style_code의 다른 행에서 탐색
-        if raw_style_name in _EMPTY_VALS:
-            for _, srow in df[df['style_code'] == s].iterrows():
-                sn = _clean_ugly_raw_name(srow.get('style_name', ''))
-                if sn not in _EMPTY_VALS:
-                    raw_style_name = sn
-                    break
+        _norm_code = re.sub(r'[^a-zA-Z0-9]', '', s).upper()
 
-        # ── 2.5) 원본 style_name 품번 검증: 다른 품번 코드가 섞여 있으면 잘못된 데이터
-        # 예) "s262msa1270_DG 모다아울렛 대구점" → 품번 S262M8A142 와 불일치 → 재검색
-        if raw_style_name not in _EMPTY_VALS:
-            _norm_s = re.sub(r'[^a-zA-Z0-9]', '', s).upper()
-            _code_tokens = re.findall(r'[a-zA-Z0-9]{6,}', raw_style_name)
-            _has_mismatch = _norm_s and any(
-                t.upper() not in _norm_s and _norm_s not in t.upper()
-                for t in _code_tokens
+        def _code_mismatch(name_str: str) -> bool:
+            """style_name에 현재 품번과 다른 코드 토큰이 포함되면 True (순수 한국어 이름은 항상 False)"""
+            tokens = re.findall(r'[a-zA-Z0-9]{6,}', name_str)
+            if not tokens:
+                return False
+            return any(
+                t.upper() not in _norm_code and _norm_code not in t.upper()
+                for t in tokens
             )
-            if _has_mismatch:
-                raw_style_name = ''  # step 5 네이버 재검색 대상
 
-        # ── 3) DB 마스터 override (품번이 상품명에 포함된 경우만 신뢰)
+        # ── 1+2+2.5) raw data에서 유효한 style_name 탐색
+        # style_name이 있는 품번은 그대로 사용, 품번 불일치 데이터만 건너뜀
+        raw_item_name = str(row.get('item_name', '') or '').strip()
+        raw_style_name = ''
+        for _, srow in df[df['style_code'] == s].iterrows():
+            sn = _clean_ugly_raw_name(srow.get('style_name', ''))
+            if sn not in _EMPTY_VALS and not _code_mismatch(sn):
+                raw_style_name = sn
+                break
+
+        # ── 3) DB 마스터 override (불일치 없는 경우 신뢰 — 순수 한국어 이름 포함)
         if s in p_map:
             db_item = p_map[s].get('item_name') or ''
             db_style = p_map[s].get('style_name') or ''
             if db_item and db_item not in _EMPTY_VALS:
                 raw_item_name = db_item
-            if db_style and db_style not in _EMPTY_VALS:
-                norm_s = re.sub(r'[^a-zA-Z0-9]', '', s).upper()
-                norm_db = re.sub(r'[^a-zA-Z0-9]', '', db_style).upper()
-                if not norm_s or norm_s in norm_db:
-                    raw_style_name = db_style
-                # else: DB 이름에 품번이 없으므로 잘못된 데이터 → 무시하고 재검색
+            if db_style and db_style not in _EMPTY_VALS and not _code_mismatch(db_style):
+                raw_style_name = db_style
 
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:
@@ -675,7 +708,7 @@ def _build_best_items(df) -> dict:
         # ── 5) style_name: DB에 유효값 없으면 네이버에서 품번 정확 매칭으로 검색
         if raw_style_name in _EMPTY_VALS:
             ic = str(row.get('item_code', '') or '').strip()
-            searched = _naver_search_style_name(brand_name, s, ic if ic not in _EMPTY_VALS else None)
+            searched, _ = _naver_search_style_name(brand_name, s, ic if ic not in _EMPTY_VALS else None)
             if searched:
                 raw_style_name = searched
 

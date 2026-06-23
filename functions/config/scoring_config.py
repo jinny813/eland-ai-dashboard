@@ -91,10 +91,10 @@ _SPORTS_NORMAL_BASE = {
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
         "item":   {"RunningShoes": 0.45, "CasualShoes": 0.30, "OtherShoes": 0.10, "Top": 0.10, "Bottom": 0.05}
     },
-    "weight_discount":  0.275,
-    "weight_freshness": 0.275,
+    "weight_discount":  0.30,
+    "weight_freshness": 0.20,
     "weight_season":    0.15,
-    "weight_best":      0.30,
+    "weight_best":      0.35,
     "weight_item":      0.00,
 }
 
@@ -169,10 +169,10 @@ _KIDS_NORMAL_BASE = {
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
         "item":   _ITEM_KIDS
     },
-    "weight_discount":  0.275,
-    "weight_freshness": 0.275,
+    "weight_discount":  0.30,
+    "weight_freshness": 0.20,
     "weight_season":    0.15,
-    "weight_best":      0.30,
+    "weight_best":      0.35,
     "weight_item":      0.00,
 }
 
@@ -190,10 +190,10 @@ _MENS_NORMAL_BASE = {
         "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
         "item":   _ITEM_MENS
     },
-    "weight_discount":  0.275,
-    "weight_freshness": 0.275,
+    "weight_discount":  0.30,
+    "weight_freshness": 0.20,
     "weight_season":    0.15,
-    "weight_best":      0.30,
+    "weight_best":      0.35,
     "weight_item":      0.00,
 }
 

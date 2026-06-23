@@ -626,7 +626,10 @@ def load_dashboard_data(
                 _b_area_for_cap = get_area(store, b_name)
                 tM_for_score = tM_won  # 채점에 사용할 tM (목표매출 기준)
 
-                if _b_area_for_cap > 0:
+                if _b_area_for_cap >= 50:
+                    tM_inv_won = _b_area_for_cap * 70_000.0 * 30.0 * 3.0   # 50평 이상: 평수 * 7만 * 30일 * 3배
+                    _tM_adjusted = 'cap'
+                elif _b_area_for_cap > 0:
                     tM_inv_won = _b_area_for_cap * 100_000.0 * 30.0 * 3.0  # 평수 * 10만 * 30일 * 3배
                     _tM_adjusted = 'cap'
                 else:

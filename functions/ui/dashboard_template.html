@@ -1631,11 +1631,88 @@
     @media (max-width: 1100px) {
       .action-panel { grid-template-columns: 1fr; }
     }
+
+    /* ──────────────────────────────────────────────
+   모바일 반응형 최적화 (Max-width: 768px)
+   ────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .app { flex-direction: column; }
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        width: 260px;
+        z-index: 9999;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+      }
+      .sidebar.mobile-active { transform: translateX(280px); }
+      .sidebar.collapsed { width: 260px; } /* Disable collapse on mobile */
+      .sidebar-toggle { display: none; }
+      
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9998;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .sidebar-overlay.active { display: block; opacity: 1; }
+      
+      .mobile-menu-btn { display: flex !important; }
+      
+      .main { width: 100vw; max-width: 100vw; overflow-x: hidden; }
+      .content { padding: 16px 12px 100px 12px; overflow-x: hidden; }
+      .topbar { padding: 0 16px; font-size: 11px; }
+      .top-sep, .top-active { display: none; }
+      
+      /* Grid to Single Column */
+      [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+      .stat-grid, .action-grid { grid-template-columns: 1fr !important; }
+      .card { padding: 16px; margin-bottom: 16px; }
+      
+      /* Table Horizontal Scroll */
+      .table-wrap {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+      }
+      .table-wrap th, .table-wrap td { padding: 10px 8px; font-size: 11px; }
+      
+      /* Typography */
+      .section-title, .card-title { font-size: 17px; }
+      .section-sub { font-size: 11px; }
+      .score-box { font-size: 26px; }
+      
+      /* Action Guide fixes */
+      .action-item { flex-direction: column; align-items: flex-start; }
+      .action-item > div:last-child { margin-top: 8px; width: 100%; }
+      .ai-btn-container { width: 100%; margin-top: 12px; }
+      #btn-ai-comprehensive { margin-left: 0 !important; width: 100%; text-align: center; justify-content: center; }
+    }
+    .mobile-menu-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-right: 12px;
+      cursor: pointer;
+      color: #111;
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      background: #F1F5F9;
+    }
   </style>
 </head>
 
 <body>
   <div class="app">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebarMobile()"></div>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-toggle" onclick="toggleSidebar()">❯</div>
       <div class="logo-area">
@@ -1666,14 +1743,15 @@
           <span style="font-size:16px; flex-shrink:0;">👚</span> <span>매장별 상세 현황판</span>
         </div>
         <div class="nav-item" onclick="showPage('p4',this)" data-page="p4">
-          <span style="font-size:16px; flex-shrink:0;">📥</span> <span>상품 정보 입력</span>
+          <span style="font-size:16px; flex-shrink:0;">📥</span> <span>RAW데이터 입력</span>
         </div>
       </nav>
     </aside>
 
     <div class="main">
       <div class="topbar" style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
+        <div style="display:flex; align-items:center;">
+          <div class="mobile-menu-btn" onclick="toggleSidebarMobile()">☰</div>
           <span>상품구색 시스템</span><span class="top-sep">></span><span class="top-active" id="top-title">지점별 상품 구색 점수판</span>
         </div>
         <div style="display:flex; align-items:center; gap:8px; margin-right:16px;">
@@ -2226,6 +2304,10 @@
           <div style="font-size:14px; font-weight:800; color:#1E293B; margin-bottom:10px;">📌 재고액 설정 및 배분 원칙</div>
           <div style="font-size:13px; color:#475569; line-height:1.7;">
             • <b>목표 총 재고</b>: 브랜드별 [목표 매출 × 300%]<br>
+            <div style="padding-left:14px; color:#64748B; font-size:12px; margin-bottom:4px; line-height:1.5;">
+              - 50평 미만 매장 = 평수 × 10만원 × 30일 × 3배<br>
+              - 50평 이상 매장 = 평수 × 7만원 × 30일 × 3배
+            </div>
             • <b>세부 목표액</b>: [목표 총 재고 × 아래 세부 비중(%)]
           </div>
         </div>
@@ -2909,10 +2991,12 @@
 
       // [v100.7] 네비게이터 드롭다운 동기화
       const sSel = document.getElementById('p2_store_sel');
+      const cSel = document.getElementById('p2_cat_sel');
       const bSel = document.getElementById('p2_brand_sel');
-      if (sSel && bSel) {
+      if (sSel && cSel && bSel) {
         sSel.value = st;
-        updateP2BrandOptions(st, b.name);
+        updateP2CatOptions(st, b.category);
+        updateP2BrandOptions(st, b.category, b.name);
       }
 
       // 원 단위 포맷 함수 (M → 실제 원 단위)
@@ -3066,12 +3150,12 @@
     </div>
   `;
 
-      // 1. 4개 지표 카드 — 가중 기여 점수(X/만점점) 표시로 합산 = 총점
+      // 1. 4개 지표 카드 — 100점 환산 원점수 표시 (P1 팝업과 동일 방식)
       const mList = [
-        { id: 'dis',    l: '할인율 점수', s: Math.round((b.dis    || 0) * _wDis   / 100), maxPt: _wDis,   c: 'm-dis',    estimated: !!b.dis_estimated },
-        { id: 'fresh',  l: '신선도 점수', s: Math.round((b.fresh  || 0) * _wFresh / 100), maxPt: _wFresh, c: 'm-fresh',  estimated: false },
-        { id: 'season', l: '시즌 점수',   s: Math.round((b.season || 0) * _wSea   / 100), maxPt: _wSea,   c: 'm-season', estimated: false },
-        { id: 'best',   l: 'BEST 점수',   s: Math.round(_bestActualPct * _wBest  / 100), maxPt: _wBest,  c: 'm-best',   estimated: false }
+        { id: 'dis',    l: '할인율 점수', s: Math.round(b.dis    || 0), maxPt: 100, c: 'm-dis',    estimated: !!b.dis_estimated },
+        { id: 'fresh',  l: '신선도 점수', s: Math.round(b.fresh  || 0), maxPt: 100, c: 'm-fresh',  estimated: false },
+        { id: 'season', l: '시즌 점수',   s: Math.round(b.season || 0), maxPt: 100, c: 'm-season', estimated: false },
+        { id: 'best',   l: 'BEST 점수',   s: Math.round(_bestActualPct), maxPt: 100, c: 'm-best',   estimated: false }
       ];
 
       function getRateColor(r) {
@@ -3269,15 +3353,12 @@
             ${m.id === 'dis' && b.avg_discount_rate !== undefined ? `<span style="font-size:11px; font-weight:850; color:#E30019; background:#FFF1F2; border:1px solid #FFE4E6; padding:2px 8px; border-radius:6px; margin-left:6px;">평균 ${b.avg_discount_rate}%</span>` : ''}
           </div>
           <div style="text-align:right;">
-            <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">/${m.maxPt}점</span>
+            <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">/100점</span>
           </div>
         </div>
         ${shortageHtml}
         <div class="m-body">${segsHtml}</div>
-        <div style="margin-top:auto; padding-top:20px; border-top:1px dashed #E2E8F0;">
-          <button onclick="runDiagnosis('${m.id}', this)" class="btn-diagnosis" style="width:100%; padding:14px; background:#1D1E1E; color:#fff; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; border:none; transition:all 0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.1); letter-spacing:-0.5px; font-family:inherit;">AI 상세 진단</button>
-          <div class="diagnosis-result" style="display:none; margin-top:14px; padding:16px; background:#F8FAFC; border-radius:10px; border:1px solid #E2E8F0; font-size:13px; line-height:1.6;"></div>
-        </div>
+        <!-- AI 상세 진단 버튼은 층장 액션 가이드 종합 진단으로 통합됨 -->
       </div>
     `;
       }).join('');
@@ -3336,7 +3417,10 @@
           <div class="action-item-simple" style="padding:8px 18px; border-bottom:1px dashed #E2E8F0; display:flex; align-items:center; gap:12px;">
             <div style="background:#4F46E5; color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">${adv.rank}</div>
             <div style="flex:1;">
-              <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${adv.style_name}</div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                <span style="font-size:15px; font-weight:700; color:#1E293B;">${adv.style_name}</span>
+                <button onclick="fetchProductImg('${encodeURIComponent(b.name||'')}','${encodeURIComponent(adv.style_code||'')}','${(adv.style_name||adv.style_code||'').replace(/'/g,"\\'").replace(/`/g,'\\`')}')" style="font-size:10px;font-weight:700;color:#4F46E5;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;padding:2px 7px;cursor:pointer;flex-shrink:0;">사진</button>
+              </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-size:11px; font-family:monospace; font-weight:700;">${adv.style_code}</span>
                 <span style="color:#EF4444; font-size:13px; font-weight:800;">${adv.action_msg}</span>
@@ -3381,7 +3465,10 @@
           <div class="action-item-simple" style="padding:8px 18px; border-bottom:1px dashed #E2E8F0; display:flex; align-items:center; gap:12px;">
             <div style="background:#F97316; color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">${item.rank}</div>
             <div style="flex:1;">
-              <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${item.style_name}</div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                <span style="font-size:15px; font-weight:700; color:#1E293B;">${item.style_name}</span>
+                <button onclick="fetchProductImg('${encodeURIComponent(b.name||'')}','${encodeURIComponent(item.style_code||'')}','${(item.style_name||item.style_code||'').replace(/'/g,"\\'").replace(/`/g,'\\`')}')" style="font-size:10px;font-weight:700;color:#4F46E5;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;padding:2px 7px;cursor:pointer;flex-shrink:0;">사진</button>
+              </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-size:11px; font-family:monospace; font-weight:700;">${item.style_code}</span>
                 <span style="color:#F97316; font-size:13px; font-weight:800;">${item.reason}</span>
@@ -3408,6 +3495,7 @@
             <div style="display:flex; align-items:center;">
               <div class="action-panel-title" style="margin-bottom:0; font-size:16px; font-weight:800; color:#1e293b;">🎯 층장 액션 가이드</div>
               <div class="action-panel-badge" style="margin-left:12px; background:#EEF2FF; color:#4338CA; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:800;">자사 판매 데이터 기반 정밀 진단</div>
+              <button onclick="event.stopPropagation(); diagnoseComprehensive(this)" id="btn-ai-comprehensive" style="margin-left:16px; padding:8px 16px; background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); color:#fff; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; border:none; transition:all 0.2s; box-shadow:0 4px 10px rgba(79,70,229,0.3); font-family:inherit;">✨ AI 종합 상세 진단</button>
             </div>
             <div class="toggle-icon" style="font-size:12px; font-weight:800; color:#475569; background:#fff; padding:6px 12px; border-radius:20px; border:1px solid #E2E8F0; transition:all 0.2s;">▲ 닫기</div>
           </div>
@@ -3418,7 +3506,7 @@
                 <div class="action-col-icon">💡</div>
                 <div>
                   <div class="action-col-title">재고 확보 필요 상품</div>
-                  <div class="action-col-sub">자사 BEST 10 중 재고 5개 이하 (확보 필요)</div>
+                  <div class="action-col-sub">우리 매장 BEST 10 중 재고 5개 이하 (확보 필요)</div>
                 </div>
               </div>
               ${renderAiAdvice()}
@@ -3430,12 +3518,13 @@
                 <div class="action-col-icon">🔥</div>
                 <div>
                   <div class="action-col-title">집중 판매 필요 상품</div>
-                  <div class="action-col-sub">자사 BEST 10 중 재고 5개 초과 (집중 판매 필요)</div>
+                  <div class="action-col-sub">NC 전체 BEST 10 중 자사 재고 5개 초과 (집중 판매 필요)</div>
                 </div>
               </div>
               ${renderPushItems()}
             </div>
           </div>
+          <div id="ai-comprehensive-result" style="display:none; padding:24px; border-top:1px solid #E2E8F0; background:#F8FAFC; font-size:13px; line-height:1.6; color:#1E293B;"></div>
         </div>
       `;
     }
@@ -3616,23 +3705,24 @@
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // 클릭한 마우스 X좌표 기준 수평 중앙 배치, Y좌표 기준 아래로 15px 배치
+      // [수정] Streamlit iframe의 높이가 매우 길 수 있으므로, 하단 경계 플립(flip) 로직이 팝업을
+      // 현재 화면 밖으로 날려버리는 것을 방지하기 위해, 마우스 클릭 Y 좌표를 모달의 정중앙에 배치합니다.
       let left = clickX - (modalWidth / 2);
-      let top = clickY + 15;
+      let top = clickY - (modalHeight / 2);
 
-      // 1. 우측 경계 검사 (우측으로 삐져나가면 안쪽으로)
+      // 1. 우측 경계 검사
       if (left + modalWidth > viewportWidth - 20) {
         left = viewportWidth - modalWidth - 20;
       }
-      // 2. 좌측 경계 검사 (좌측으로 삐져나가면 안쪽으로)
+      // 2. 좌측 경계 검사
       if (left < 20) {
         left = 20;
       }
-      // 3. 하단 경계 검사 (아래로 삐져나가면 클릭 위치 위쪽으로 플립 배치)
+      // 3. 하단 경계 검사 (iframe을 넘어가지 않도록)
       if (top + modalHeight > viewportHeight - 20) {
-        top = clickY - modalHeight - 15;
+        top = viewportHeight - modalHeight - 20;
       }
-      // 4. 상단 경계 검사 (위로 삐져나가면 최소 20px 마진 유지)
+      // 4. 상단 경계 검사 (무조건 최소 20px 마진)
       if (top < 20) {
         top = 20;
       }
@@ -3652,10 +3742,10 @@
       overlay.classList.add('show');
       
       if (modal) {
-        modal.style.position = '';
-        modal.style.left = '';
-        modal.style.top = '';
-        modal.style.margin = '';
+        // 중앙 정렬 방식을 해제하고 마우스 클릭 좌표 기준 오프셋 렌더링
+        requestAnimationFrame(() => {
+          _repositionModal(modal, _lastClickClientX, _lastClickClientY);
+        });
       }
     }
 
@@ -4017,14 +4107,33 @@
 
     // 채점 로직 모달 외부 클릭 닫기는 overlay onclick으로 처리됨
 
-    async function runDiagnosis(indicatorId, btnElem) {
+    window.__AI_CACHE__ = window.__AI_CACHE__ || {};
+
+    async function diagnoseComprehensive(btnElem) {
       if (!currentBrand) return;
-      const resultDiv = btnElem.nextElementSibling;
+      const resultDiv = document.getElementById('ai-comprehensive-result');
+      
+      const cacheKey = currentBrand.name + "_" + currentGlobalMonth;
+      if (window.__AI_CACHE__[cacheKey]) {
+        renderAIResult(window.__AI_CACHE__[cacheKey], resultDiv);
+        return;
+      }
       
       btnElem.disabled = true;
-      btnElem.textContent = '진단 리포트 생성 중... ⏳';
+      btnElem.textContent = '데이터 취합 중... ⏳';
       btnElem.style.opacity = '0.7';
       resultDiv.style.display = 'none';
+
+      const loadingTexts = [
+          'NC 전체 매장 벤치마킹 중... 🔎',
+          '취약점 및 기회요소 분석 중... 💡',
+          '최종 리포트 작성 중... 📝'
+      ];
+      let textIdx = 0;
+      const loadingInterval = setInterval(() => {
+          btnElem.textContent = loadingTexts[textIdx % loadingTexts.length];
+          textIdx++;
+      }, 2500);
 
       try {
         const scores = {
@@ -4039,126 +4148,151 @@
         const st = currentBrand.store;
         const dStore = DETAIL[st] || {};
         const dBrand = dStore[currentBrand.name] || {};
-        const d = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
-        const dataSummary = d[indicatorId] || {};
+        const dataSummary = dBrand[typeLabel] || Object.values(dBrand)[0] || {};
 
         const bpStoreData = BP_DETAIL[st] || {};
         const bpBrand = bpStoreData[currentBrand.name] || {};
-        const bpDataForType = bpBrand[typeLabel] || Object.values(bpBrand)[0] || {};
-        const bpSummary = bpDataForType[indicatorId] || {};
+        const bpSummary = bpBrand[typeLabel] || Object.values(bpBrand)[0] || {};
 
         const reqBody = {
           brand_name: currentBrand.name,
-          indicator_id: indicatorId,
+          store_name: currentBrand.store,
+          type_label: typeLabel,
+          month: currentGlobalMonth,
+          indicator_id: 'comprehensive',
           scores: scores,
           data_summary: dataSummary,
-          bp_summary: bpSummary
+          bp_summary: bpSummary,
+          ts: Date.now()
         };
 
-        const response = await fetch(`${API_URL}/api/diagnose`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reqBody)
+        // 전월 데이터 조회 (DB 데이터 통합 분석)
+        if (window.__ALL_DATA__) {
+            const months = window.__ALL_DATA__[currentGlobalMonth]?.AVAILABLE_MONTHS || [];
+            const currIdx = months.indexOf(currentGlobalMonth);
+            if (currIdx >= 0 && currIdx < months.length - 1) {
+                const prevMonth = months[currIdx + 1]; // 직전 월
+                const prevData = window.__ALL_DATA__[prevMonth];
+                if (prevData && prevData.brands && prevData.brands[st] && prevData.brands[st][currentBrand.name]) {
+                    const prevBrand = prevData.brands[st][currentBrand.name];
+                    reqBody.past_summary = prevBrand[typeLabel] || Object.values(prevBrand)[0] || {};
+                }
+            }
+        }
+
+        // [v202.2] LocalStorage 브릿지 한계 극복 (Cross-origin 환경 대응 Broadcast)
+        for (let i = 0; i < window.parent.frames.length; i++) {
+            try {
+                window.parent.frames[i].postMessage({
+                    type: "AI_DIAGNOSE_REQ",
+                    payload: JSON.stringify(reqBody)
+                }, "*");
+            } catch(e) {}
+        }
+        
+        try {
+            localStorage.setItem("AI_DIAGNOSE_REQ", JSON.stringify(reqBody));
+        } catch(e) {}
+
+        // 결과 대기 폴링 (브로드캐스트 메시지 수신 감지)
+        const waitForResult = () => new Promise((resolve, reject) => {
+            const handler = (e) => {
+                if (e.data && e.data.type === "AI_DIAGNOSE_RES" && e.data.payload) {
+                    processPayload(e.data.payload);
+                }
+            };
+            const storageHandler = (e) => {
+                if (e.key === "AI_DIAGNOSE_RES" && e.newValue) {
+                    processPayload(e.newValue);
+                }
+            };
+            
+            const processPayload = (payloadStr) => {
+                window.removeEventListener("message", handler);
+                window.removeEventListener("storage", storageHandler);
+                try {
+                    const parsed = JSON.parse(payloadStr);
+                    if (parsed.ts === reqBody.ts) {
+                        if (parsed.error) reject(new Error(parsed.error));
+                        else resolve(parsed.result);
+                    } else {
+                        window.addEventListener("message", handler);
+                        window.addEventListener("storage", storageHandler);
+                    }
+                } catch (err) { reject(err); }
+            };
+            
+            window.addEventListener("message", handler);
+            window.addEventListener("storage", storageHandler);
+            // 45초 타임아웃
+            setTimeout(() => {
+                window.removeEventListener("message", handler);
+                window.removeEventListener("storage", storageHandler);
+                reject(new Error("AI 진단 시간이 초과되었습니다. (API 키 확인 필요)"));
+            }, 45000);
         });
 
-        const data = await response.json();
+        const res = await waitForResult();
+        const data = { status: 'success', result: res };
         
         if (data.status === 'success' && data.result) {
-          const res = data.result;
-
-          // 1. BP 매장 비교 분석 시각화
-          let bpChartHtml = '';
-          if (dataSummary && bpSummary && dataSummary.segs && bpSummary.segs) {
-            const currentSegs = dataSummary.segs;
-            const bpSegs = bpSummary.segs;
-            
-            let rowsHtml = '';
-            currentSegs.forEach(curr => {
-               // Matching segment
-               const bpMatch = bpSegs.find(b => b.key === curr.key || b.l === curr.l);
-               if (!bpMatch) return;
-               
-               const curPct = Math.round(curr.mix_pct || curr.pct || 0);
-               const bpPct = Math.round(bpMatch.mix_pct || bpMatch.valM || bpMatch.pct || 0);
-               const diff = curPct - bpPct;
-               const diffColor = diff > 0 ? '#DC2626' : (diff < 0 ? '#16A34A' : '#64748B');
-               const diffSign = diff > 0 ? '+' : '';
-               const curName = st.replace('NC','').replace('점','').substring(0,4); // '신구로'
-               
-               rowsHtml += `
-                 <div style="margin-bottom:18px;">
-                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                     <span style="font-size:12px; font-weight:800; color:#111;">${curr.l}</span>
-                     <span style="font-size:12px; font-weight:900; color:${diffColor}">${diffSign}${diff}%p</span>
-                   </div>
-                   
-                   <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                     <span style="width:46px; font-size:11px; font-weight:800; color:#DC2626;">${curName}</span>
-                     <div style="flex:1; background:#F1F5F9; height:8px; border-radius:4px;">
-                       <div style="width:${curPct}%; background:#DC2626; height:100%; border-radius:4px;"></div>
-                     </div>
-                     <span style="width:28px; text-align:right; font-size:11px; font-weight:900; color:#DC2626">${curPct}%</span>
-                   </div>
-                   
-                   <div style="display:flex; align-items:center; gap:8px;">
-                     <span style="width:46px; font-size:11px; font-weight:800; color:#2563EB;">BP매장</span>
-                     <div style="flex:1; background:#F1F5F9; height:8px; border-radius:4px;">
-                       <div style="width:${bpPct}%; background:#2563EB; height:100%; border-radius:4px;"></div>
-                     </div>
-                     <span style="width:28px; text-align:right; font-size:11px; font-weight:900; color:#2563EB">${bpPct}%</span>
-                   </div>
-                 </div>
-               `;
-            });
-            
-            if (rowsHtml.length > 0) {
-               const curNameTitle = st.replace('NC','').replace('점','') + '점';
-               bpChartHtml = `
-                 <div style="border:1px solid #E5E7EB; border-radius:12px; overflow:hidden; margin-bottom:20px; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
-                    <div style="background:#1D1E1E; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
-                       <span style="font-weight:900; font-size:14px;">BP 매장 비교 분석</span>
-                       <span style="background:#E30019; font-size:10px; font-weight:900; padding:3px 8px; border-radius:12px;">BP 매장</span>
-                    </div>
-                    <div style="padding:16px;">
-                       <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:24px; font-size:12px; font-weight:800;">
-                         <span style="color:#DC2626; background:#FEF2F2; padding:4px 12px; border-radius:12px;">${curNameTitle} <span style="font-size:10px;">(현재)</span></span>
-                         <span style="color:#94A3B8; font-size:10px;">VS</span>
-                         <span style="color:#2563EB; background:#EFF6FF; padding:4px 12px; border-radius:12px;">BP 매장 <span style="font-size:10px;">(기준)</span></span>
-                       </div>
-                       ${rowsHtml}
-                    </div>
-                 </div>
-               `;
-            }
-          }
-
-          // 2. AI Action Insights
-          const actionsHtml = (res.actions || []).map(a => `
-            <div style="background:#FEF2F2; border-left:4px solid #DC2626; border-radius:8px; padding:14px; margin-bottom:10px; font-size:13px; font-weight:800; color:#111; line-height:1.5;">
-              ${a}
-            </div>
-          `).join('');
-
-          resultDiv.innerHTML = `
-            ${bpChartHtml}
-            ${actionsHtml}
-          `;
-          resultDiv.style.background = 'transparent';
-          resultDiv.style.border = 'none';
-          resultDiv.style.padding = '0';
-          resultDiv.style.display = 'block';
+          window.__AI_CACHE__[cacheKey] = data.result;
+          renderAIResult(data.result, resultDiv);
         } else {
           resultDiv.innerHTML = `<div style="color:#DC2626; font-weight:800;">❌ 진단 실패: ${data.error || '오류 발생'}</div>`;
           resultDiv.style.display = 'block';
         }
       } catch (err) {
-        resultDiv.innerHTML = `<div style="color:#DC2626; font-weight:800;">❌ 네트워크 오류: ${err.message}</div>`;
+        resultDiv.innerHTML = `<div style="color:#DC2626; font-weight:800;">❌ 진단 오류: ${err.message}</div>`;
         resultDiv.style.display = 'block';
       } finally {
+        clearInterval(loadingInterval);
         btnElem.disabled = false;
-        btnElem.textContent = 'AI 상세 진단';
+        btnElem.textContent = '✨ AI 종합 상세 진단';
         btnElem.style.opacity = '1';
       }
+    }
+
+    function renderAIResult(res, resultDiv) {
+      const sectionConfig = [
+        { prefix: '📌', label: '구색 진단', bg: '#EFF6FF', border: '#3B82F6', titleColor: '#1D4ED8' },
+        { prefix: '🧥', label: '세부 아이템 진단', bg: '#F0FDF4', border: '#22C55E', titleColor: '#15803D' },
+        { prefix: '💰', label: '가격 진단', bg: '#FFFBEB', border: '#F59E0B', titleColor: '#B45309' },
+        { prefix: '🚀', label: '종합 결론', bg: '#FEF2F2', border: '#EF4444', titleColor: '#B91C1C' },
+      ];
+
+      const actions = res.actions || [];
+      let actionsHtml = '';
+
+      actions.forEach((a, idx) => {
+        const cfg = sectionConfig[idx] || { prefix: '📋', label: `진단 ${idx+1}`, bg: '#F8FAFC', border: '#94A3B8', titleColor: '#334155' };
+        // 섹션 제목 태그([...]) 또는 이모지+제목 이후 본문 분리
+        const cleaned = String(a)
+          .replace(/^[\📌🧥💰🚀📋]\s*\[.*?\]\s*<br>/i, '')
+          .replace(/^\[.*?\]\s*<br>/i, '');
+        actionsHtml += `
+          <div style="background:${cfg.bg}; border-left:5px solid ${cfg.border}; border-radius:10px; padding:18px 20px; margin-bottom:16px;">
+            <div style="font-size:13px; font-weight:900; color:${cfg.titleColor}; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+              <span>${cfg.prefix}</span><span>${cfg.label}</span>
+            </div>
+            <div style="font-size:13px; font-weight:500; color:#1E293B; line-height:1.9;">
+              ${cleaned || a}
+            </div>
+          </div>`;
+      });
+
+      // actions가 4개 미만이면 원본 그대로 fallback 렌더링
+      if (actions.length === 0) {
+        actionsHtml = `<div style="color:#DC2626; font-weight:700;">진단 결과가 없습니다.</div>`;
+      }
+
+      resultDiv.innerHTML = `
+        <div style="font-size:15px; font-weight:900; margin-bottom:16px; color:#1E293B; display:flex; align-items:center; gap:8px;">
+          📊 <span>AI 종합 상세 진단 결과</span>
+        </div>
+        ${actionsHtml}
+      `;
+      resultDiv.style.display = 'block';
     }
 
     let yoyChartInstance = null;
@@ -4472,8 +4606,82 @@
       }
     });
 
+    function toggleSidebarMobile() {
+      const sb = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sb.classList.toggle('mobile-active');
+      overlay.classList.toggle('active');
+    }
+
     window.onload = init;
+
+    // ── 상품 사진 on-demand 크롤링 모달
+    const _IMG_API = 'http://localhost:8000/api/product-image';
+    const _imgCache = {};
+
+    async function fetchProductImg(brandEnc, codeEnc, displayName) {
+      const code = decodeURIComponent(codeEnc);
+      const brand = decodeURIComponent(brandEnc);
+      const modal = document.getElementById('_pImgModal');
+      const imgEl = document.getElementById('_pImgEl');
+      const errEl = document.getElementById('_pImgErr');
+      const loadEl = document.getElementById('_pImgLoading');
+
+      document.getElementById('_pImgName').textContent = displayName || code;
+      document.getElementById('_pImgCode').textContent = code;
+      imgEl.style.display = 'none';
+      errEl.style.display = 'none';
+      loadEl.style.display = 'block';
+      modal.style.display = 'flex';
+
+      const cacheKey = brand + '|' + code;
+      if (_imgCache[cacheKey]) {
+        _showImgResult(_imgCache[cacheKey]);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${_IMG_API}?brand=${brandEnc}&code=${codeEnc}`);
+        const data = await res.json();
+        _imgCache[cacheKey] = data.image_url || '';
+        _showImgResult(data.image_url || '');
+      } catch (e) {
+        _showImgResult('');
+      }
+    }
+
+    function _showImgResult(imgUrl) {
+      const imgEl = document.getElementById('_pImgEl');
+      const errEl = document.getElementById('_pImgErr');
+      const loadEl = document.getElementById('_pImgLoading');
+      loadEl.style.display = 'none';
+      if (imgUrl) {
+        imgEl.src = imgUrl;
+        imgEl.style.display = 'block';
+        errEl.style.display = 'none';
+      } else {
+        imgEl.style.display = 'none';
+        errEl.style.display = 'block';
+      }
+    }
+
+    function closeProductImg() {
+      document.getElementById('_pImgModal').style.display = 'none';
+      document.getElementById('_pImgEl').src = '';
+    }
   </script>
+
+  <!-- 상품 사진 모달 -->
+  <div id="_pImgModal" onclick="closeProductImg()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;">
+    <div onclick="event.stopPropagation()" style="background:#fff;border-radius:14px;padding:24px 20px 20px;max-width:360px;width:90%;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <button onclick="closeProductImg()" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#9CA3AF;line-height:1;">✕</button>
+      <div id="_pImgName" style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;line-height:1.4;padding-right:20px;"></div>
+      <div id="_pImgCode" style="font-size:11px;font-weight:600;color:#6B7280;font-family:monospace;margin-bottom:14px;"></div>
+      <div id="_pImgLoading" style="display:none;padding:30px;color:#6B7280;font-size:13px;">🔍 네이버에서 이미지 검색 중...</div>
+      <img id="_pImgEl" src="" alt="상품 이미지" onerror="this.style.display='none';document.getElementById('_pImgErr').style.display='block';" style="display:none;max-width:300px;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #F1F5F9;">
+      <div id="_pImgErr" style="display:none;color:#9CA3AF;font-size:12px;padding:20px;">네이버에서 이미지를 찾을 수 없습니다.</div>
+    </div>
+  </div>
 </body>
 
 </html>
