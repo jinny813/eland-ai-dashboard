@@ -4224,12 +4224,12 @@
             
             window.addEventListener("message", handler);
             window.addEventListener("storage", storageHandler);
-            // 45초 타임아웃
+            // 90초 타임아웃 (백엔드 70초 타임아웃 + 지수 백오프 대기시간 고려)
             setTimeout(() => {
                 window.removeEventListener("message", handler);
                 window.removeEventListener("storage", storageHandler);
-                reject(new Error("AI 진단 시간이 초과되었습니다. (API 키 확인 필요)"));
-            }, 45000);
+                reject(new Error("AI 진단 시간이 초과되었습니다. 잠시 후 다시 시도해주세요."));
+            }, 90000);
         });
 
         const res = await waitForResult();
