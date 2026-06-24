@@ -439,15 +439,6 @@ def main():
             max-width: 100% !important;
             margin: 0 !important;
         }
-        /* [v202.6] 클라우드 클릭 먹통 완벽 해결: z-index 최상단 확보 및 명시적 position 설정 */
-        iframe[title="streamlit_html"], [data-testid="stHtml"] iframe {
-            width: 100vw !important;
-            height: calc(100vh - 60px) !important;
-            border: none !important;
-            position: relative !important;
-            z-index: 99999 !important;
-            pointer-events: auto !important;
-        }
         [data-testid="stSidebar"] {
             background-color: #f8f9fa;
         }
@@ -653,10 +644,10 @@ def main():
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         
                         # 지점 수 기반 + 페이지 여유 공간 포함한 높이 (p3 상세 현황판 등 긴 페이지 대응)
-                        # [v202.4] 하단 흰색 빈 여백 완벽 제거
-                        # 기존 safe_height(3000~8000px) 강제 할당으로 인해 발생하던 하단 공백 문제 해결.
-                        # Python 단에서 height를 주지 않고, CSS의 min-height: 100vh와 내부 스크롤(scrolling=True)에 맡김.
-                        st.components.v1.html(final_html, scrolling=True)
+                        # [v202.7] 클라우드 UI 완전 안정화 (명시적 높이 지정 + 내부 스크롤)
+                        # 클라우드에서 CSS 타겟팅이 실패해 높이가 150px로 짤리고 클릭이 안되는 문제를 방지하기 위해,
+                        # 파이썬 단에서 충분한 높이(850px)를 고정으로 주고 대시보드 내부에서 스크롤되도록 설정.
+                        st.components.v1.html(final_html, scrolling=True, height=850)
                         st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
 
                         # [v202.1] AI 상세 진단 브릿지 연동 (대시보드 하단으로 이동해 상단 공백 방지)
