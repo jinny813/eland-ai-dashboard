@@ -3,6 +3,7 @@ import re
 import json
 import time as _time
 import sqlite3
+import threading
 import urllib.parse
 import urllib.request
 import pandas as pd
@@ -21,7 +22,8 @@ _ITEM_GROUP_KO = {
 _DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
 _SCORER_GENERIC = AssortmentScorer({})  # 아이템 코드 매핑용 (config 불필요)
 
-_NAME_SEARCH_CACHE: dict = {}   # {style_code: (result_str, timestamp)}
+_NAME_SEARCH_CACHE: dict = {}   # {style_code: (result_str, img_url, timestamp)}
+_NAME_SEARCH_CACHE_LOCK = threading.Lock()
 _NAME_SEARCH_TTL: int = 3600 * 6  # 6시간 내 재시도 방지
 
 
@@ -170,7 +172,8 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
         return ('', '')
 
     # 세션 내 캐시 확인 (성공/실패 모두 저장되어 있어 재시도 방지)
-    _cached = _NAME_SEARCH_CACHE.get(style_code)
+    with _NAME_SEARCH_CACHE_LOCK:
+        _cached = _NAME_SEARCH_CACHE.get(style_code)
     if _cached is not None:
         _result, _img, _ts = _cached
         if _time.time() - _ts < _NAME_SEARCH_TTL:
@@ -246,7 +249,8 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
         title, image_url = _crawl_naver_shopping_title('', style_code, item_code)
 
     # 결과 캐시 저장 (성공/실패 모두 — 재시도 방지)
-    _NAME_SEARCH_CACHE[style_code] = (title, image_url, _time.time())
+    with _NAME_SEARCH_CACHE_LOCK:
+        _NAME_SEARCH_CACHE[style_code] = (title, image_url, _time.time())
 
     if title:
         # DB에 캐시

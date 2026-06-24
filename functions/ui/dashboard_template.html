@@ -2703,15 +2703,24 @@
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       if (el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
-      document.getElementById('top-title').textContent = { 
-        'p1': '지점별 상품 구색 점수판', 
-        'p2': '브랜드별 비교 대시보드', 
-        'p3': '매장별 상세 현황판', 
-        'p4': '상품 정보 입력' 
+      document.getElementById('top-title').textContent = {
+        'p1': '지점별 상품 구색 점수판',
+        'p2': '브랜드별 비교 대시보드',
+        'p3': '매장별 상세 현황판',
+        'p4': '상품 정보 입력'
       }[id] || '';
-      
+
       if (id === 'p2') buildBrandComparisonTable();
       if (id === 'p3') initP2Selectors();
+
+      // 페이지 전환 후 실제 콘텐츠 높이를 Streamlit iframe에 전달
+      setTimeout(function() {
+        var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+        try {
+          window.parent.postMessage({ type: 'streamlit:componentReady', apiVersion: 1 }, '*');
+          window.parent.postMessage({ type: 'streamlit:setFrameHeight', height: h }, '*');
+        } catch(e) {}
+      }, 200);
     }
 
     // ─── [v100.7] P2 전용 네비게이터 로직 ───
@@ -4681,27 +4690,17 @@
       <div id="_pImgErr" style="display:none;color:#9CA3AF;font-size:12px;padding:20px;">네이버에서 이미지를 찾을 수 없습니다.</div>
     </div>
   </div>
-  <!-- Streamlit Auto-resize Workaround -->
+  <!-- [v204.0] 초기 로드 시 실제 콘텐츠 높이를 Streamlit에 전달 (페이지 전환은 showPage 내부에서 처리) -->
   <script>
-    function sendHeight() {
-      if (window.parent) {
-        const appWrapper = document.querySelector('.app');
-        if (appWrapper) {
-          // 여백을 임의로 더하지 않고, 실제 콘텐츠 높이만 정확히 계산 (무한 팽창 방지)
-          const newHeight = appWrapper.scrollHeight;
-          window.parent.postMessage({
-            isStreamlitMessage: true,
-            type: "streamlit:setFrameHeight",
-            height: newHeight
-          }, "*");
-        }
-      }
-    }
-    const ro = new ResizeObserver(sendHeight);
-    ro.observe(document.body);
-    window.addEventListener("load", sendHeight);
-    // 가장 확실한 백업 방법: 주기적으로 높이 재계산 후 전송
-    setInterval(sendHeight, 1000);
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+      try {
+        window.parent.postMessage({ type: 'streamlit:componentReady', apiVersion: 1 }, '*');
+        window.parent.postMessage({ type: 'streamlit:setFrameHeight', height: h }, '*');
+      } catch(e) {}
+    }, 300);
+  });
   </script>
 </body>
 

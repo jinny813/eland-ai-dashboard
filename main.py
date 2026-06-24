@@ -20,11 +20,13 @@ import io
 import importlib
 
 # --- 로깅 설정 ---
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
-fh = logging.FileHandler('app.log', encoding='utf-8')
-fh.setLevel(logging.INFO)
-logger.addHandler(fh)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    fh = logging.FileHandler('app.log', encoding='utf-8')
+    fh.setLevel(logging.WARNING)
+    logger.addHandler(fh)
 
 import core.report_generator
 from core.report_generator import dashboard_fingerprint
@@ -643,10 +645,9 @@ def main():
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         
-                        # [v203.0] 클라우드/로컬 완전 통일: 충분한 고정 높이(2800px) + 내부 스크롤
-                        # - height=2800: 대시보드 어떤 페이지(P1~P3)도 짤리지 않는 안전한 높이
-                        # - scrolling=True: 대시보드 내부 JS 스크롤 허용
-                        st.components.v1.html(final_html, scrolling=True, height=2800)
+                        # [v204.0] 초기 높이를 낮게 설정하고, iframe 내부 JS가 실제 콘텐츠 높이를 측정해
+                        # postMessage로 Streamlit에 전달해 자동 리사이즈 (페이지 전환 시 1회만 실행)
+                        st.components.v1.html(final_html, scrolling=False, height=900)
                         st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
 
                         # [v203.0] AI 브릿지: comm_plugin 완전 제거 (클라우드에서 invisible overlay 유발해 클릭 차단)
