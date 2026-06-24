@@ -597,8 +597,9 @@ def main():
                         _backup_path = _c_os.path.join(_c_os.path.dirname(_c_os.path.abspath(__file__)), "data", "dashboard_backup.json")
                         if _c_os.path.exists(_backup_path):
                             try:
+                                import json as _c_json
                                 with open(_backup_path, "r", encoding="utf-8") as _bf:
-                                    _backup_data = json.load(_bf)
+                                    _backup_data = _c_json.load(_bf)
                                 if _backup_data and isinstance(_backup_data, dict) and "error" not in _backup_data:
                                     cache_ts = _backup_data.pop("__ts__", "백업 데이터")
                                     all_months_data = _backup_data
