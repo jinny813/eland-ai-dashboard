@@ -3417,17 +3417,19 @@
           <div class="action-item-simple" style="padding:8px 18px; border-bottom:1px dashed #E2E8F0; display:flex; align-items:center; gap:12px;">
             <div style="background:#4F46E5; color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">${adv.rank}</div>
             <div style="flex:1;">
-              ${adv.style_name ? `<div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${adv.style_name}</div>` : ''}
+              ${_hasKorean(adv.style_name) ? `<div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${adv.style_name}</div>` : ''}
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-size:11px; font-family:monospace; font-weight:700;">${adv.style_code}</span>
                 <span style="color:#EF4444; font-size:13px; font-weight:800;">${adv.action_msg}</span>
                 <span style="flex:1;"></span>
-                ${adv.style_name ? `<button onclick="fetchProductImg('${encodeURIComponent(b.name||'')}','${encodeURIComponent(adv.style_code||'')}','${(adv.style_name||adv.style_code||'').replace(/'/g,"\\'").replace(/`/g,'\\`')}')" style="font-size:10px;font-weight:700;color:#4F46E5;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;padding:2px 7px;cursor:pointer;flex-shrink:0;">사진</button>` : ''}
+                ${_hasKorean(adv.style_name) ? `<button onclick="fetchProductImg('${encodeURIComponent(b.name||'')}','${encodeURIComponent(adv.style_code||'')}','${(adv.style_name||adv.style_code||'').replace(/'/g,"\\'").replace(/`/g,'\\`')}')" style="font-size:10px;font-weight:700;color:#4F46E5;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;padding:2px 7px;cursor:pointer;flex-shrink:0;">사진</button>` : ''}
               </div>
             </div>
           </div>
         `).join('');
       }
+
+      const _hasKorean = s => /[가-힣]/.test(s || '');
 
       function getDisplayName(item) {
         if (item.style_name && item.style_name.trim()) return item.style_name;
@@ -3464,12 +3466,12 @@
           <div class="action-item-simple" style="padding:8px 18px; border-bottom:1px dashed #E2E8F0; display:flex; align-items:center; gap:12px;">
             <div style="background:#F97316; color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;">${item.rank}</div>
             <div style="flex:1;">
-              ${item.style_name ? `<div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${item.style_name}</div>` : ''}
+              ${_hasKorean(item.style_name) ? `<div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:2px;">${item.style_name}</div>` : ''}
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-size:11px; font-family:monospace; font-weight:700;">${item.style_code}</span>
                 <span style="color:#F97316; font-size:13px; font-weight:800;">${item.reason}</span>
                 <span style="flex:1;"></span>
-                ${item.style_name ? `<button onclick="fetchProductImg('${encodeURIComponent(b.name||'')}','${encodeURIComponent(item.style_code||'')}','${(item.style_name||item.style_code||'').replace(/'/g,"\\'").replace(/`/g,'\\`')}')" style="font-size:10px;font-weight:700;color:#4F46E5;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;padding:2px 7px;cursor:pointer;flex-shrink:0;">사진</button>` : ''}
+                ${_hasKorean(item.style_name) ? `<button onclick="fetchProductImg('${encodeURIComponent(b.name||'')}','${encodeURIComponent(item.style_code||'')}','${(item.style_name||item.style_code||'').replace(/'/g,"\\'").replace(/`/g,'\\`')}')" style="font-size:10px;font-weight:700;color:#4F46E5;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;padding:2px 7px;cursor:pointer;flex-shrink:0;">사진</button>` : ''}
               </div>
             </div>
           </div>
@@ -3703,12 +3705,12 @@
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // [수정] Streamlit iframe의 높이가 매우 길 수 있으므로, 하단 경계 플립(flip) 로직이 팝업을
-      // 현재 화면 밖으로 날려버리는 것을 방지하기 위해, 마우스 클릭 Y 좌표를 모달의 정중앙에 배치합니다.
-      let left = clickX - (modalWidth / 2);
+      // 좌우: 항상 화면 가운데 정렬 고정
+      let left = (viewportWidth / 2) - (modalWidth / 2);
+      // 상하: 마우스 클릭 Y 좌표 기준 (모달의 정중앙에 배치)
       let top = clickY - (modalHeight / 2);
 
-      // 1. 우측 경계 검사
+      // 1. 우측 경계 검사 (좌우 가운데 정렬이지만 만약을 대비한 안전장치)
       if (left + modalWidth > viewportWidth - 20) {
         left = viewportWidth - modalWidth - 20;
       }

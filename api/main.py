@@ -35,6 +35,81 @@ _API_CACHE = {
     "expire_at": 0
 }
 
+# 상품 이미지 in-memory 캐시 {brand|code: (img_url, timestamp)}
+_IMG_CACHE: dict = {}
+_IMG_CACHE_TTL = 3600 * 6  # 6시간
+
+
+def _fetch_product_image(brand: str, code: str) -> str:
+    """네이버 쇼핑 검색으로 상품 이미지 URL을 on-demand 크롤링."""
+    import re, urllib.parse, urllib.request, gzip as _gzip
+
+    clean_code = re.sub(r'[-\s]', '', code)
+    norm_code = re.sub(r'[^A-Z0-9]', '', clean_code.upper())
+    if not norm_code:
+        return ''
+
+    _HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
+        'Accept-Encoding': 'gzip, deflate',
+        'Referer': 'https://www.naver.com/',
+    }
+
+    def _get(url: str) -> str:
+        try:
+            req = urllib.request.Request(url, headers=_HEADERS)
+            with urllib.request.urlopen(req, timeout=8) as r:
+                raw = r.read()
+                enc = r.headers.get('Content-Encoding', '')
+                if enc == 'gzip':
+                    raw = _gzip.decompress(raw)
+                return raw.decode('utf-8', errors='ignore')
+        except Exception:
+            return ''
+
+    def _find_image(html: str) -> str:
+        if not html:
+            return ''
+        # 방법 1: productName 매칭 후 근접 imageUrl 추출
+        for m in re.finditer(r'"productName"\s*:\s*"([^"]*)"', html):
+            raw_name = m.group(1)
+            if norm_code not in re.sub(r'[^A-Z0-9]', '', raw_name.upper()):
+                continue
+            # 매칭된 productName 이후 3000자 안에서 이미지 키 탐색
+            window = html[m.start(): m.start() + 3000]
+            for key in ('imageUrl', 'thumbnailUrl', 'image', 'thumbnail', 'imgUrl'):
+                img_m = re.search(r'"' + key + r'"\s*:\s*"(https?://[^"\\]+)"', window)
+                if img_m:
+                    return img_m.group(1).replace('\\/', '/')
+        # 방법 2: 네이버 쇼핑 이미지 CDN URL 직접 추출
+        m2 = re.search(r'https://shopping-phinf\.pstatic\.net/[^\s"\'<>&\\]+', html)
+        if m2:
+            return m2.group(0)
+        # 방법 3: 일반 pstatic.net 이미지
+        m3 = re.search(r'https://[a-z0-9.-]+\.pstatic\.net/[^\s"\'<>&\\]+', html)
+        if m3:
+            return m3.group(0)
+        return ''
+
+    queries = [f"{brand} {clean_code}".strip() if brand else clean_code, clean_code]
+    seen: set = set()
+    for q in queries:
+        if q in seen:
+            continue
+        seen.add(q)
+        enc = urllib.parse.quote(q)
+        # 네이버 쇼핑 검색
+        img = _find_image(_get(f"https://search.naver.com/search.naver?where=shop&query={enc}"))
+        if img:
+            return img
+        # 네이버 통합 검색 (쇼핑 카드 포함)
+        img = _find_image(_get(f"https://search.naver.com/search.naver?query={enc}"))
+        if img:
+            return img
+    return ''
+
 app = FastAPI()
 
 app.add_middleware(
