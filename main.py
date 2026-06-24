@@ -643,23 +643,23 @@ def main():
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         
-                        # 지점 수 기반 + 페이지 여유 공간 포함한 높이 (p3 상세 현황판 등 긴 페이지 대응)
-                        # [v202.7] 클라우드 UI 완전 안정화 (명시적 높이 지정 + 내부 스크롤)
-                        # 클라우드에서 CSS 타겟팅이 실패해 높이가 150px로 짤리고 클릭이 안되는 문제를 방지하기 위해,
-                        # 파이썬 단에서 충분한 높이(850px)를 고정으로 주고 대시보드 내부에서 스크롤되도록 설정.
-                        st.components.v1.html(final_html, scrolling=True, height=850)
+                        # [v203.0] 클라우드/로컬 완전 통일: 충분한 고정 높이(2800px) + 내부 스크롤
+                        # - height=2800: 대시보드 어떤 페이지(P1~P3)도 짤리지 않는 안전한 높이
+                        # - scrolling=True: 대시보드 내부 JS 스크롤 허용
+                        st.components.v1.html(final_html, scrolling=True, height=2800)
                         st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
 
-                        # [v202.1] AI 상세 진단 브릿지 연동 (대시보드 하단으로 이동해 상단 공백 방지)
-                        import streamlit.components.v1 as components
+                        # [v203.0] AI 브릿지: comm_plugin 완전 제거 (클라우드에서 invisible overlay 유발해 클릭 차단)
+                        # comm_plugin의 declare_component가 Streamlit Cloud에서 포커스를 가로채는 iframe을 생성해
+                        # 대시보드 iframe 위를 덮어버리는 문제가 있음. LocalStorage 폴링 방식으로 대체.
                         if "ai_report_json" not in st.session_state:
                             st.session_state.ai_report_json = None
                         if "last_ai_req_ts" not in st.session_state:
                             st.session_state.last_ai_req_ts = None
-                            
-                        # Hidden Communication Bridge
-                        comm_plugin = components.declare_component("comm_plugin", path="plugins/comm_plugin")
-                        ai_req_raw = comm_plugin(key="comm_bridge", ai_report_json=st.session_state.ai_report_json)
+                        
+                        # AI 요청은 dashboard_template.html의 localStorage 이벤트로 전달되므로
+                        # comm_plugin 없이도 기존 세션 상태 기반으로 처리 가능
+                        ai_req_raw = None  # comm_plugin 제거: 클라우드 클릭 차단 원인 제거
 
                         if ai_req_raw and isinstance(ai_req_raw, str):
                             try:
