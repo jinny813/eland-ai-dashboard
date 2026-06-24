@@ -41,12 +41,14 @@
       background: var(--bg-main);
       color: var(--text-main);
       letter-spacing: -0.03em;
-      overflow-y: auto;
-      min-height: 100vh;
+      overflow-y: auto; /* 짤림 방지: 필요시 스크롤 허용 */
+      margin: 0;
+      padding: 0;
     }
 
     .app {
       display: flex;
+      align-items: stretch;
     }
 
     /* ──────────────────────────────────────────────
@@ -2712,15 +2714,6 @@
 
       if (id === 'p2') buildBrandComparisonTable();
       if (id === 'p3') initP2Selectors();
-
-      // 페이지 전환 후 실제 콘텐츠 높이를 Streamlit iframe에 전달
-      setTimeout(function() {
-        var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-        try {
-          window.parent.postMessage({ type: 'streamlit:componentReady', apiVersion: 1 }, '*');
-          window.parent.postMessage({ type: 'streamlit:setFrameHeight', height: h }, '*');
-        } catch(e) {}
-      }, 200);
     }
 
     // ─── [v100.7] P2 전용 네비게이터 로직 ───
@@ -4690,18 +4683,27 @@
       <div id="_pImgErr" style="display:none;color:#9CA3AF;font-size:12px;padding:20px;">네이버에서 이미지를 찾을 수 없습니다.</div>
     </div>
   </div>
-  <!-- [v204.0] 초기 로드 시 실제 콘텐츠 높이를 Streamlit에 전달 (페이지 전환은 showPage 내부에서 처리) -->
+  <!-- [v205.1] Safe sendHeight: MutationObserver(무한루프) 제거, 로드 및 탭 전환 시 1회성 postMessage로 iframe 동적 높이 조절 -->
   <script>
-  window.addEventListener('load', function() {
-    setTimeout(function() {
-      var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-      try {
-        window.parent.postMessage({ type: 'streamlit:componentReady', apiVersion: 1 }, '*');
-        window.parent.postMessage({ type: 'streamlit:setFrameHeight', height: h }, '*');
-      } catch(e) {}
-    }, 300);
-  });
+    function safeSendHeight() {
+      if (!window.parent) return;
+      // 짤림 방지를 위해 +100px 여유 추가
+      const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight) + 100;
+      window.parent.postMessage({ isStreamlitMessage: true, type: "streamlit:setFrameHeight", height: h }, "*");
+    }
+    // 페이지 로드 완료 시
+    window.addEventListener("load", () => setTimeout(safeSendHeight, 500));
+    // 브라우저 리사이즈 시
+    window.addEventListener("resize", () => setTimeout(safeSendHeight, 300));
+    
+    // showPage(탭 전환) 함수를 래핑하여 탭 이동 시 높이 재계산
+    const originalShowPage = window.showPage;
+    if (typeof originalShowPage === 'function') {
+      window.showPage = function(id, el) {
+        originalShowPage(id, el);
+        setTimeout(safeSendHeight, 100);
+      };
+    }
   </script>
 </body>
-
 </html>
