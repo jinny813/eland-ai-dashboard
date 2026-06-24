@@ -431,19 +431,22 @@ def main():
     # ━━━ CSS Injection ━━━
     st.markdown("""
         <style>
-        #MainMenu {visibility: hidden;}
-        header {visibility: hidden;}
-        footer {visibility: hidden;}
+        #MainMenu { display: none !important; }
+        header { display: none !important; }
+        footer { display: none !important; }
         .block-container {
             padding: 0rem !important;
             max-width: 100% !important;
             margin: 0 !important;
         }
-        /* [v202.5] 클라우드 환경 먹통 방지: 모든 iframe이 아닌 대시보드 iframe만 타겟팅 */
+        /* [v202.6] 클라우드 클릭 먹통 완벽 해결: z-index 최상단 확보 및 명시적 position 설정 */
         iframe[title="streamlit_html"], [data-testid="stHtml"] iframe {
             width: 100vw !important;
             height: calc(100vh - 60px) !important;
             border: none !important;
+            position: relative !important;
+            z-index: 99999 !important;
+            pointer-events: auto !important;
         }
         [data-testid="stSidebar"] {
             background-color: #f8f9fa;
