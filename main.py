@@ -643,9 +643,9 @@ def main():
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         
-                        # 대시보드를 먼저 그려서 상단 공백을 없앰
-                        st.components.v1.html(final_html, height=3500, scrolling=True)
-                        st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
+                        # 대시보드를 먼저 그려서 상단 공백을 없앰. height는 생략하여 JS가 높이를 동적으로 전달하게 함
+                        st.components.v1.html(final_html, scrolling=True)
+                        st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
 
                         # [v202.1] AI 상세 진단 브릿지 연동 (대시보드 하단으로 이동해 상단 공백 방지)
                         import streamlit.components.v1 as components

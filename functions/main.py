@@ -467,8 +467,9 @@ def main():
                             f'<script>window.__ALL_DATA__ = JSON.parse(atob(document.getElementById("__b64").textContent));</script>\n'
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
-                        st.components.v1.html(final_html, height=1600, scrolling=True)
-                        st.markdown('<div style="margin-bottom: 100px;"></div>', unsafe_allow_html=True)
+                        # height는 생략하여 JS가 높이를 동적으로 전달하게 함
+                        st.components.v1.html(final_html, scrolling=True)
+                        st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
 
                     # ── 탭 2: 노출/측정판 다운로드 (가장자리 여백 2.5rem 추가 확보) ──
                     if tab_dl is not None:
