@@ -652,27 +652,28 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 1+2+3) DB 마스터 및 Raw Data에서 상품명(style_name) 추출 ──
-        # 이랜드월드 등 DB에 이미 상품명이 있는 경우 크롤링하지 않고 그대로 사용합니다.
+        # ── 1+2+3) Google Sheet (df) 및 DB 마스터에서 상품명(style_name) 추출 ──
+        # 구글 스프레드시트(Raw Data)에 이미 상품명이 있는 경우 우선 적용합니다.
         raw_item_name = str(row.get('item_name', '') or '').strip()
         raw_style_name = ''
 
-        # 1. DB 마스터 우선 확인 (p_map)
+        # 1. Raw Data (df) 우선 확인 (구글 스프레드시트 우선)
+        for _, srow in df[df['style_code'] == s].iterrows():
+            sn = str(srow.get('style_name', '')).strip()
+            if sn and sn not in _EMPTY_VALS:
+                raw_style_name = sn
+                break
+
+        # 2. DB 마스터 확인 (Raw Data에 없을 경우 p_map 확인)
         if s in p_map:
             db_item = p_map[s].get('item_name') or ''
             db_style = p_map[s].get('style_name') or ''
             if db_item and db_item not in _EMPTY_VALS:
+                # 아이템명은 마스터 정보로 보완
                 raw_item_name = db_item
-            if db_style and db_style not in _EMPTY_VALS:
-                raw_style_name = str(db_style).strip()
-
-        # 2. Raw Data 확인 (마스터에 없으면 원본 df에서 가져옴)
-        if not raw_style_name or raw_style_name in _EMPTY_VALS:
-            for _, srow in df[df['style_code'] == s].iterrows():
-                sn = str(srow.get('style_name', '')).strip()
-                if sn and sn not in _EMPTY_VALS:
-                    raw_style_name = sn
-                    break
+            if not raw_style_name or raw_style_name in _EMPTY_VALS:
+                if db_style and db_style not in _EMPTY_VALS:
+                    raw_style_name = str(db_style).strip()
 
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:
