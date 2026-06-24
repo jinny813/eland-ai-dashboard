@@ -191,7 +191,10 @@ class AIAgent:
                             return
                     except urllib.error.HTTPError as e:
                         if e.code in [503, 500, 429] and attempt < retries:
-                            time.sleep(3.0)
+                            # 429(Too Many Requests)일 경우 넉넉하게 10초 이상 대기 (지수 백오프)
+                            sleep_time = 5.0 * (attempt + 1) if e.code == 429 else 3.0
+                            logger.warning(f"Gemini API {e.code} Error. Retrying in {sleep_time}s... (Attempt {attempt+1}/{retries})")
+                            time.sleep(sleep_time)
                             continue
                         q.put(e)
                         return
@@ -257,9 +260,10 @@ class AIAgent:
                 "재고가 충분한 베스트셀러 상품은 매장 입구 및 메인 VP 존에 집중 연출하여 판매 회전율을 극대화하십시오."
             ],
             "comprehensive": [
-                f"[{brand_name}] NC 전체 및 1등 매장(BP) 대비 현재고 분포(할인율, 신선도, 시즌)를 확인하여 전반적인 밸런스를 조정하십시오.",
-                "1등 매장에서 잘 팔리는 주력 아이템 중 자사 매장에 결품된 상품의 긴급 물량을 본사에 요청하십시오.",
-                "현재 보유 중인 BEST 아이템임에도 판매가 저조한 상품은 매장 내 전면 VP 연출 및 마네킹 피팅을 통해 즉각적인 소진을 유도하십시오."
+                f"📌 [구색 진단] <br>[{brand_name}] NC 전체 및 1등 매장(BP) 대비 현재고 분포(할인율, 신선도, 시즌)를 확인하여 전반적인 밸런스를 조정하십시오.",
+                "🧥 [세부 아이템 진단] <br>1등 매장에서 잘 팔리는 주력 아이템 중 자사 매장에 결품된 상품의 긴급 물량을 본사에 요청하십시오.",
+                "💰 [가격 진단] <br>잘 팔리는 주력 가격대의 상품이 결품되지 않도록 지속 모니터링하고, 악성 재고는 추가 할인을 검토하십시오.",
+                "🚀 [종합 결론: 층장/매니저 액션 플랜] <br>현재 보유 중인 BEST 아이템임에도 판매가 저조한 상품은 매장 내 전면 VP 연출 및 마네킹 피팅을 통해 즉각적인 소진을 유도하십시오."
             ]
         }
         actions = fallback_actions.get(indicator_id, [
