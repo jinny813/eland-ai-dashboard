@@ -9,7 +9,6 @@ from io import BytesIO
 
 from core.data_manager import DataManager
 from database.gsheet_manager import GSheetManager
-from config.brand_targets import get_tm
 
 from fastapi.middleware.cors import CORSMiddleware
 from core.data_loader import load_dashboard_data
@@ -41,73 +40,139 @@ _IMG_CACHE_TTL = 3600 * 6  # 6시간
 
 
 def _fetch_product_image(brand: str, code: str) -> str:
-    """네이버 쇼핑 검색으로 상품 이미지 URL을 on-demand 크롤링."""
-    import re, urllib.parse, urllib.request, gzip as _gzip
+    """네이버 쇼핑에서 상품 이미지 URL을 on-demand 크롤링. 여러 전략 순차 시도."""
+    import re, urllib.parse, urllib.request, gzip as _gzip, json as _json
 
     clean_code = re.sub(r'[-\s]', '', code)
     norm_code = re.sub(r'[^A-Z0-9]', '', clean_code.upper())
     if not norm_code:
         return ''
 
-    _HEADERS = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
+    _BASE_HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8',
         'Accept-Encoding': 'gzip, deflate',
-        'Referer': 'https://www.naver.com/',
+        'Connection': 'keep-alive',
     }
 
-    def _get(url: str) -> str:
+    def _get(url: str, referer: str = 'https://www.naver.com/') -> str:
         try:
-            req = urllib.request.Request(url, headers=_HEADERS)
-            with urllib.request.urlopen(req, timeout=8) as r:
+            headers = {**_BASE_HEADERS, 'Referer': referer,
+                       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'}
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as r:
                 raw = r.read()
-                enc = r.headers.get('Content-Encoding', '')
-                if enc == 'gzip':
+                if r.headers.get('Content-Encoding', '') == 'gzip':
                     raw = _gzip.decompress(raw)
                 return raw.decode('utf-8', errors='ignore')
         except Exception:
             return ''
 
-    def _find_image(html: str) -> str:
+    def _get_json(url: str, referer: str) -> dict:
+        try:
+            headers = {**_BASE_HEADERS, 'Referer': referer,
+                       'Accept': 'application/json, text/plain, */*',
+                       'x-requested-with': 'XMLHttpRequest'}
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as r:
+                raw = r.read()
+                if r.headers.get('Content-Encoding', '') == 'gzip':
+                    raw = _gzip.decompress(raw)
+                return _json.loads(raw.decode('utf-8', errors='ignore'))
+        except Exception:
+            return {}
+
+    def _extract_from_html(html: str) -> str:
         if not html:
             return ''
-        # 방법 1: productName 매칭 후 근접 imageUrl 추출
-        for m in re.finditer(r'"productName"\s*:\s*"([^"]*)"', html):
-            raw_name = m.group(1)
-            if norm_code not in re.sub(r'[^A-Z0-9]', '', raw_name.upper()):
+
+        # 전략 A: JSON-LD 구조 데이터 파싱 (SEO 표준, 가장 신뢰성 높음)
+        for block in re.findall(
+            r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+            html, re.DOTALL | re.IGNORECASE
+        ):
+            try:
+                data = _json.loads(block)
+                elems = data.get('itemListElement') or ([data] if data.get('@type') == 'Product' else [])
+                for elem in elems:
+                    prod = elem.get('item', elem)
+                    name = str(prod.get('name', '') or '')
+                    if norm_code in re.sub(r'[^A-Z0-9]', '', name.upper()):
+                        img = prod.get('image') or prod.get('thumbnail') or ''
+                        if isinstance(img, list):
+                            img = img[0] if img else ''
+                        if img:
+                            return str(img)
+            except Exception:
                 continue
-            # 매칭된 productName 이후 3000자 안에서 이미지 키 탐색
-            window = html[m.start(): m.start() + 3000]
-            for key in ('imageUrl', 'thumbnailUrl', 'image', 'thumbnail', 'imgUrl'):
+
+        # 전략 B: productName JSON 블롭 → 근접 이미지 키 탐색 (최대 4000자)
+        for m in re.finditer(r'"productName"\s*:\s*"([^"]*)"', html):
+            if norm_code not in re.sub(r'[^A-Z0-9]', '', m.group(1).upper()):
+                continue
+            window = html[max(0, m.start() - 200): m.start() + 4000]
+            for key in ('imageUrl', 'thumbnailUrl', 'image', 'thumbnail', 'imgUrl', 'representativeImageUrl'):
                 img_m = re.search(r'"' + key + r'"\s*:\s*"(https?://[^"\\]+)"', window)
                 if img_m:
-                    return img_m.group(1).replace('\\/', '/')
-        # 방법 2: 네이버 쇼핑 이미지 CDN URL 직접 추출
+                    url = img_m.group(1).replace('\\/', '/')
+                    if url:
+                        return url
+
+        # 전략 C: 쇼핑 CDN 이미지 URL 직접 추출 (shopping-phinf.pstatic.net)
         m2 = re.search(r'https://shopping-phinf\.pstatic\.net/[^\s"\'<>&\\]+', html)
         if m2:
             return m2.group(0)
-        # 방법 3: 일반 pstatic.net 이미지
+
+        # 전략 D: og:image 메타 태그
+        og_m = re.search(r'<meta\s+property=["\']og:image["\']\s+content=["\']([^"\']+)["\']', html)
+        if not og_m:
+            og_m = re.search(r'<meta\s+content=["\']([^"\']+)["\']\s+property=["\']og:image["\']', html)
+        if og_m:
+            url = og_m.group(1)
+            if url.startswith('http'):
+                return url
+
+        # 전략 E: 일반 pstatic.net 이미지
         m3 = re.search(r'https://[a-z0-9.-]+\.pstatic\.net/[^\s"\'<>&\\]+', html)
         if m3:
             return m3.group(0)
+
         return ''
 
-    queries = [f"{brand} {clean_code}".strip() if brand else clean_code, clean_code]
-    seen: set = set()
+    base_q = f"{brand} {clean_code}".strip() if brand else clean_code
+    queries = list(dict.fromkeys([base_q, clean_code]))  # 중복 제거, 순서 유지
+
     for q in queries:
-        if q in seen:
-            continue
-        seen.add(q)
         enc = urllib.parse.quote(q)
-        # 네이버 쇼핑 검색
-        img = _find_image(_get(f"https://search.naver.com/search.naver?where=shop&query={enc}"))
+        shop_ref = f"https://search.shopping.naver.com/search/all?query={enc}"
+
+        # 1순위: 네이버 쇼핑 전용 검색 페이지 (SSR 상품 목록 포함)
+        img = _extract_from_html(_get(shop_ref, referer='https://search.shopping.naver.com/'))
         if img:
             return img
-        # 네이버 통합 검색 (쇼핑 카드 포함)
-        img = _find_image(_get(f"https://search.naver.com/search.naver?query={enc}"))
+
+        # 2순위: 네이버 쇼핑 내부 JSON API
+        api_url = (
+            f"https://search.shopping.naver.com/api/search?"
+            f"query={enc}&sort=rel&pagingIndex=1&pagingSize=10&viewType=list"
+        )
+        jdata = _get_json(api_url, referer=shop_ref)
+        products = (jdata.get('shoppingResult') or {}).get('products') or []
+        for p in products:
+            p_norm = re.sub(r'[^A-Z0-9]', '', str(p.get('productName', '')).upper())
+            if norm_code in p_norm:
+                img = p.get('imageUrl') or p.get('image') or p.get('thumbnail') or ''
+                if img:
+                    return str(img).replace('\\/', '/')
+
+        # 3순위: 네이버 통합검색 (쇼핑 카드 포함)
+        img = _extract_from_html(_get(
+            f"https://search.naver.com/search.naver?query={enc}",
+            referer='https://www.naver.com/'
+        ))
         if img:
             return img
+
     return ''
 
 app = FastAPI()

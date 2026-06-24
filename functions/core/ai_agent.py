@@ -157,7 +157,18 @@ class AIAgent:
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
                 "maxOutputTokens": 8000,
-                "temperature": 0.3
+                "temperature": 0.3,
+                "responseMimeType": "application/json",
+                "responseSchema": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "actions": {
+                            "type": "ARRAY",
+                            "items": { "type": "STRING" }
+                        }
+                    },
+                    "required": ["actions"]
+                }
             }
         }
 
@@ -205,36 +216,15 @@ class AIAgent:
 
             candidates = res.get("candidates", [])
             if not candidates:
-                # finishReason 확인
                 finish = res.get("promptFeedback", {}).get("blockReason", "unknown")
                 raise ValueError(f"No candidates returned. blockReason: {finish}")
 
             text_resp = candidates[0]["content"]["parts"][0]["text"].strip()
 
-            # ── Step 1: Markdown 백틱 제거 ──
-            text_resp = re.sub(r"```json\s*", "", text_resp)
-            text_resp = re.sub(r"```\s*", "", text_resp)
-            text_resp = text_resp.strip()
-
-            # ── Step 2: JSON 블록만 추출 ──
-            start_idx = text_resp.find("{")
-            end_idx = text_resp.rfind("}") + 1
-            if start_idx == -1 or end_idx == 0:
-                logger.error(f"No JSON found. Raw response (first 500): {text_resp[:500]}")
-                raise ValueError("No JSON object found in response")
-            text_resp = text_resp[start_idx:end_idx]
-
-            # ── Step 3: JSON 문자열 내부 실제 개행 이스케이프 ──
-            def escape_newlines_in_strings(m):
-                inner = m.group(1)
-                inner = inner.replace('\r\n', '<br>').replace('\r', '<br>').replace('\n', '<br>')
-                return f'"{inner}"'
-            text_resp = re.sub(r'"((?:[^"\\]|\\.)*)"', escape_newlines_in_strings, text_resp, flags=re.DOTALL)
-
-            # ── Step 4: 파싱 ──
+            # responseSchema를 통해 완벽한 JSON 포맷이 보장되므로, 정규식 전처리 없이 바로 파싱
             result = json.loads(text_resp)
             if "actions" in result and isinstance(result["actions"], list):
-                result["actions"] = [str(a).replace('\\n', '<br>') for a in result["actions"]]
+                result["actions"] = [str(a).replace('\\n', '<br>').replace('\n', '<br>') for a in result["actions"]]
                 return result
             else:
                 raise ValueError("JSON does not contain 'actions' list")

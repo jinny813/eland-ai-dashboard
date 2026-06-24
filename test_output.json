@@ -1,0 +1,7 @@
+{
+  "actions": [
+    "[테스트브랜드] NC 전체 및 1등 매장(BP) 대비 현재고 분포(할인율, 신선도, 시즌)를 확인하여 전반적인 밸런스를 조정하십시오. (⚠️ AI 진단 엔진 폴백 가이드 적용 - 원인: JSON parsing failed: Unterminated string starting at: line 2 column 5 (char 1413))",
+    "1등 매장에서 잘 팔리는 주력 아이템 중 자사 매장에 결품된 상품의 긴급 물량을 본사에 요청하십시오. (⚠️ AI 진단 엔진 폴백 가이드 적용 - 원인: JSON parsing failed: Unterminated string starting at: line 2 column 5 (char 1413))",
+    "현재 보유 중인 BEST 아이템임에도 판매가 저조한 상품은 매장 내 전면 VP 연출 및 마네킹 피팅을 통해 즉각적인 소진을 유도하십시오. (⚠️ AI 진단 엔진 폴백 가이드 적용 - 원인: JSON parsing failed: Unterminated string starting at: line 2 column 5 (char 1413))"
+  ]
+}
