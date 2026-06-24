@@ -44,6 +44,9 @@ class DataManager:
         self.BRAND_TO_COMPANY = {
             "로엠":       "ElandWorld",
             "미쏘":       "ElandWorld",
+            "클라비스":   "ElandWorld",
+            "뉴발란스":   "ElandWorld",
+            "뉴발란스키즈": "ElandWorld",
             "리스트":     "IndongFN",
             "쉬즈미스":   "IndongFN",
             "인동팩토리(리스트,쉬즈미스)": "IndongFN",
