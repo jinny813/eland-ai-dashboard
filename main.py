@@ -583,22 +583,38 @@ def main():
                                     st.error("❌ 데이터 재계산 실패")
                             st.rerun()
 
-                # ── 데이터 로드 우선순위: pickle(즉시) → Scored_Cache(1회 GSheet) → 전체 재계산 ──
+                # ── 데이터 로드 우선순위: pickle(즉시) → Scored_Cache(GSheet) → backup.json(GitHub) → 전체 재계산 ──
                 cache_ts, all_months_data = _load_from_pkl()
 
                 if all_months_data is None:
-                    # pickle 없음 → Scored_Cache 시도 (GSheet 1회 호출, ~5~15초)
+                    # ② Scored_Cache 시도 (GSheet 1회 호출, ~5~15초)
                     cache_ts, all_months_data = _cached_load_scored_cache(check_mgr)
                     if all_months_data is not None and isinstance(all_months_data, dict) and "error" not in all_months_data:
                         _save_to_pkl(cache_ts, all_months_data)
                     else:
-                        # Scored_Cache 없음 → 전체 재계산 (GSheet 다중 호출, 1~3분)
-                        cache_ts = None
-                        max_no = _cached_get_max_no(check_mgr)
-                        available_months = _cached_get_available_months(check_mgr, max_no)
-                        all_months_data = cached_load_all_dashboard_data(check_mgr, available_months)
-                        if all_months_data and isinstance(all_months_data, dict) and "error" not in all_months_data:
-                            _save_to_pkl(None, all_months_data)
+                        # ③ [v203.1] dashboard_backup.json 폴백 (GitHub에 포함, 클라우드에서도 즉시 로드 가능)
+                        # Scored_Cache GAS read_raw 미구현 문제 우회 — 로컬 데이터를 JSON으로 커밋하여 클라우드에 제공
+                        _backup_path = _c_os.path.join(_c_os.path.dirname(_c_os.path.abspath(__file__)), "data", "dashboard_backup.json")
+                        if _c_os.path.exists(_backup_path):
+                            try:
+                                with open(_backup_path, "r", encoding="utf-8") as _bf:
+                                    _backup_data = json.load(_bf)
+                                if _backup_data and isinstance(_backup_data, dict) and "error" not in _backup_data:
+                                    cache_ts = _backup_data.pop("__ts__", "백업 데이터")
+                                    all_months_data = _backup_data
+                                    logger.info(f"[backup.json] 폴백 로드 완료: {list(all_months_data.keys())}")
+                                    _save_to_pkl(cache_ts, all_months_data)
+                            except Exception as _be:
+                                logger.warning(f"[backup.json] 로드 실패: {_be}")
+
+                        if all_months_data is None:
+                            # ④ 전체 재계산 (GSheet 다중 호출, 1~3분)
+                            cache_ts = None
+                            max_no = _cached_get_max_no(check_mgr)
+                            available_months = _cached_get_available_months(check_mgr, max_no)
+                            all_months_data = cached_load_all_dashboard_data(check_mgr, available_months)
+                            if all_months_data and isinstance(all_months_data, dict) and "error" not in all_months_data:
+                                _save_to_pkl(None, all_months_data)
 
                 if all_months_data is None:
                     all_months_data = {"error": "데이터를 로드할 수 없습니다. 잠시 후 새로고침해 주세요."}
@@ -644,11 +660,8 @@ def main():
                             f'<script>window.__ALL_DATA__ = JSON.parse(document.getElementById("__data").textContent);</script>\n'
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
-                        
-                        # [v204.0] 초기 높이를 낮게 설정하고, iframe 내부 JS가 실제 콘텐츠 높이를 측정해
-                        # postMessage로 Streamlit에 전달해 자동 리사이즈 (페이지 전환 시 1회만 실행)
-                        st.components.v1.html(final_html, scrolling=False, height=900)
-                        st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
+
+                        st.components.v1.html(final_html, scrolling=True, height=5500)
 
                         # [v203.0] AI 브릿지: comm_plugin 완전 제거 (클라우드에서 invisible overlay 유발해 클릭 차단)
                         # comm_plugin의 declare_component가 Streamlit Cloud에서 포커스를 가로채는 iframe을 생성해
