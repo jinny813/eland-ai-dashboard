@@ -439,7 +439,8 @@ def main():
             max-width: 100% !important;
             margin: 0 !important;
         }
-        iframe {
+        /* [v202.5] 클라우드 환경 먹통 방지: 모든 iframe이 아닌 대시보드 iframe만 타겟팅 */
+        iframe[title="streamlit_html"], [data-testid="stHtml"] iframe {
             width: 100vw !important;
             height: calc(100vh - 60px) !important;
             border: none !important;
