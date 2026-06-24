@@ -643,8 +643,12 @@ def main():
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         
-                        # 대시보드를 먼저 그려서 상단 공백을 없앰. height는 생략하여 JS가 높이를 동적으로 전달하게 함
-                        st.components.v1.html(final_html, scrolling=True)
+                        # 지점 수 기반 + 페이지 여유 공간 포함한 높이 (p3 상세 현황판 등 긴 페이지 대응)
+                        latest_m = available_months[0] if available_months else None
+                        num_stores = len(all_months_data.get(latest_m, {}).get("STORES", [])) if latest_m else 50
+                        safe_height = max(3000, num_stores * 120 + 2000)
+
+                        st.components.v1.html(final_html, scrolling=False, height=safe_height)
                         st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
 
                         # [v202.1] AI 상세 진단 브릿지 연동 (대시보드 하단으로 이동해 상단 공백 방지)

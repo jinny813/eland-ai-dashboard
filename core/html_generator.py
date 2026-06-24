@@ -66,11 +66,20 @@ def _is_valid_title(title: str, keywords: list) -> bool:
 def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool:
     target_brand = target_brand.strip()
     if not target_brand: return True
-    
+
     if target_brand == '발렌시아':
         return '발렌시아' in title.replace('발렌시아가', '')
-    
-    return target_brand in title
+
+    # 공백 제거 후 비교 ('폴햄 키즈' vs '폴햄키즈' 같은 표기 차이 흡수)
+    t_norm = target_brand.replace(' ', '').lower()
+    if t_norm in title.replace(' ', '').lower():
+        return True
+
+    # Naver API가 반환한 brand/mallName 필드도 확인
+    if item_brand and t_norm in item_brand.replace(' ', '').lower():
+        return True
+
+    return False
 
 
 
@@ -81,12 +90,14 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
     """
     keywords = _get_item_keywords(item_code)
     clean_style_code = style_code.replace('-', '')
-    query = f"{brand_name}{clean_style_code}".strip()
+    query = f"{brand_name} {clean_style_code}".strip() if brand_name else clean_style_code
     if not query:
         return ('', '')
     norm_code = re.sub(r'[^a-zA-Z0-9]', '', clean_style_code).upper()
-    best_cleaned = None
+    best_cleaned = None      # 브랜드 + 품번 모두 일치
+    best_brand_only = None   # 브랜드만 일치 (품번 미포함 폴백)
     best_img = ''
+    best_brand_only_img = ''
     try:
         enc = urllib.parse.quote(query)
         url = f"https://search.naver.com/search.naver?query={enc}"
@@ -118,17 +129,22 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
                 cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
                 if brand_name and not _is_brand_match(brand_name, cleaned):
                     continue
-                # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
-                if norm_code and norm_code not in re.sub(r'[^a-zA-Z0-9]', '', cleaned).upper():
-                    continue
                 img_url = img_matches[i] if i < len(img_matches) else ''
-                if not best_cleaned:
-                    best_cleaned = cleaned
-                    best_img = img_url
-                if _is_valid_title(cleaned, keywords):
-                    return (cleaned, img_url)
+                code_in_title = norm_code and norm_code in re.sub(r'[^a-zA-Z0-9]', '', cleaned).upper()
+                if code_in_title:
+                    if not best_cleaned:
+                        best_cleaned = cleaned
+                        best_img = img_url
+                    if _is_valid_title(cleaned, keywords):
+                        return (cleaned, img_url)
+                elif not best_brand_only:
+                    # 품번이 제목에 없어도 브랜드 일치면 폴백으로 저장
+                    best_brand_only = cleaned
+                    best_brand_only_img = img_url
             if best_cleaned:
                 return (best_cleaned, best_img)
+            if best_brand_only:
+                return (best_brand_only, best_brand_only_img)
     except Exception:
         pass
 
@@ -148,7 +164,8 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
     image_url = ''
     keywords = _get_item_keywords(item_code)
     clean_style_code = style_code.replace('-', '')
-    query = f"{brand_name}{clean_style_code}".strip()
+    # 브랜드와 품번 사이 공백 포함 (검색 정확도 향상)
+    query = f"{brand_name} {clean_style_code}".strip() if brand_name else clean_style_code
     if not query:
         return ('', '')
 
@@ -181,31 +198,44 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
             items = fetch_api(clean_style_code)
 
         if items:
-            best_title = ''
-            best_img = ''
+            best_with_code = ''   # 브랜드 O + 품번 O
+            best_with_code_img = ''
+            best_brand_only = ''  # 브랜드 O + 품번 X (폴백)
+            best_brand_only_img = ''
             for item in items:
                 t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
                 brand_context = item.get('brand', '') + ' ' + item.get('mallName', '')
 
-                if brand_name and not _is_brand_match(brand_name, t, brand_context):
+                brand_ok = _is_brand_match(brand_name, t, brand_context) if brand_name else True
+                if not brand_ok:
                     continue
 
-                norm_query = clean_style_code.upper()
+                norm_query = re.sub(r'[^a-zA-Z0-9]', '', clean_style_code).upper()
                 norm_title = re.sub(r'[^a-zA-Z0-9]', '', t).upper()
+                code_in_title = norm_query and norm_query in norm_title
 
-                # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
-                if norm_query and norm_query in norm_title:
-                    if not best_title:
-                        best_title = t
-                        best_img = item.get('image', '')
+                if code_in_title:
+                    # 1순위: 브랜드 + 품번 모두 제목에 있는 결과
+                    if not best_with_code:
+                        best_with_code = t
+                        best_with_code_img = item.get('image', '')
                     if _is_valid_title(t, keywords):
                         title = t
                         image_url = item.get('image', '')
                         break
+                elif not best_brand_only:
+                    # 2순위: 브랜드는 맞지만 품번이 제목에 없는 경우 (폴백)
+                    best_brand_only = t
+                    best_brand_only_img = item.get('image', '')
 
-            if not title and best_title:
-                title = best_title
-                image_url = best_img
+            if not title:
+                if best_with_code:
+                    title = best_with_code
+                    image_url = best_with_code_img
+                elif best_brand_only:
+                    # 품번이 제목에 없어도 브랜드 일치 결과 사용
+                    title = best_brand_only
+                    image_url = best_brand_only_img
 
     # 2. API 결과 없을 때 웹 스크래핑 폴백 (브랜드+품번)
     if not title:

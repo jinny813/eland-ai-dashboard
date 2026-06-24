@@ -40,98 +40,40 @@ _IMG_CACHE_TTL = 3600 * 6  # 6시간
 
 
 def _fetch_product_image(brand: str, code: str) -> str:
-    """네이버 통합검색에서 상품 이미지 URL을 on-demand 크롤링.
-    search.shopping.naver.com은 418 차단되므로 search.naver.com 사용.
-    """
-    import re, urllib.parse, urllib.request, gzip as _gzip
+    """[개선된 방식] 네이버 OpenAPI를 이용해 상품 대표 이미지 크롤링"""
+    import os, urllib.request, json
+    from urllib.parse import quote
+    from dotenv import load_dotenv
 
-    clean_code = re.sub(r'[-\s]', '', code)
-    norm_code = re.sub(r'[^A-Z0-9]', '', clean_code.upper())
+    load_dotenv()
+    client_id = os.getenv("NAVER_CLIENT_ID")
+    client_secret = os.getenv("NAVER_CLIENT_SECRET")
+    
+    if not client_id or not client_secret:
+        return ""
+
+    norm_code = ''.join(c for c in code.upper() if c.isalnum())
     if not norm_code:
-        return ''
+        return ""
 
-    _HEADERS = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
-        'Accept-Encoding': 'gzip, deflate',
-        'Referer': 'https://www.naver.com/',
-    }
-
-    def _get(url: str) -> str:
-        try:
-            req = urllib.request.Request(url, headers=_HEADERS)
-            with urllib.request.urlopen(req, timeout=10) as r:
-                raw = r.read()
-                if r.headers.get('Content-Encoding', '') == 'gzip':
-                    raw = _gzip.decompress(raw)
-                return raw.decode('utf-8', errors='ignore')
-        except Exception:
-            return ''
-
-    def _to_https(url: str) -> str:
-        """protocol-relative나 schema 없는 URL에 https:// 붙이기."""
-        url = url.replace('\\/', '/').strip()
-        if url.startswith('//'):
-            return 'https:' + url
-        if not url.startswith('http'):
-            return 'https://' + url
-        return url
-
-    def _find(html: str) -> str:
-        if not html:
-            return ''
-
-        # 전략 1: productName이 품번과 매칭 → 근접 이미지 URL
-        # productName 값에 <(<), /(/) 같은 JSON unicode escape 포함 가능
-        for m in re.finditer(r'"productName"\s*:\s*"([^"]*)"', html):
-            raw_name = m.group(1)
-            # unicode escape 제거 후 알파뉴머릭만 추출
-            name_stripped = re.sub(r'\\u[0-9a-fA-F]{4}', '', raw_name)
-            name_norm = re.sub(r'[^A-Z0-9]', '', name_stripped.upper())
-            if norm_code not in name_norm:
-                # 원본에도 없으면 skip
-                if norm_code not in re.sub(r'[^A-Z0-9]', '', raw_name.upper()):
-                    continue
-            # 매칭됨 → 전후 5000자에서 이미지 키 탐색
-            window = html[max(0, m.start() - 300): m.start() + 5000]
-            for key in ('imageUrl', 'thumbnailUrl', 'image', 'thumbnail', 'imgUrl', 'representativeImageUrl'):
-                img_m = re.search(
-                    r'"' + key + r'"\s*:\s*"((?:https?:)?//[^"\\]+|https?://[^"\\]+|'
-                    r'[a-z0-9.-]+\.pstatic\.net/[^"\\]+)"',
-                    window
-                )
-                if img_m:
-                    return _to_https(img_m.group(1))
-
-        # 전략 2: shopping-phinf.pstatic.net CDN URL 직접 추출 (https:// 없어도 허용)
-        pst = re.findall(r'(?:https?://)?shopping-phinf\.pstatic\.net/[^\s"\'<>&\\]+', html)
-        if pst:
-            return _to_https(pst[0])
-
-        # 전략 3: imageUrl JSON 키에서 pstatic URL (위에서 못 찾은 경우 대비)
-        img_m = re.search(r'"imageUrl"\s*:\s*"([^"\\]*pstatic\.net[^"\\]*)"', html)
-        if img_m:
-            return _to_https(img_m.group(1))
-
-        # 전략 4: 일반 pstatic.net
-        pst2 = re.findall(r'(?:https?://)?[a-z0-9.-]+\.pstatic\.net/[^\s"\'<>&\\]+', html)
-        if pst2:
-            return _to_https(pst2[0])
-
-        return ''
-
-    base_q = f"{brand} {clean_code}".strip() if brand else clean_code
-    queries = list(dict.fromkeys([base_q, clean_code]))
-
-    for q in queries:
-        enc = urllib.parse.quote(q)
-        # 네이버 통합검색 (search.shopping.naver.com은 418 차단)
-        img = _find(_get(f"https://search.naver.com/search.naver?query={enc}"))
-        if img:
-            return img
-
-    return ''
+    query = quote(f"{brand} {code}".strip() if brand else code)
+    url = f"https://openapi.naver.com/v1/search/shop.json?query={query}&display=5"
+    
+    req = urllib.request.Request(url)
+    req.add_header("X-Naver-Client-Id", client_id)
+    req.add_header("X-Naver-Client-Secret", client_secret)
+    
+    try:
+        res = urllib.request.urlopen(req, timeout=5)
+        data = json.loads(res.read().decode('utf-8'))
+        
+        for item in data.get('items', []):
+            title_norm = ''.join(c for c in item.get('title', '').upper() if c.isalnum())
+            if norm_code in title_norm or (len(norm_code) >= 6 and norm_code[:6] in title_norm):
+                return item.get('image', '')
+    except Exception as e:
+        logger.error(f"Image API fetch error for {code}: {e}")
+    return ""
 
 app = FastAPI()
 
@@ -147,20 +89,63 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/api/product-image")
 async def get_product_image(brand: str = "", code: str = ""):
-    """버튼 클릭 시 on-demand로 네이버에서 상품 이미지 URL을 크롤링해 반환."""
+    """상품 이미지 반환 (1. 메모리 캐시 -> 2. SQLite 조회 -> 3. API 호출 후 저장)"""
     if not code:
         return JSONResponse({"image_url": "", "ok": False})
+        
     import time as _t
+    import sqlite3
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
+    
+    # 1. In-memory 캐시 우선 확인 (대시보드 병목 방지)
     cache_key = f"{brand}|{code}"
     cached = _IMG_CACHE.get(cache_key)
     if cached is not None:
         img, ts = cached
         if _t.time() - ts < _IMG_CACHE_TTL:
             return JSONResponse({"image_url": img, "ok": bool(img)})
+
+    image_url = ""
+    # 2. 메모리에 없으면 DB 캐시 확인
     try:
-        image_url = _fetch_product_image(brand, code)
-    except Exception:
-        image_url = ""
+        conn = sqlite3.connect(db_path, timeout=3.0)
+        cur = conn.cursor()
+        cur.execute("SELECT image_url FROM products WHERE style_code = ?", (code,))
+        row = cur.fetchone()
+        if row and row[0]:
+            image_url = row[0]
+            _IMG_CACHE[cache_key] = (image_url, _t.time())
+            conn.close()
+            return JSONResponse({"image_url": image_url, "ok": True})
+    except Exception as e:
+        logger.error(f"DB Read Error for {code}: {e}")
+        conn = None
+
+    # 3. 메모리, DB에 모두 없으면 OpenAPI 호출
+    if not image_url:
+        try:
+            image_url = _fetch_product_image(brand, code)
+        except Exception:
+            image_url = ""
+        
+    # 4. 찾은 이미지 DB와 메모리에 저장
+    if image_url:
+        try:
+            if not conn:
+                conn = sqlite3.connect(db_path, timeout=3.0)
+                cur = conn.cursor()
+            cur.execute("SELECT 1 FROM products WHERE style_code = ?", (code,))
+            if cur.fetchone():
+                cur.execute("UPDATE products SET image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE style_code = ?", (image_url, code))
+            else:
+                cur.execute("INSERT INTO products (style_code, brand, image_url) VALUES (?, ?, ?)", (code, brand, image_url))
+            conn.commit()
+        except Exception as e:
+            logger.error(f"DB Write Error for {code}: {e}")
+        finally:
+            if conn:
+                conn.close()
+                
     _IMG_CACHE[cache_key] = (image_url, _t.time())
     return JSONResponse({"image_url": image_url, "ok": bool(image_url)})
 
