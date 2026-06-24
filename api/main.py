@@ -127,26 +127,19 @@ async def get_product_image(brand: str = "", code: str = ""):
     """버튼 클릭 시 on-demand로 네이버에서 상품 이미지 URL을 크롤링해 반환."""
     if not code:
         return JSONResponse({"image_url": "", "ok": False})
+    import time as _t
+    cache_key = f"{brand}|{code}"
+    cached = _IMG_CACHE.get(cache_key)
+    if cached is not None:
+        img, ts = cached
+        if _t.time() - ts < _IMG_CACHE_TTL:
+            return JSONResponse({"image_url": img, "ok": bool(img)})
     try:
-        from core.html_generator import _crawl_naver_shopping_title, _NAME_SEARCH_CACHE, _NAME_SEARCH_TTL
-        import time as _t
-
-        # 세션 캐시에 이미지가 이미 있으면 즉시 반환
-        cached = _NAME_SEARCH_CACHE.get(code)
-        if cached is not None and len(cached) == 3:
-            _, img, ts = cached
-            if _t.time() - ts < _NAME_SEARCH_TTL and img:
-                return JSONResponse({"image_url": img, "ok": True})
-
-        # 브랜드+품번으로 크롤링 시도
-        _, image_url = _crawl_naver_shopping_title(brand, code)
-        # 결과 없으면 품번만으로 재시도
-        if not image_url and brand:
-            _, image_url = _crawl_naver_shopping_title('', code)
-
-        return JSONResponse({"image_url": image_url, "ok": bool(image_url)})
+        image_url = _fetch_product_image(brand, code)
     except Exception:
-        return JSONResponse({"image_url": "", "ok": False})
+        image_url = ""
+    _IMG_CACHE[cache_key] = (image_url, _t.time())
+    return JSONResponse({"image_url": image_url, "ok": bool(image_url)})
 
 
 @app.get("/api/dashboard")

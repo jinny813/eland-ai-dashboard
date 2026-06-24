@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import time as _time
 import sqlite3
 import urllib.parse
 import urllib.request
@@ -20,6 +21,9 @@ _ITEM_GROUP_KO = {
 _DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
 _SCORER_GENERIC = AssortmentScorer({})  # 아이템 코드 매핑용 (config 불필요)
 
+_NAME_SEARCH_CACHE: dict = {}   # {style_code: (result_str, timestamp)}
+_NAME_SEARCH_TTL: int = 3600 * 6  # 6시간 내 재시도 방지
+
 
 def _item_code_to_ko(item_code: str) -> str:
     """item_code → 한국어 카테고리명. AssortmentScorer의 기존 매핑 테이블 재사용."""
@@ -28,14 +32,61 @@ def _item_code_to_ko(item_code: str) -> str:
     grp = _SCORER_GENERIC._get_item_group(item_code)
     return _ITEM_GROUP_KO.get(grp, '—')
 
+_ITEM_KEYWORDS = {
+    'Outer': ['자켓', '재킷', '점퍼', '코트', '패딩', '가디건', '바람막이', '아우터', '집업', '조끼', '베스트', '사파리', '블루종'],
+    'Top': ['티셔츠', '셔츠', '블라우스', '니트', '스웨터', '맨투맨', '후드', '상의', '탑', '풀오버', '카라티', '반팔', '긴팔'],
+    'Bottom': ['바지', '팬츠', '슬랙스', '데님', '청바지', '레깅스', '하의', '쇼츠', '반바지', '조거', '면바지'],
+    'Skirt': ['스커트', '치마'],
+    'Dress': ['원피스', '드레스'],
+    'Set': ['세트', '상하복', '수트', '정장', '투피스', '셋업'],
+    'Suits': ['정장', '수트', '셋업', '양복'],
+    'Shirts': ['셔츠', '남방', '블라우스'],
+    'Casual': ['캐주얼', '티셔츠', '바지'],
+    'Knit': ['니트', '스웨터', '가디건', '조끼'],
+    'RunningShoes': ['러닝화', '운동화', '런닝화', '스니커즈'],
+    'CasualShoes': ['스니커즈', '단화', '슬립온', '운동화'],
+    'OtherShoes': ['구두', '로퍼', '부츠', '샌들', '슬리퍼', '워커']
+}
 
-def _crawl_naver_shopping_title(brand_name: str, style_code: str) -> str:
+def _get_item_keywords(item_code: str) -> list:
+    if not item_code or item_code in ('—', '-', 'nan', 'None', ''):
+        return []
+    grp = _SCORER_GENERIC._get_item_group(item_code)
+    kw = _ITEM_KEYWORDS.get(grp, []).copy()
+    ko = _item_code_to_ko(item_code)
+    if ko != '—' and ko not in kw:
+        kw.append(ko)
+    return kw
+
+def _is_valid_title(title: str, keywords: list) -> bool:
+    if not keywords: return True
+    for k in keywords:
+        if k in title: return True
+    return False
+def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool:
+    target_brand = target_brand.strip()
+    if not target_brand: return True
+    
+    if target_brand == '발렌시아':
+        return '발렌시아' in title.replace('발렌시아가', '')
+    
+    return target_brand in title
+
+
+
+def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str = None) -> tuple:
     """
-    API 키가 없거나 실패한 경우, 네이버 통합 검색 쇼핑 영역 결과를 직접 파싱하여 상품명을 반환합니다.
+    API 키가 없거나 실패한 경우, 네이버 통합 검색 쇼핑 영역 결과를 직접 파싱하여
+    (상품명, 이미지URL) 튜플을 반환합니다.
     """
-    query = f"{brand_name} {style_code}".strip()
+    keywords = _get_item_keywords(item_code)
+    clean_style_code = style_code.replace('-', '')
+    query = f"{brand_name}{clean_style_code}".strip()
     if not query:
-        return ''
+        return ('', '')
+    norm_code = re.sub(r'[^a-zA-Z0-9]', '', clean_style_code).upper()
+    best_cleaned = None
+    best_img = ''
     try:
         enc = urllib.parse.quote(query)
         url = f"https://search.naver.com/search.naver?query={enc}"
@@ -45,44 +96,48 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str) -> str:
             'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
             'Referer': 'https://search.naver.com/'
         }
+
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=5) as resp:
             html = resp.read().decode('utf-8', errors='ignore')
-            
-        def check_brand(tb, txt):
-            tb = tb.strip()
-            if not tb: return True
-            if tb == '발렌시아': return '발렌시아' in txt.replace('발렌시아가', '')
-            return tb in txt
 
         matches = re.findall(r'"productName"\s*:\s*"([^"]+)"', html)
+        img_matches = re.findall(r'"imageUrl"\s*:\s*"([^"]+)"', html)
         if matches:
-            for raw_title in matches:
-                # JSON escape decode
+            for i, raw_title in enumerate(matches):
                 try:
                     safe_s = raw_title.replace('"', '\\"')
                     decoded = json.loads(f'"{safe_s}"')
                 except Exception:
-                    def replace_match(m):
-                        return chr(int(m.group(1), 16))
+                    def replace_match(m): return chr(int(m.group(1), 16))
                     try:
                         decoded = re.sub(r'\\u([0-9a-fA-F]{4})', replace_match, raw_title)
                         decoded = decoded.replace('\\/', '/')
-                    except Exception:
-                        decoded = raw_title
-                
+                    except Exception: decoded = raw_title
+
                 cleaned = re.sub(r'<[^>]*>', '', decoded).strip()
-                if cleaned and check_brand(brand_name, cleaned):
-                    return cleaned
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f"Naver scrap failed for {query}: {e}")
-    return ''
+                if brand_name and not _is_brand_match(brand_name, cleaned):
+                    continue
+                # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
+                if norm_code and norm_code not in re.sub(r'[^a-zA-Z0-9]', '', cleaned).upper():
+                    continue
+                img_url = img_matches[i] if i < len(img_matches) else ''
+                if not best_cleaned:
+                    best_cleaned = cleaned
+                    best_img = img_url
+                if _is_valid_title(cleaned, keywords):
+                    return (cleaned, img_url)
+            if best_cleaned:
+                return (best_cleaned, best_img)
+    except Exception:
+        pass
+
+    return ('', '')
 
 
-def _naver_search_style_name(brand_name: str, style_code: str) -> str:
+def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = None) -> tuple:
     """
-    네이버 쇼핑 API로 브랜드+품번 검색 → 상품명 반환.
+    네이버 쇼핑 API로 브랜드+품번 검색 → (상품명, 이미지URL) 튜플 반환.
     실패하거나 API 키가 없으면 직접 웹 스크래핑을 통한 폴백 시도.
     결과를 product_master.db에 캐시하고 core/style_master.json 파일에 저장하여 재사용.
     """
@@ -90,54 +145,89 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
     client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
     
     title = ''
-    query = f"{brand_name} {style_code}".strip()
+    image_url = ''
+    keywords = _get_item_keywords(item_code)
+    clean_style_code = style_code.replace('-', '')
+    query = f"{brand_name}{clean_style_code}".strip()
     if not query:
-        return ''
-        
+        return ('', '')
+
+    # 세션 내 캐시 확인 (성공/실패 모두 저장되어 있어 재시도 방지)
+    _cached = _NAME_SEARCH_CACHE.get(style_code)
+    if _cached is not None:
+        _result, _img, _ts = _cached
+        if _time.time() - _ts < _NAME_SEARCH_TTL:
+            return (_result, _img)
+
     # 1. API 키가 있으면 OpenAPI 우선 시도
     if client_id and client_secret:
-        def _is_brand_match(target_brand: str, title: str, item_brand: str = '') -> bool:
-            target_brand = target_brand.strip()
-            if not target_brand: return True
-            
-            if target_brand == '발렌시아':
-                return '발렌시아' in title.replace('발렌시아가', '')
-            
-            return target_brand in title
+        def fetch_api(q):
+            try:
+                enc = urllib.parse.quote(q)
+                url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=5"
+                req = urllib.request.Request(url)
+                req.add_header("X-Naver-Client-Id", client_id)
+                req.add_header("X-Naver-Client-Secret", client_secret)
+                resp = urllib.request.urlopen(req, timeout=5)
+                if resp.getcode() == 200:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    return data.get('items', [])
+            except Exception:
+                pass
+            return []
 
-        try:
-            enc = urllib.parse.quote(query)
-            url = f"https://openapi.naver.com/v1/search/shop.json?query={enc}&display=5"
-            req = urllib.request.Request(url)
-            req.add_header("X-Naver-Client-Id", client_id)
-            req.add_header("X-Naver-Client-Secret", client_secret)
-            resp = urllib.request.urlopen(req, timeout=5)
-            if resp.getcode() == 200:
-                data = json.loads(resp.read().decode('utf-8'))
-                items = data.get('items', [])
-                for item in items:
-                    t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
-                    mall = item.get('brand', '') + ' ' + item.get('mallName', '')
-                    if _is_brand_match(brand_name, t, mall):
+        items = fetch_api(query)
+        if not items and brand_name:
+            items = fetch_api(clean_style_code)
+
+        if items:
+            best_title = ''
+            best_img = ''
+            for item in items:
+                t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
+                brand_context = item.get('brand', '') + ' ' + item.get('mallName', '')
+
+                if brand_name and not _is_brand_match(brand_name, t, brand_context):
+                    continue
+
+                norm_query = clean_style_code.upper()
+                norm_title = re.sub(r'[^a-zA-Z0-9]', '', t).upper()
+
+                # 품번이 상품명에 정확하게 포함되어야만 유효한 결과로 인정
+                if norm_query and norm_query in norm_title:
+                    if not best_title:
+                        best_title = t
+                        best_img = item.get('image', '')
+                    if _is_valid_title(t, keywords):
                         title = t
+                        image_url = item.get('image', '')
                         break
-        except Exception:
-            pass
 
-    # 2. API 결과가 없거나 실패 시 웹 스크래핑 폴백 시도
+            if not title and best_title:
+                title = best_title
+                image_url = best_img
+
+    # 2. API 결과 없을 때 웹 스크래핑 폴백 (브랜드+품번)
     if not title:
-        title = _crawl_naver_shopping_title(brand_name, style_code)
+        title, image_url = _crawl_naver_shopping_title(brand_name, style_code, item_code)
+
+    # 3. 브랜드 없이 품번만으로 재시도 (더 넓은 검색)
+    if not title and brand_name:
+        title, image_url = _crawl_naver_shopping_title('', style_code, item_code)
+
+    # 결과 캐시 저장 (성공/실패 모두 — 재시도 방지)
+    _NAME_SEARCH_CACHE[style_code] = (title, image_url, _time.time())
 
     if title:
         # DB에 캐시
         try:
             conn = sqlite3.connect(_DB_PATH)
             conn.execute(
-                """INSERT INTO products (style_code, product_name, brand, updated_at) 
+                """INSERT INTO products (style_code, product_name, brand, updated_at)
                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                   ON CONFLICT(style_code) DO UPDATE SET 
-                       product_name=excluded.product_name, 
-                       brand=excluded.brand, 
+                   ON CONFLICT(style_code) DO UPDATE SET
+                       product_name=excluded.product_name,
+                       brand=excluded.brand,
                        updated_at=CURRENT_TIMESTAMP""",
                 (style_code, title, brand_name)
             )
@@ -165,8 +255,8 @@ def _naver_search_style_name(brand_name: str, style_code: str) -> str:
                 json.dump(master_data, jf, ensure_ascii=False, indent=2)
         except Exception:
             pass
-        return title
-    return ''
+        return (title, image_url)
+    return ('', '')
 
 # ── [v8.0] 다중 팔레트 기반 동적 색상 유틸리티
 def _get_dynamic_color(pct: float, p_type: str = "default") -> str:
@@ -204,7 +294,12 @@ def _safe_float(v) -> float:
 def _get_stock_ref_gen(df, outlet):
     """중복 제거된 고유 재고 레퍼런스 추출"""
     if df.empty: return df
+    has_valid_uid = False
     if 'inv_uid' in df.columns and df['inv_uid'].notna().any():
+        if not (df['inv_uid'].astype(str).str.strip().eq('') | df['inv_uid'].astype(str).str.strip().eq('nan')).all():
+            has_valid_uid = True
+            
+    if has_valid_uid:
         return df.drop_duplicates('inv_uid')
     if outlet: return df
     d_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
@@ -508,10 +603,21 @@ def _get_product_info(style_codes: list) -> dict:
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
-        query = f"SELECT * FROM products WHERE style_code IN ('{codes_str}')"
+        # crawled_product_names 테이블이 있으면 우선 사용, 없으면 products만 조회
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if 'crawled_product_names' in tables:
+            query = f"""
+                SELECT p.style_code, p.category, p.keywords, p.normal_price,
+                       COALESCE(c.product_name, p.product_name) as product_name
+                FROM products p
+                LEFT JOIN crawled_product_names c ON p.style_code = c.style_code
+                WHERE p.style_code IN ('{codes_str}')
+            """
+        else:
+            query = f"SELECT style_code, category, keywords, normal_price, product_name FROM products WHERE style_code IN ('{codes_str}')"
         df_p = pd.read_sql(query, conn)
         conn.close()
-        
+
         res = {}
         for _, row in df_p.iterrows():
             res[row['style_code']] = {
@@ -546,26 +652,27 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 1) raw data에서 초기값 추출
+        # ── 1+2+3) DB 마스터 및 Raw Data에서 상품명(style_name) 추출 ──
+        # 이랜드월드 등 DB에 이미 상품명이 있는 경우 크롤링하지 않고 그대로 사용합니다.
         raw_item_name = str(row.get('item_name', '') or '').strip()
-        raw_style_name = str(row.get('style_name', '') or '').strip()
+        raw_style_name = ''
 
-        # ── 2) dedup으로 누락된 경우: 같은 style_code의 다른 행에서 탐색
-        if raw_style_name in _EMPTY_VALS:
-            for _, srow in df[df['style_code'] == s].iterrows():
-                sn = str(srow.get('style_name', '') or '').strip()
-                if sn not in _EMPTY_VALS:
-                    raw_style_name = sn
-                    break
-
-        # ── 3) DB 마스터 override
+        # 1. DB 마스터 우선 확인 (p_map)
         if s in p_map:
             db_item = p_map[s].get('item_name') or ''
             db_style = p_map[s].get('style_name') or ''
             if db_item and db_item not in _EMPTY_VALS:
                 raw_item_name = db_item
             if db_style and db_style not in _EMPTY_VALS:
-                raw_style_name = db_style
+                raw_style_name = str(db_style).strip()
+
+        # 2. Raw Data 확인 (마스터에 없으면 원본 df에서 가져옴)
+        if not raw_style_name or raw_style_name in _EMPTY_VALS:
+            for _, srow in df[df['style_code'] == s].iterrows():
+                sn = str(srow.get('style_name', '')).strip()
+                if sn and sn not in _EMPTY_VALS:
+                    raw_style_name = sn
+                    break
 
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:
@@ -578,11 +685,12 @@ def _build_best_items(df) -> dict:
             else:
                 raw_item_name = ic
 
-        # ── 5) style_name: 네이버 쇼핑 검색 (API key 있을 때만)
-        if raw_style_name in _EMPTY_VALS and brand_name:
-            found = _naver_search_style_name(brand_name, s)
-            if found:
-                raw_style_name = found
+        # ── 5) style_name: DB에 유효값 없으면 네이버에서 품번 정확 매칭으로 검색
+        if raw_style_name in _EMPTY_VALS:
+            ic = str(row.get('item_code', '') or '').strip()
+            searched, _ = _naver_search_style_name(brand_name, s, ic if ic not in _EMPTY_VALS else None)
+            if searched:
+                raw_style_name = searched
 
         # [v131.0] 단가 보완 로직 강화:
         # 1. DB 마스터 정보(p_map)에 유효 단가가 있는지 우선 확인

@@ -652,47 +652,27 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 내부 정제 함수
-        def _clean_ugly_raw_name(name_str: str) -> str:
-            if not name_str: return ""
-            ns = str(name_str).strip()
-            while True:
-                m = re.match(r'^[^()]*\)', ns)
-                if m: ns = ns[m.end():].strip()
-                else: break
-            ns = re.sub(r'[◆※#][^\s]+', '', ns).strip()
-            return ns
-
-        _norm_code = re.sub(r'[^a-zA-Z0-9]', '', s).upper()
-
-        def _code_mismatch(name_str: str) -> bool:
-            """style_name에 현재 품번과 다른 코드 토큰이 포함되면 True (순수 한국어 이름은 항상 False)"""
-            tokens = re.findall(r'[a-zA-Z0-9]{6,}', name_str)
-            if not tokens:
-                return False
-            return any(
-                t.upper() not in _norm_code and _norm_code not in t.upper()
-                for t in tokens
-            )
-
-        # ── 1+2+2.5) raw data에서 유효한 style_name 탐색
-        # style_name이 있는 품번은 그대로 사용, 품번 불일치 데이터만 건너뜀
+        # ── 1+2+3) DB 마스터 및 Raw Data에서 상품명(style_name) 추출 ──
+        # 이랜드월드 등 DB에 이미 상품명이 있는 경우 크롤링하지 않고 그대로 사용합니다.
         raw_item_name = str(row.get('item_name', '') or '').strip()
         raw_style_name = ''
-        for _, srow in df[df['style_code'] == s].iterrows():
-            sn = _clean_ugly_raw_name(srow.get('style_name', ''))
-            if sn not in _EMPTY_VALS and not _code_mismatch(sn):
-                raw_style_name = sn
-                break
 
-        # ── 3) DB 마스터 override (불일치 없는 경우 신뢰 — 순수 한국어 이름 포함)
+        # 1. DB 마스터 우선 확인 (p_map)
         if s in p_map:
             db_item = p_map[s].get('item_name') or ''
             db_style = p_map[s].get('style_name') or ''
             if db_item and db_item not in _EMPTY_VALS:
                 raw_item_name = db_item
-            if db_style and db_style not in _EMPTY_VALS and not _code_mismatch(db_style):
-                raw_style_name = db_style
+            if db_style and db_style not in _EMPTY_VALS:
+                raw_style_name = str(db_style).strip()
+
+        # 2. Raw Data 확인 (마스터에 없으면 원본 df에서 가져옴)
+        if not raw_style_name or raw_style_name in _EMPTY_VALS:
+            for _, srow in df[df['style_code'] == s].iterrows():
+                sn = str(srow.get('style_name', '')).strip()
+                if sn and sn not in _EMPTY_VALS:
+                    raw_style_name = sn
+                    break
 
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:
