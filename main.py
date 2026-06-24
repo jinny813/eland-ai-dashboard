@@ -441,7 +441,7 @@ def main():
         }
         iframe {
             width: 100vw !important;
-            min-height: 100vh !important;
+            height: calc(100vh - 60px) !important;
             border: none !important;
         }
         [data-testid="stSidebar"] {
@@ -649,11 +649,10 @@ def main():
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
                         
                         # 지점 수 기반 + 페이지 여유 공간 포함한 높이 (p3 상세 현황판 등 긴 페이지 대응)
-                        latest_m = available_months[0] if available_months else None
-                        num_stores = len(all_months_data.get(latest_m, {}).get("STORES", [])) if latest_m else 50
-                        safe_height = max(3000, num_stores * 120 + 2000)
-
-                        st.components.v1.html(final_html, scrolling=False, height=safe_height)
+                        # [v202.4] 하단 흰색 빈 여백 완벽 제거
+                        # 기존 safe_height(3000~8000px) 강제 할당으로 인해 발생하던 하단 공백 문제 해결.
+                        # Python 단에서 height를 주지 않고, CSS의 min-height: 100vh와 내부 스크롤(scrolling=True)에 맡김.
+                        st.components.v1.html(final_html, scrolling=True)
                         st.markdown('<div style="margin-bottom: 20px;"></div>', unsafe_allow_html=True)
 
                         # [v202.1] AI 상세 진단 브릿지 연동 (대시보드 하단으로 이동해 상단 공백 방지)
