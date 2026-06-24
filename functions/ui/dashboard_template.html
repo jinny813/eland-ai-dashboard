@@ -47,7 +47,6 @@
 
     .app {
       display: flex;
-      min-height: 100vh;
     }
 
     /* ──────────────────────────────────────────────
@@ -220,7 +219,7 @@
     }
 
     .content {
-      padding: 24px 32px 120px 32px; /* 하단 여백 120px 추가 */
+      padding: 24px 32px 40px 32px; /* 하단 여백 대폭 축소 */
       flex: 1;
       overflow-y: visible; /* 부모 스크롤을 따르도록 수정 */
     }
@@ -4686,13 +4685,16 @@
   <script>
     function sendHeight() {
       if (window.parent) {
-        // AI 진단 결과 등으로 높이가 동적으로 변할 때를 대비해 약간의 여백 추가
-        const newHeight = document.documentElement.scrollHeight + 50;
-        window.parent.postMessage({
-          isStreamlitMessage: true,
-          type: "streamlit:setFrameHeight",
-          height: newHeight
-        }, "*");
+        const appWrapper = document.querySelector('.app');
+        if (appWrapper) {
+          // 여백을 임의로 더하지 않고, 실제 콘텐츠 높이만 정확히 계산 (무한 팽창 방지)
+          const newHeight = appWrapper.scrollHeight;
+          window.parent.postMessage({
+            isStreamlitMessage: true,
+            type: "streamlit:setFrameHeight",
+            height: newHeight
+          }, "*");
+        }
       }
     }
     const ro = new ResizeObserver(sendHeight);
