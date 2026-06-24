@@ -63,11 +63,20 @@ class ActionAnalyzer:
             p_map = p_master.set_index('style_code').to_dict('index')
             conn.close()
 
+        _empty = {'', '—', '-', 'nan', 'None', 'none'}
+
         def get_name(sc, row):
-            if sc in p_map: 
-                name = p_map[sc]['product_name'] or p_map[sc]['category']
-                if name: return name
-            return str(row.get('style_name', row.get('product_name', row.get('item_name', sc))))
+            # 1. GSheet 원본 style_name 우선 (이랜드 등 ERP 한국어 이름 보존)
+            for col in ('style_name', 'product_name', 'item_name'):
+                v = str(row.get(col, '') or '').strip()
+                if v and v not in _empty:
+                    return v
+            # 2. GSheet에 없으면 SQLite 마스터
+            if sc in p_map:
+                name = p_map[sc].get('product_name') or p_map[sc].get('category') or ''
+                if name and name not in _empty:
+                    return name
+            return sc
 
         # 1. 본 매장(자사) 판매 BEST 10 추출 (재고 확보 필요 상품)
         agg_dict = {

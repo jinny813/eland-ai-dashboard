@@ -652,27 +652,33 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 1+2+3) DB 마스터 및 Raw Data에서 상품명(style_name) 추출 ──
-        # 이랜드월드 등 DB에 이미 상품명이 있는 경우 크롤링하지 않고 그대로 사용합니다.
+        # ── 1+2+3) 상품명(style_name) 추출 ──
+        # 우선순위: GSheet(원본 ERP 데이터) > SQLite 마스터 > 네이버 크롤링
+        # 이랜드(로엠/클라비스/뉴발란스 등)는 GSheet에 한국어 이름이 있으므로 크롤링 불필요
         raw_item_name = str(row.get('item_name', '') or '').strip()
         raw_style_name = ''
 
-        # 1. DB 마스터 우선 확인 (p_map)
-        if s in p_map:
+        # 1. GSheet 원본 데이터 우선 확인 (이랜드 등 ERP 상품명 보존)
+        for _, srow in df[df['style_code'] == s].iterrows():
+            sn = str(srow.get('style_name', '')).strip()
+            if sn and sn not in _EMPTY_VALS:
+                raw_style_name = sn
+                break
+
+        # 2. GSheet에 없으면 SQLite 마스터 확인
+        if raw_style_name in _EMPTY_VALS:
+            if s in p_map:
+                db_item = p_map[s].get('item_name') or ''
+                db_style = p_map[s].get('style_name') or ''
+                if db_item and db_item not in _EMPTY_VALS:
+                    raw_item_name = db_item
+                if db_style and db_style not in _EMPTY_VALS:
+                    raw_style_name = str(db_style).strip()
+        elif s in p_map:
+            # GSheet에 이름이 있어도 item_name은 SQLite에서 보완
             db_item = p_map[s].get('item_name') or ''
-            db_style = p_map[s].get('style_name') or ''
             if db_item and db_item not in _EMPTY_VALS:
                 raw_item_name = db_item
-            if db_style and db_style not in _EMPTY_VALS:
-                raw_style_name = str(db_style).strip()
-
-        # 2. Raw Data 확인 (마스터에 없으면 원본 df에서 가져옴)
-        if not raw_style_name or raw_style_name in _EMPTY_VALS:
-            for _, srow in df[df['style_code'] == s].iterrows():
-                sn = str(srow.get('style_name', '')).strip()
-                if sn and sn not in _EMPTY_VALS:
-                    raw_style_name = sn
-                    break
 
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:

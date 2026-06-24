@@ -4690,7 +4690,7 @@
         const newHeight = document.documentElement.scrollHeight + 50;
         window.parent.postMessage({
           isStreamlitMessage: true,
-          type: "setFrameHeight",
+          type: "streamlit:setFrameHeight",
           height: newHeight
         }, "*");
       }
@@ -4698,6 +4698,8 @@
     const ro = new ResizeObserver(sendHeight);
     ro.observe(document.body);
     window.addEventListener("load", sendHeight);
+    // 가장 확실한 백업 방법: 주기적으로 높이 재계산 후 전송
+    setInterval(sendHeight, 1000);
   </script>
 </body>
 
