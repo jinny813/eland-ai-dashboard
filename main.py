@@ -129,7 +129,7 @@ def _cached_build_month(_mgr, max_no: int, month: str, report_version: str = REP
     raw_recs 단계에서 Python List 형태로 선택된 달만 필터링한 후 넘깁니다.
     """
     import importlib, sys
-    for _m in ['core.data_loader']:
+    for _m in ['core.data_loader', 'core.scoring_logic']:
         if _m in sys.modules:
             importlib.reload(sys.modules[_m])
     from core.data_loader import load_dashboard_data
