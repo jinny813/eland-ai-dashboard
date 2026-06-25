@@ -461,9 +461,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     # 2. 할인율 세부
     df['_dis_rate'] = df['discount_rate'].apply(AssortmentScorer._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
     
-    # [v4.1] 할인율 데이터가 모두 0인 상설 매장의 경우 연차(Age) 기준으로 자동 Fallback 처리
+    # [v17.33] 상설 매장은 항상 rate-based (scoring_logic.py와 동일)
     has_dis_data = (df['_dis_rate'] > 0).any()
-    use_age_for_dis = outlet and not has_dis_data
 
     category_group = str(df['category_group'].iloc[0]) if 'category_group' in df.columns else ""
     # [v11.1] 스포츠 카테고리 대응: 정상 매장이라도 실제 할인율 필드 사용 (아동은 제외)
@@ -477,14 +476,17 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     dis_inv = inv_w.get('dis', {})
 
-    _use_rate_dis_h = (outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h)
+    _use_rate_dis_h = outlet or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h)
     if _use_rate_dis_h:
-        # 상설 또는 스포츠: 실시간 할인율 필드 활용
-        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), dis_inv.get('s70', 0.10)),
-                   ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), dis_inv.get('s50', 0.20)),
-                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), dis_inv.get('s30', 0.30)),
-                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), dis_inv.get('s10', 0.10)),
-                   ('d0',  '0%', (df['_dis_rate']==0), dis_inv.get('s0', 0.00))]
+        # 상설 또는 스포츠: 실시간 할인율 필드 활용 (s0=0% 항목은 rate-based 채점 제외)
+        _d_s70 = dis_inv.get('s70', 0.10 if outlet else 0.00)
+        _d_s50 = dis_inv.get('s50', 0.20 if outlet else 0.05)
+        _d_s30 = dis_inv.get('s30', 0.30 if outlet else 0.10)
+        _d_s10 = dis_inv.get('s10', 0.10 if outlet else 0.15)
+        dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), _d_s70),
+                   ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), _d_s50),
+                   ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), _d_s30),
+                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), _d_s10)]
     else:
         # 정상 또는 할인율 데이터 없는 상설: 연차(year) 기준 매핑
         dis_cfg = [('d70', '70% 이상', (df['_age']>=4), dis_inv.get('s70', 0.00)),
