@@ -357,9 +357,9 @@ class AssortmentScorer:
             if any(k in cg for k in ["스포츠", "아웃도어"]):
                 is_rate_based = True
 
-        # [v4.1] 할인율 데이터가 모두 0인 상설 매장의 경우 연차(Age) 기준으로 자동 Fallback 처리
+        # [v4.1→v17.31] 상설은 항상 실할인율 기준 채점 (연차 폴백 제거)
         has_dis_data = (df['_dis_rate'] > 0).any()
-        use_age_for_dis = is_outlet and not has_dis_data
+        use_age_for_dis = False  # 상설은 rate-based 고정; 정상 매장은 _use_rate_dis=False 분기에서 처리
 
         # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
         _brand_nm_s = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
@@ -367,20 +367,25 @@ class AssortmentScorer:
 
         _use_rate_dis = (is_outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_s not in _age_only_brands)
         if _use_rate_dis:
+            # 정상/상설에 맞는 기본값 분리 적용. s0는 연차기반 전용 키이므로 rate-based에서 제외.
+            _d_s70 = dis_inv.get('s70', 0.10 if is_outlet else 0.00)
+            _d_s50 = dis_inv.get('s50', 0.20 if is_outlet else 0.05)
+            _d_s30 = dis_inv.get('s30', 0.30 if is_outlet else 0.10)
+            _d_s10 = dis_inv.get('s10', 0.10 if is_outlet else 0.15)
             dis_cfg = [
-                {'m': (df['_dis_rate'] >= 70), 'r': dis_inv.get('s70', 0.10)},
-                {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': dis_inv.get('s50', 0.20)},
-                {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': dis_inv.get('s30', 0.30)},
-                {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': dis_inv.get('s10', 0.10)},
-                {'m': (df['_dis_rate'] == 0), 'r': dis_inv.get('s0', 0.00)},
+                {'m': (df['_dis_rate'] >= 70), 'r': _d_s70},
+                {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': _d_s50},
+                {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': _d_s30},
+                {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': _d_s10},
+                # 0% 할인 아이템은 rate-based 채점에서 제외 (s0는 연차기반 전용)
             ]
         else:
             dis_cfg = [
-                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.10 if use_age_for_dis else 0.70)},
-                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.10 if use_age_for_dis else 0.00)},
-                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.20 if use_age_for_dis else 0.05)},
-                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
-                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.10 if use_age_for_dis else 0.15)},
+                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.70)},
+                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.00)},
+                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.05)},
+                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.10)},
+                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.15)},
             ]
         # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
         dis_scale = 1.0

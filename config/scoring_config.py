@@ -37,16 +37,17 @@ _WOMEN_NORMAL_BASE = {
     "bp_best_target":    [25.0, 29.4],
     "year_base": 2026,
 
-    # ── 최종 재고 로직 (v8) 목표 비중
+    # ── 최종 재고 로직 목표 비중 (이미지 최종판 기준)
+    # 시즌: 봄(SS)=0.25, 여름(당시즌)=0.50 → sum=0.75 → 봄 max 5점, 여름 max 10점 정확히 산출
     "inv_weights": {
-        "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15}, 
+        "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
         "fresh":  {"new": 0.70},
         "best":   {"store10": 0.20},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
 
-    # 지표별 최종 가중치 (총점 산출용)
+    # 지표별 최종 가중치 (총점 산출용): dis=30점, fresh=20점, sea=15점, best=35점
     "weight_discount":  0.30,
     "weight_freshness": 0.20,
     "weight_season":    0.15,
@@ -61,16 +62,17 @@ _WOMEN_OUTLET_BASE = {
     "bp_freshness_target": 10.0,
     "year_base": 2026,
 
-    # ── 최종 재고 로직 (v8) 목표 비중
+    # ── 최종 재고 로직 목표 비중 (이미지 최종판 기준)
+    # best store10: 25% (이미지 상설 25%), 시즌: 봄=0.25, 여름=0.50 → 봄 5점, 여름 10점
     "inv_weights": {
-        "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10}, 
+        "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
         "fresh":  {"new": 0.10, "plan": 0.20},
-        "best":   {"store10": 0.20},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "best":   {"store10": 0.25},
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
 
-    # 지표별 최종 가중치 (총점 산출용)
+    # 지표별 최종 가중치 (총점 산출용): dis=40점, fresh=15점, sea=15점, best=30점
     "weight_discount":  0.40,
     "weight_freshness": 0.15,
     "weight_season":    0.15,
