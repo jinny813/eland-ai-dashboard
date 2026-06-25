@@ -579,6 +579,22 @@ def main():
                                         st.success(f"✅ 갱신 완료! ({_ref_ts})")
                                     else:
                                         st.warning("⚠️ GSheet Scored_Cache 저장 실패 — 로컬 캐시만 갱신됨")
+                                        
+                                    # [추가] 하이브리드 캐싱: 로컬 JSON 파일 영구 덮어쓰기
+                                    try:
+                                        import json as _c_json
+                                        _backup_dir = _c_os.path.join(_c_os.path.dirname(_c_os.path.abspath(__file__)), "data")
+                                        _c_os.makedirs(_backup_dir, exist_ok=True)
+                                        _backup_path = _c_os.path.join(_backup_dir, "dashboard_backup.json")
+                                        
+                                        _ref_data_copy = _ref_data.copy()
+                                        _ref_data_copy["__ts__"] = _ref_ts
+                                        
+                                        with open(_backup_path, "w", encoding="utf-8") as _bf:
+                                            _c_json.dump(_ref_data_copy, _bf, ensure_ascii=False)
+                                        st.success("💾 dashboard_backup.json 로컬 백업 완료 (초고속 로딩 셋업 완료!)")
+                                    except Exception as _be:
+                                        st.error(f"백업 저장 실패: {_be}")
                                 else:
                                     st.error("❌ 데이터 재계산 실패")
                             st.rerun()

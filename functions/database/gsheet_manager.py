@@ -342,6 +342,16 @@ class GSheetManager:
         import gzip as _gz
 
         res = self._get({"action": "read_raw", "sheetName": "Scored_Cache"}, timeout=60)
+        
+        # [Fallback 방어 로직] GAS에 read_raw가 배포되지 않은 경우 read_all로 우회 (L2 하이브리드 보완)
+        if res is None and self.error_msg and "Unknown GET action: read_raw" in self.error_msg:
+            logger.warning("[ScoredCache] read_raw 미지원 서버. read_all 우회 로드를 시도합니다.")
+            fallback_res = self._get({"action": "read_all", "sheetName": "Scored_Cache"}, timeout=60)
+            
+            if isinstance(fallback_res, list) and len(fallback_res) > 0 and isinstance(fallback_res[0], dict):
+                headers = list(fallback_res[0].keys())
+                res = [headers] + [[row.get(h, "") for h in headers] for row in fallback_res]
+
         if not res or not isinstance(res, list) or len(res) < 2:
             return None, None
 
