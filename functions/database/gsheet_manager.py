@@ -337,17 +337,18 @@ class GSheetManager:
             logger.error(f"[ScoredCache] 저장 전처리 실패: {e}")
             return False
 
-    def read_scored_cache(self):
-        """Scored_Cache 탭에서 gzip 복원 후 JSON 문자열 반환 → (timestamp, json_str) or (None, None)"""
+    def read_scored_cache(self, expected_version: str = ""):
+        """Scored_Cache 탭에서 gzip 복원 후 JSON 문자열 반환 → (timestamp, json_str) or (None, None)
+        expected_version이 지정되면 저장된 버전과 불일치 시 None을 반환해 구버전 캐시를 거부한다."""
         import gzip as _gz
 
         res = self._get({"action": "read_raw", "sheetName": "Scored_Cache"}, timeout=60)
-        
+
         # [Fallback 방어 로직] GAS에 read_raw가 배포되지 않은 경우 read_all로 우회 (L2 하이브리드 보완)
         if res is None and self.error_msg and "Unknown GET action: read_raw" in self.error_msg:
             logger.warning("[ScoredCache] read_raw 미지원 서버. read_all 우회 로드를 시도합니다.")
             fallback_res = self._get({"action": "read_all", "sheetName": "Scored_Cache"}, timeout=60)
-            
+
             if isinstance(fallback_res, list) and len(fallback_res) > 0 and isinstance(fallback_res[0], dict):
                 headers = list(fallback_res[0].keys())
                 res = [headers] + [[row.get(h, "") for h in headers] for row in fallback_res]
@@ -359,6 +360,12 @@ class GSheetManager:
             header = res[0]
             if len(header) < 4 or str(header[3]).strip() != "HEADER":
                 logger.warning("[ScoredCache] 헤더 형식 불일치 — 캐시 없음으로 처리")
+                return None, None
+
+            # 버전 불일치 시 구버전 캐시 거부
+            stored_version = str(header[1]).strip() if len(header) > 1 else ""
+            if expected_version and stored_version != expected_version:
+                logger.warning(f"[ScoredCache] 버전 불일치 — 무시: 저장={stored_version!r}, 현재={expected_version!r}")
                 return None, None
 
             timestamp = str(header[0])

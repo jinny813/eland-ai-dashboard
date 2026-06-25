@@ -231,9 +231,10 @@ def _load_from_pkl():
 
 
 @st.cache_data(show_spinner="저장된 점수 결과 로드 중...", max_entries=1, ttl=3600)
-def _cached_load_scored_cache(_mgr):
-    """Scored_Cache GSheet 탭 → 사전 계산 결과 dict 반환. (timestamp, data) or (None, None)."""
-    ts, json_str = _mgr.read_scored_cache()
+def _cached_load_scored_cache(_mgr, report_version: str = REPORT_VERSION):
+    """Scored_Cache GSheet 탭 → 사전 계산 결과 dict 반환. (timestamp, data) or (None, None).
+    report_version이 저장된 버전과 다르면 구버전 캐시를 거부하여 재계산을 강제한다."""
+    ts, json_str = _mgr.read_scored_cache(expected_version=report_version)
     if json_str is None:
         return None, None
     try:
