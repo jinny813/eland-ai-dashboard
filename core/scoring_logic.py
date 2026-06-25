@@ -382,11 +382,11 @@ class AssortmentScorer:
             ]
         else:
             dis_cfg = [
-                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.00 if use_age_for_dis else 0.70)},
-                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.10 if use_age_for_dis else 0.00)},
-                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.20 if use_age_for_dis else 0.05)},
-                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.30 if use_age_for_dis else 0.10)},
-                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.10 if use_age_for_dis else 0.15)},
+                {'m': (df['_age'] == 0), 'r': 0.70},
+                {'m': (df['_age'] >= 4), 'r': 0.00},
+                {'m': (df['_age'] == 3), 'r': 0.05},
+                {'m': (df['_age'] == 2), 'r': 0.10},
+                {'m': (df['_age'] == 1), 'r': 0.15},
             ]
         # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
         dis_scale = 1.0
@@ -423,8 +423,8 @@ class AssortmentScorer:
             ]
         else:
             fresh_cfg = [
-                {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
-                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.00)}
+                {'m': _new_mask, 'r': 0.70},
+                {'m': _plan_mask, 'r': 0.00}
             ]
 
         # 신선도 지표 내 명시적 구간별 가중 평균
@@ -574,7 +574,7 @@ class AssortmentScorer:
         else:
             year_base = self.config.get('year_base', 2026)
             df['_age'] = df['year'].apply(lambda y: max(0, year_base-int(str(y).replace('년','')))) if 'year' in df.columns else 10
-            dis_cfg = [('4년차+(70%)', (df['_age']>=4), dis_inv.get('s70', 0.0)), ('3년차(50%)', (df['_age']==3), dis_inv.get('s50', 0.05)), ('2년차(30%)', (df['_age']==2), dis_inv.get('s30', 0.1)), ('1년차(10%)', (df['_age']==1), dis_inv.get('s10', 0.15))]
+            dis_cfg = [('4년+(70%)', (df['_age']>=4), 0.0), ('3년(50%)', (df['_age']==3), 0.05), ('2년(30%)', (df['_age']==2), 0.1), ('1년(10%)', (df['_age']==1), 0.15)]
 
         for label, mask, r_val in dis_cfg:
             if r_val > 0 and _get_ref_count(mask) * _dis_hint_scale < (target_total * r_val): res["dis"].append(label)
@@ -591,8 +591,12 @@ class AssortmentScorer:
                 fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
         else:
             _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
-            r_n = _fresh_w.get('new', 0.10 if is_outlet else 0.70)
-            r_p = _fresh_w.get('plan', 0.20 if is_outlet else 0.10)
+            if is_outlet:
+                r_n = _fresh_w.get('new', 0.10)
+                r_p = _fresh_w.get('plan', 0.20)
+            else:
+                r_n = 0.70
+                r_p = 0.00
             fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
         for label, mask, r_val in fresh_cfg:
             if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
