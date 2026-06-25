@@ -45,6 +45,8 @@ if sys.platform == "win32":
         pass
 
 from core.data_manager import DataManager
+import database.gsheet_manager
+importlib.reload(database.gsheet_manager)
 from database.gsheet_manager import GSheetManager
 
 
