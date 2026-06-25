@@ -357,9 +357,10 @@ class AssortmentScorer:
             if any(k in cg for k in ["스포츠", "아웃도어"]):
                 is_rate_based = True
 
-        # [v4.1] 할인율 데이터가 모두 0인 상설 매장의 경우 연차(Age) 기준으로 자동 Fallback 처리
-        has_dis_data = (df['_dis_rate'] >= 0).any()
-        use_age_for_dis = is_outlet and not has_dis_data
+        # [v4.1→v17.31] 상설은 항상 실할인율 기준 채점 (연차 폴백 제거)
+        # 구 로직: has_dis_data=(>=0) → 0%/미입력 구분 불가 → 연차 폴백 시 1년차 재고 10점 오산정
+        has_dis_data = (df['_dis_rate'] > 0).any()
+        use_age_for_dis = False  # 상설은 rate-based 고정; 정상 매장은 _use_rate_dis=False 분기에서 처리
 
         # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
         _brand_nm_s = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
