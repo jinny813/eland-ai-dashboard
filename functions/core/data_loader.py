@@ -46,7 +46,7 @@ def _is_outlet_type(store_type: str) -> bool:
 
 
 def _get_config(category: str, store_type: str, brand: str) -> dict:
-    """우선순위: 카테고리_매장유형_브랜드 > 카테고리_매장유형 > 기본_설정 > category_store_type base"""
+    """우선순위: 카테고리_매장유형_브랜드 > 카테고리_매장유형 > category_store_type base > 기본_설정"""
     # SCORING_CONFIG 키는 '상설' 표기 통일
     normalized_type = "상설" if _is_outlet_type(store_type) else "정상"
     key_brand = f"{category}_{normalized_type}_{brand}"
@@ -55,8 +55,8 @@ def _get_config(category: str, store_type: str, brand: str) -> dict:
     return (
         SCORING_CONFIG.get(key_brand)
         or SCORING_CONFIG.get(key_type)
-        or SCORING_CONFIG.get("기본_설정")
         or base
+        or SCORING_CONFIG.get("기본_설정")
     )
 
 
