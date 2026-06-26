@@ -249,9 +249,15 @@ def preprocess_raw_records(
                     name = '쇼핑점'
                 return name
                 
-            def normalize_type_local(t: str) -> str:
+            def normalize_type_local(t: str):
                 t = str(t).strip()
-                return '정상' if '정상' in t else '상설'
+                if t in ('#N/A', '#REF!', 'nan', 'none', 'None', ''):
+                    return None  # 미확인: DB 원본값 유지, BRAND_STORE_TYPES 업데이트 안 함
+                if '정상' in t:
+                    return '정상'
+                if '복합' in t:
+                    return '복합'
+                return '상설'
                 
             _cur_mo = f"{datetime.now().month:02d}"
             _cur_yr = str(datetime.now().year)
@@ -268,9 +274,11 @@ def preprocess_raw_records(
                     if area_val > 0:
                         _cfg_area.AREA_CONFIG.setdefault(store_name, {})[brand_name] = area_val
                 
-                # 유형 오버라이드
+                # 유형 오버라이드 (storemaster가 정식 소스)
                 if type_col:
-                    _cfg_type.BRAND_STORE_TYPES.setdefault(store_name, {})[brand_name] = normalize_type_local(row.get(type_col, '상설'))
+                    norm_t = normalize_type_local(row.get(type_col, ''))
+                    if norm_t is not None:
+                        _cfg_type.BRAND_STORE_TYPES.setdefault(store_name, {})[brand_name] = norm_t
                 
                 # 매출 실적 오버라이드
                 for (yr, mo), col in sales_cols.items():
