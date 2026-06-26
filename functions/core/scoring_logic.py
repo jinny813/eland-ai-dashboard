@@ -8,6 +8,15 @@ def _is_outlet(store_type_val: str) -> bool:
     return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory", "복합"]) or v.startswith("상")
 
 
+DIS_SCORES = {
+    "normal": {"s70": 0, "s50": 5, "s30": 10, "s10": 15},   # 합계 30점
+    "outlet": {"s70": 10, "s50": 10, "s30": 15, "s10": 5},  # 합계 40점
+}
+FRESH_SCORES = {
+    "normal": {"new": 20, "plan": 0},   # 합계 20점
+    "outlet": {"new": 5,  "plan": 10},  # 합계 15점
+}
+
 # 목표 재고액 산출 상수
 _UNIT_PRICE_LARGE = 70_000   # 50평 이상: 7만원/평/일
 _UNIT_PRICE_SMALL = 100_000  # 50평 미만: 10만원/평/일
@@ -392,26 +401,26 @@ class AssortmentScorer:
         _age_only_brands = {'로엠', '로엠(ROEM)'}
 
         _use_rate_dis = (is_outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_s not in _age_only_brands)
+        _dis_score_tbl = DIS_SCORES["outlet"] if is_outlet else DIS_SCORES["normal"]
         if _use_rate_dis:
-            # 정상/상설에 맞는 기본값 분리 적용. s0는 연차기반 전용 키이므로 rate-based에서 제외.
+            # 정상/상설에 맞는 재고비중 기본값. s0는 연차기반 전용 키이므로 rate-based에서 제외.
             _d_s70 = dis_inv.get('s70', 0.10 if is_outlet else 0.00)
             _d_s50 = dis_inv.get('s50', 0.20 if is_outlet else 0.05)
             _d_s30 = dis_inv.get('s30', 0.30 if is_outlet else 0.10)
             _d_s10 = dis_inv.get('s10', 0.10 if is_outlet else 0.15)
             dis_cfg = [
-                {'m': (df['_dis_rate'] >= 70), 'r': _d_s70},
-                {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': _d_s50},
-                {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': _d_s30},
-                {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': _d_s10},
-                # 0% 할인 아이템은 rate-based 채점에서 제외 (s0는 연차기반 전용)
+                {'m': (df['_dis_rate'] >= 70), 'r': _d_s70, 's': _dis_score_tbl['s70']},
+                {'m': (df['_dis_rate'] >= 50) & (df['_dis_rate'] < 70), 'r': _d_s50, 's': _dis_score_tbl['s50']},
+                {'m': (df['_dis_rate'] >= 30) & (df['_dis_rate'] < 50), 'r': _d_s30, 's': _dis_score_tbl['s30']},
+                {'m': (df['_dis_rate'] > 0)   & (df['_dis_rate'] < 30), 'r': _d_s10, 's': _dis_score_tbl['s10']},
             ]
         else:
             dis_cfg = [
-                {'m': (df['_age'] == 0), 'r': dis_inv.get('s0', 0.70)},
-                {'m': (df['_age'] >= 4), 'r': dis_inv.get('s70', 0.00)},
-                {'m': (df['_age'] == 3), 'r': dis_inv.get('s50', 0.05)},
-                {'m': (df['_age'] == 2), 'r': dis_inv.get('s30', 0.10)},
-                {'m': (df['_age'] == 1), 'r': dis_inv.get('s10', 0.15)},
+                {'m': (df['_age'] == 0), 'r': 0.70, 's': 0},
+                {'m': (df['_age'] >= 4), 'r': 0.00, 's': 0},
+                {'m': (df['_age'] == 3), 'r': 0.05, 's': _dis_score_tbl['s50']},
+                {'m': (df['_age'] == 2), 'r': 0.10, 's': _dis_score_tbl['s30']},
+                {'m': (df['_age'] == 1), 'r': 0.15, 's': _dis_score_tbl['s10']},
             ]
         # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
         dis_scale = 1.0
@@ -420,19 +429,19 @@ class AssortmentScorer:
             _known_d_amt = _get_record_ref(df['_dis_rate'] >= 0)['_amt'].sum()
             if 0 < _known_d_amt < _total_d_amt:
                 dis_scale = _total_d_amt / _known_d_amt
-        dis_estimated = dis_scale > 1.0  # [v17.12] True when estimation was applied
-        # [v17.4] 각각의 할인율 구간별 달성률에 구간 비중을 가중 평균하여 점수 계산
-        sum_r = sum(item['r'] for item in dis_cfg)
-        if use_age_for_dis:
-            sum_r = 1.0
+        dis_estimated = dis_scale > 1.0
+
+        # 점수 가중치 = 구간 점수 / 지표 내 점수 합계 (점수 0인 구간 제외 후 정규화)
+        sum_s = sum(item['s'] for item in dis_cfg if item.get('s', 0) > 0)
         discount_score = 0.0
-        if sum_r > 0:
+        if sum_s > 0:
             for item in dis_cfg:
-                if item['r'] > 0:
+                seg_score = item.get('s', 0)
+                if item['r'] > 0 and seg_score > 0:
                     act = _get_record_ref(item['m'])['_amt'].sum() * dis_scale
                     tgt = target_total * item['r']
                     segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
-                    discount_score += segment_pct * (item['r'] / sum_r)
+                    discount_score += segment_pct * (seg_score / sum_s)
 
         # B. 신선도 — freshness_type 기준으로 통일
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
@@ -441,27 +450,29 @@ class AssortmentScorer:
         _new_mask  = ft.str.contains('신상', na=False)
         _plan_mask = ft.str.contains('기획', na=False)
 
+        _fresh_score_tbl = FRESH_SCORES["outlet"] if is_outlet else FRESH_SCORES["normal"]
         if is_outlet:
             fresh_cfg = [
-                {'m': _new_mask, 'r': fresh_inv.get('new', 0.10)},
-                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.20)}
+                {'m': _new_mask, 'r': fresh_inv.get('new', 0.10), 's': _fresh_score_tbl['new']},
+                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.20), 's': _fresh_score_tbl['plan']},
             ]
         else:
             fresh_cfg = [
-                {'m': _new_mask, 'r': fresh_inv.get('new', 0.70)},
-                {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.00)}
+                {'m': _new_mask, 'r': 0.70, 's': _fresh_score_tbl['new']},
+                {'m': _plan_mask, 'r': 0.00, 's': _fresh_score_tbl['plan']},
             ]
 
-        # 신선도 지표 내 명시적 구간별 가중 평균
-        sum_r = sum(item['r'] for item in fresh_cfg)
+        # 점수 가중치 = 구간 점수 / 지표 내 점수 합계 (점수 0인 구간 제외)
+        sum_s = sum(item['s'] for item in fresh_cfg if item.get('s', 0) > 0)
         freshness_score = 0.0
-        if sum_r > 0:
+        if sum_s > 0:
             for item in fresh_cfg:
-                if item['r'] > 0:
+                seg_score = item.get('s', 0)
+                if item['r'] > 0 and seg_score > 0:
                     act = _get_record_ref(item['m'])['_amt'].sum()
                     tgt = target_total * item['r']
                     segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
-                    freshness_score += segment_pct * (item['r'] / sum_r)
+                    freshness_score += segment_pct * (seg_score / sum_s)
 
         # C. 시즌 — data_month 기준: 1~3월=봄시즌, 4~6월=여름시즌
         _raw_m = df['data_month'].iloc[0] if 'data_month' in df.columns and not df.empty else ''
