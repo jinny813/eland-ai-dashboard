@@ -8,6 +8,27 @@ def _is_outlet(store_type_val: str) -> bool:
     return any(k in v for k in ["상설", "outlet", "아울렛", "팩토리", "factory", "복합"]) or v.startswith("상")
 
 
+# 목표 재고액 산출 상수
+_UNIT_PRICE_LARGE = 70_000   # 50평 이상: 7만원/평/일
+_UNIT_PRICE_SMALL = 100_000  # 50평 미만: 10만원/평/일
+_STORE_DAYS       = 30       # 월 30일 기준
+_STOCK_MULTI      = 3        # 재고배수
+
+
+def calc_target_total(area: float, tM_won: float = 0.0) -> float:
+    """목표 총 재고액 산출.
+
+    50평 미만: 평수 × 10만원 × 30일 × 3배
+    50평 이상: 평수 × 7만원 × 30일 × 3배
+    평수 미입력(0): tM_won × 3배 fallback
+    """
+    if area >= 50:
+        return area * _UNIT_PRICE_LARGE * _STORE_DAYS * _STOCK_MULTI
+    if area > 0:
+        return area * _UNIT_PRICE_SMALL * _STORE_DAYS * _STOCK_MULTI
+    return max(tM_won * _STOCK_MULTI, 1.0)
+
+
 class AssortmentScorer:
     """상품구색 5개 지표 채점 엔진 — v11.0 평매출 반영 이중 채점 체계 도입"""
 
@@ -292,10 +313,15 @@ class AssortmentScorer:
 
         df['item_group'] = df.apply(_get_group_smart, axis=1)
 
-        # 목표 매출액(tM) 추출 및 목표 총액 설정
+        # 목표 매출액(tM) 추출 및 목표 총액 설정 — 평수 기반 (calc_target_total), 평수 미입력 시 tM × 3 fallback
         tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
         if tM <= 0: tM = 1.0
-        target_total = tM * 3.0  # 목표 재고액 (300%)
+        area = 0.0
+        if 'area' in df.columns:
+            _a = df['area'].iloc[0]
+            if _a is not None and not (isinstance(_a, float) and pd.isna(_a)):
+                area = max(0.0, float(_a))
+        target_total = calc_target_total(area, tM)
 
         # 매장 유형 판단
         store_type_val = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
@@ -549,7 +575,12 @@ class AssortmentScorer:
         df['item_group'] = df['item_code'].apply(self._get_item_group) if 'item_code' in df.columns else 'Others'
         
         tM = float(df['tM'].iloc[0]) if ('tM' in df.columns and not pd.isna(df['tM'].iloc[0])) else 50_000_000.0
-        target_total = tM * 3.0
+        _area = 0.0
+        if 'area' in df.columns:
+            _a2 = df['area'].iloc[0]
+            if _a2 is not None and not (isinstance(_a2, float) and pd.isna(_a2)):
+                _area = max(0.0, float(_a2))
+        target_total = calc_target_total(_area, tM)
         is_outlet = _is_outlet(str(df['store_type'].iloc[0])) if 'store_type' in df.columns else False
         inv_weights = self.config.get('inv_weights', {})
 

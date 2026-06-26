@@ -41,8 +41,8 @@ _WOMEN_NORMAL_BASE = {
     # 시즌: 봄(SS)=0.25, 여름(당시즌)=0.50 → sum=0.75 → 봄 max 5점, 여름 max 10점 정확히 산출
     "inv_weights": {
         "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
-        "fresh":  {"new": 0.70},
-        "best":   {"store10": 0.20},
+        "fresh":  {"new": 0.70},           # 기획 0% → 점수 산출 제외
+        "best":   {"store10": 0.35},       # 정상 BEST 재고비중 35%
         "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
@@ -67,7 +67,7 @@ _WOMEN_OUTLET_BASE = {
     "inv_weights": {
         "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
         "fresh":  {"new": 0.10, "plan": 0.20},
-        "best":   {"store10": 0.25},
+        "best":   {"store10": 0.30},       # 상설 BEST 재고비중 30%
         "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   {"Outer": 0.30, "Top": 0.30, "Bottom": 0.20, "Skirt": 0.10, "Dress": 0.10}
     },
@@ -88,9 +88,9 @@ _SPORTS_NORMAL_BASE = {
     "year_base": 2026,
     "inv_weights": {
         "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
-        "fresh":  {"new": 0.70, "plan": 0.10},
-        "best":   {"store10": 0.10},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
+        "fresh":  {"new": 0.70},           # 기획 0% → 점수 산출 제외
+        "best":   {"store10": 0.35},       # 정상 BEST 재고비중 35%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   {"RunningShoes": 0.45, "CasualShoes": 0.30, "OtherShoes": 0.10, "Top": 0.10, "Bottom": 0.05}
     },
     "weight_discount":  0.30,
@@ -109,8 +109,8 @@ _SPORTS_OUTLET_BASE = {
     "inv_weights": {
         "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
         "fresh":  {"new": 0.10, "plan": 0.20},
-        "best":   {"store10": 0.20},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "best":   {"store10": 0.30},       # 상설 BEST 재고비중 30%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   {"Top": 0.55, "Bottom": 0.25, "RunningShoes": 0.12, "CasualShoes": 0.05, "OtherShoes": 0.03}
     },
     "weight_discount":  0.40,
@@ -129,8 +129,8 @@ _OUTDOOR_OUTLET_BASE = {
     "inv_weights": {
         "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
         "fresh":  {"new": 0.10, "plan": 0.20},
-        "best":   {"store10": 0.20},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "best":   {"store10": 0.30},       # 상설 BEST 재고비중 30%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   {"Outer": 0.40, "Top": 0.40, "Bottom": 0.20}
     },
     "weight_discount":  0.40,
@@ -150,8 +150,8 @@ _KIDS_OUTLET_BASE = {
     "inv_weights": {
         "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
         "fresh":  {"new": 0.10, "plan": 0.20},
-        "best":   {"store10": 0.20},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "best":   {"store10": 0.30},       # 상설 BEST 재고비중 30%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   _ITEM_KIDS
     },
     "weight_discount":  0.40,
@@ -166,9 +166,9 @@ _KIDS_NORMAL_BASE = {
     "year_base": 2026,
     "inv_weights": {
         "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
-        "fresh":  {"new": 0.70, "plan": 0.10},
-        "best":   {"store10": 0.20},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.00, "winter": 0.00},
+        "fresh":  {"new": 0.70},           # 기획 0% → 점수 산출 제외
+        "best":   {"store10": 0.35},       # 정상 BEST 재고비중 35%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   _ITEM_KIDS
     },
     "weight_discount":  0.30,
@@ -187,9 +187,9 @@ _MENS_NORMAL_BASE = {
     "year_base": 2026,
     "inv_weights": {
         "dis":    {"s0": 0.70, "s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
-        "fresh":  {"new": 0.70, "plan": 0.10},
-        "best":   {"store10": 0.10},
-        "season": {"spring": 0.50, "summer": 0.30, "autumn": 0.05, "winter": 0.00},
+        "fresh":  {"new": 0.70},
+        "best":   {"store10": 0.35},       # 정상 BEST 재고비중 35%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   _ITEM_MENS
     },
     "weight_discount":  0.30,
@@ -206,14 +206,14 @@ _MENS_OUTLET_BASE = {
     "zoning": "남성",
     "year_base": 2026,
     "inv_weights": {
-        "dis":    {"s70": 0.00, "s50": 0.07, "s30": 0.13, "s10": 0.20},
-        "fresh":  {"new": 0.60, "plan": 0.05},
-        "best":   {"store10": 0.08},
-        "season": {"spring": 0.55, "summer": 0.20, "autumn": 0.05, "winter": 0.05},
+        "dis":    {"s70": 0.10, "s50": 0.20, "s30": 0.30, "s10": 0.10},
+        "fresh":  {"new": 0.10, "plan": 0.20},
+        "best":   {"store10": 0.30},       # 상설 BEST 재고비중 30%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
         "item":   _ITEM_MENS
     },
-    "weight_discount":  0.33,
-    "weight_freshness": 0.22,
+    "weight_discount":  0.40,
+    "weight_freshness": 0.15,
     "weight_season":    0.15,
     "weight_best":      0.30,
     "weight_item":      0.00,
@@ -274,7 +274,7 @@ SCORING_CONFIG = {
     "여성_상설_보니스팍스": {**_WOMEN_OUTLET_BASE, "brand_name": "보니스팍스", "zoning": "캐릭터", "eness_name": "보니스팍스", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
     "여성_상설_안지크": {**_WOMEN_OUTLET_BASE, "brand_name": "안지크", "zoning": "커리어", "eness_name": "안지크", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CAREER}},
     "여성_상설_플라스틱아일랜드": {**_WOMEN_OUTLET_BASE, "brand_name": "플라스틱아일랜드", "zoning": "캐주얼", "eness_name": "플라스틱아일랜드", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
-    
+
     # ── 추가 지점 브랜드
     "여성_상설_리스트": {**_WOMEN_OUTLET_BASE, "brand_name": "리스트", "zoning": "캐주얼", "eness_name": "리스트", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CASUAL}},
     "여성_상설_쉬즈미스": {**_WOMEN_OUTLET_BASE, "brand_name": "쉬즈미스", "zoning": "캐릭터", "eness_name": "쉬즈미스", "inv_weights": {**_WOMEN_OUTLET_BASE["inv_weights"], "item": _ITEM_CHARACTER}},
@@ -358,7 +358,7 @@ def get_weights_by_category(category: str, store_type: str, brand_name: str = ""
     """
     _st = str(store_type).strip().lower()
     is_outlet = any(k in _st for k in ("상설", "outlet", "아울렛", "팩토리", "factory", "복합")) or _st.startswith("상")
-    
+
     if category == '스포츠':
         # [v3.6] 아웃도어 브랜드는 전용 가중치(Outer 포함) 적용
         from config.brand_metadata import get_brand_zoning

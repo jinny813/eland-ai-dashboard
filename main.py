@@ -32,7 +32,7 @@ import core.report_generator
 from core.report_generator import dashboard_fingerprint
 
 # ── 엑셀 보고서 로직 버전 (코드 변경시 반드시 올릴 것 → 캐시 자동 무효화) ──
-REPORT_VERSION = "v17.33"
+REPORT_VERSION = "v17.34"
 
 # [v100.1] Windows 콘솔 인코딩 대응
 if sys.platform == "win32":
@@ -129,7 +129,7 @@ def _cached_build_month(_mgr, max_no: int, month: str, report_version: str = REP
     raw_recs 단계에서 Python List 형태로 선택된 달만 필터링한 후 넘깁니다.
     """
     import importlib, sys
-    for _m in ['core.data_loader', 'core.scoring_logic']:
+    for _m in ['core.scoring_logic', 'core.html_generator', 'core.data_loader']:
         if _m in sys.modules:
             importlib.reload(sys.modules[_m])
     from core.data_loader import load_dashboard_data

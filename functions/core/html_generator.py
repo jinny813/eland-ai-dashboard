@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 import pandas as pd
 from datetime import datetime
-from core.scoring_logic import AssortmentScorer, _is_outlet
+from core.scoring_logic import AssortmentScorer, _is_outlet, calc_target_total
 from core.analyzer import ActionAnalyzer
 
 # ── item_group(영문) → 한국어 카테고리명
@@ -345,7 +345,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     store_type = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
     outlet = _is_outlet(store_type)
-    target_total = tM * 3.0  # 목표 재고액 (300%)
+    area = 0.0
+    if 'area' in df.columns:
+        _a = df['area'].iloc[0]
+        if _a is not None and not (isinstance(_a, float) and pd.isna(_a)):
+            area = max(0.0, float(_a))
+    target_total = calc_target_total(area, tM)
     inv_w = config.get('inv_weights', {})
 
     # 1. 아이템 점수 세부 (조닝별 특화 로직 반영)
@@ -524,17 +529,16 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     _new_mask = ft.str.contains('신상', na=False)
     _plan_mask = ft.str.contains('기획', na=False)
 
-    if outlet: 
-        # 상설: 신상(10%), 기획(20%)
+    _fresh_w = inv_w.get('fresh', {})
+    if outlet:
         fresh_cfg = [
-            ('new', '신상', _new_mask, 0.10), 
-            ('plan', '기획', _plan_mask, 0.20)
+            ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.10)),
+            ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.20)),
         ]
     else:
-        # 정상: 신상(70%), 기획(0%)
         fresh_cfg = [
-            ('new', '신상', _new_mask, 0.70),
-            ('plan', '기획', _plan_mask, 0.00)
+            ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.70)),
+            ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.00)),
         ]
     
     fresh_segs = []

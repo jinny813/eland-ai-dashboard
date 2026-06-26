@@ -571,6 +571,7 @@ def load_dashboard_data(
                     b_type = _ct if _ct else (str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설')
                     cfg = _get_config(cat if cat != '전체' else "여성", b_type, brand)
                     b_df['tM'] = get_tm(brand_name=brand, store_name=store, month=diag_month)
+                    b_df['area'] = get_area(store, brand)  # 평수 기반 목표 재고액 산출용
                     try:
                         score = _score_df_product(b_df, cfg)
                     except Exception as _e:
@@ -673,7 +674,8 @@ def load_dashboard_data(
                     # 평수 미설정 브랜드: 목표매출의 3배를 목표재고로 (최소 안전망)
                     tM_inv_won = tM_won * 3.0
 
-                b_df['tM'] = tM_for_score  # 채점 로직은 목표매출 기준 사용
+                b_df['tM'] = tM_for_score   # 채점 로직 tM (평수 없을 때 fallback용)
+                b_df['area'] = _b_area_for_cap  # 평수 기반 목표 재고액 산출용 (calc_target_total)
 
                 # [v202.4] 재고 계산 시 중복 제거 제외:
                 # 이미 위에서 완전히 동일한 행(엑셀 중복 덧붙여넣기)은 drop_duplicates()로 제거되었으므로,

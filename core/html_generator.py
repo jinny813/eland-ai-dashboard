@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 import pandas as pd
 from datetime import datetime
-from core.scoring_logic import AssortmentScorer, _is_outlet
+from core.scoring_logic import AssortmentScorer, _is_outlet, calc_target_total
 from core.analyzer import ActionAnalyzer
 
 # ── item_group(영문) → 한국어 카테고리명
@@ -350,7 +350,13 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     store_type = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
     outlet = _is_outlet(store_type)
-    target_total = tM * 3.0  # 목표 재고액 (300%)
+    # 목표 총 재고액 = 평수 × 단가 × 30일 × 3배. 평수 없으면 tM × 3 fallback.
+    area = 0.0
+    if 'area' in df.columns:
+        _a = df['area'].iloc[0]
+        if _a is not None and not (isinstance(_a, float) and pd.isna(_a)):
+            area = max(0.0, float(_a))
+    target_total = calc_target_total(area, tM)
     inv_w = config.get('inv_weights', {})
 
     # 1. 아이템 점수 세부 (조닝별 특화 로직 반영)
@@ -529,17 +535,16 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     _new_mask = ft.str.contains('신상', na=False)
     _plan_mask = ft.str.contains('기획', na=False)
 
-    if outlet: 
-        # 상설: 신상(10%), 기획(20%)
+    _fresh_w = inv_w.get('fresh', {})
+    if outlet:
         fresh_cfg = [
-            ('new', '신상', _new_mask, 0.10), 
-            ('plan', '기획', _plan_mask, 0.20)
+            ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.10)),
+            ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.20)),
         ]
     else:
-        # 정상: 신상(70%), 기획(0%)
         fresh_cfg = [
-            ('new', '신상', _new_mask, 0.70),
-            ('plan', '기획', _plan_mask, 0.00)
+            ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.70)),
+            ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.00)),
         ]
     
     fresh_segs = []
@@ -612,8 +617,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     
     ref_best = _get_stock_ref_gen(df[df['style_code'].isin(best_styles)], outlet)
     best_amt = ref_best['_amt'].sum()
-    # scoring_logic과 동일한 비율 사용 (상설: 0.20, 정상: config 기본값)
-    best_ratio = inv_w.get('best', {}).get('store10', 0.25)
+    # 정상 35% / 상설 30% — config 우선, 없으면 매장 유형에 따른 기본값
+    best_ratio = inv_w.get('best', {}).get('store10', 0.30 if outlet else 0.35)
     tgt_best = target_total * best_ratio
     best_pct = (best_amt / tgt_best * 100) if tgt_best > 0 else 0
     best_segs = [{
@@ -691,10 +696,10 @@ def _build_best_items(df) -> dict:
         # ── 1+2+3) 상품명(style_name) 추출 ──
         # 우선순위: GSheet(원본 ERP 데이터) > SQLite 마스터 > 네이버 크롤링
         # 이랜드(로엠/클라비스/뉴발란스 등)는 GSheet에 한국어 이름이 있으므로 크롤링 불필요
-        raw_item_name = str(row.get('item_name', '') or '').strip()
         raw_style_name = ''
+        raw_item_name = ''
 
-        # 1. GSheet 원본 데이터 우선 확인 (이랜드 등 ERP 상품명 보존)
+        # 1. GSheet 원본 style_name 우선 확인 (이랜드 등 ERP 상품명 보존)
         for _, srow in df[df['style_code'] == s].iterrows():
             sn = str(srow.get('style_name', '')).strip()
             if sn and sn not in _EMPTY_VALS:
@@ -704,28 +709,21 @@ def _build_best_items(df) -> dict:
         # 2. GSheet에 없으면 SQLite 마스터 확인
         if raw_style_name in _EMPTY_VALS:
             if s in p_map:
-                db_item = p_map[s].get('item_name') or ''
                 db_style = p_map[s].get('style_name') or ''
-                if db_item and db_item not in _EMPTY_VALS:
-                    raw_item_name = db_item
                 if db_style and db_style not in _EMPTY_VALS:
                     raw_style_name = str(db_style).strip()
-        elif s in p_map:
-            # GSheet에 이름이 있어도 item_name은 SQLite에서 보완
-            db_item = p_map[s].get('item_name') or ''
-            if db_item and db_item not in _EMPTY_VALS:
-                raw_item_name = db_item
 
-        # ── 4) item_name: item_code 기반 한국어 카테고리명
-        if raw_item_name in _EMPTY_VALS:
-            ic = str(row.get('item_code', '') or '').strip()
-            if not ic or ic in _EMPTY_VALS:
-                ic = s
-            mapped_name = _item_code_to_ko(ic)
-            if mapped_name and mapped_name not in _EMPTY_VALS:
-                raw_item_name = mapped_name
-            else:
-                raw_item_name = ic
+        # ── item_name: item_code 기반 매핑 우선 (GSheet의 잘못된 카테고리 데이터 방지)
+        ic = str(row.get('item_code', '') or '').strip()
+        if not ic or ic in _EMPTY_VALS:
+            ic = s
+        mapped_name = _item_code_to_ko(ic)
+        if mapped_name and mapped_name not in _EMPTY_VALS:
+            raw_item_name = mapped_name
+        else:
+            # item_code 매핑 실패 시에만 GSheet item_name 사용
+            gs_item = str(row.get('item_name', '') or '').strip()
+            raw_item_name = gs_item if gs_item not in _EMPTY_VALS else ic
 
         # ── 5) style_name: DB에 유효값 없으면 네이버에서 품번 정확 매칭으로 검색
         if raw_style_name in _EMPTY_VALS:
