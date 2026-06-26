@@ -542,9 +542,10 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
             ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.20)),
         ]
     else:
+        # 정상 매장: 기획 비중 항상 0 (config에 관계없이) — FRESH_SCORES["normal"].plan=0 과 동일
         fresh_cfg = [
             ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.70)),
-            ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.00)),
+            ('plan', '기획', _plan_mask, 0.00),
         ]
     
     fresh_segs = []
@@ -673,6 +674,20 @@ def _get_product_info(style_codes: list) -> dict:
 
 _EMPTY_VALS = {'', '—', '-', 'nan', 'None', 'none'}
 
+# GSheet style_name 컬럼에 카테고리명이 잘못 입력된 경우를 걸러내기 위한 집합
+_CATEGORY_LIKE_NAMES = {
+    '가방', '백', '파우치', '지갑', '토트백', '숄더백', '크로스백', '클러치', '배낭', '백팩',
+    '티셔츠', '티', '반팔티', '긴팔티', '맨투맨', '후드티', '후드',
+    '셔츠', '블라우스', '남방',
+    '팬츠', '바지', '슬랙스', '청바지', '데님', '반바지', '쇼츠', '레깅스',
+    '스커트', '치마', '원피스', '드레스',
+    '자켓', '재킷', '점퍼', '코트', '패딩', '아우터', '가디건', '조끼', '베스트',
+    '니트', '스웨터', '세트', '수트', '정장',
+    '신발', '운동화', '스니커즈', '구두', '슬리퍼', '샌들', '부츠',
+    '모자', '캡', '비니', '머플러', '스카프', '벨트', '양말',
+    '상의', '하의', '이너', '언더웨어',
+}
+
 def _build_best_items(df) -> dict:
     if df is None or df.empty or "sales_qty" not in df.columns: return {"store":[], "nc":[]}
     df = df.copy()
@@ -699,19 +714,19 @@ def _build_best_items(df) -> dict:
         raw_style_name = ''
         raw_item_name = ''
 
-        # 1. GSheet 원본 style_name 우선 확인 (이랜드 등 ERP 상품명 보존)
+        # 1. GSheet 원본 style_name 우선 확인 (카테고리명처럼 보이면 건너뜀)
         for _, srow in df[df['style_code'] == s].iterrows():
             sn = str(srow.get('style_name', '')).strip()
-            if sn and sn not in _EMPTY_VALS:
+            if sn and sn not in _EMPTY_VALS and sn not in _CATEGORY_LIKE_NAMES:
                 raw_style_name = sn
                 break
 
         # 2. GSheet에 없으면 SQLite 마스터 확인
         if raw_style_name in _EMPTY_VALS:
             if s in p_map:
-                db_style = p_map[s].get('style_name') or ''
-                if db_style and db_style not in _EMPTY_VALS:
-                    raw_style_name = str(db_style).strip()
+                db_style = str(p_map[s].get('style_name') or '').strip()
+                if db_style and db_style not in _EMPTY_VALS and db_style not in _CATEGORY_LIKE_NAMES:
+                    raw_style_name = db_style
 
         # ── item_name: item_code 기반 매핑 우선 (GSheet의 잘못된 카테고리 데이터 방지)
         ic = str(row.get('item_code', '') or '').strip()

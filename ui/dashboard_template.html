@@ -3229,8 +3229,8 @@
         if (m.id === 'best') segs = segs.filter(s => !s.key.includes('worst'));
 
         // [v35.0] 그룹 내 최대 비중(maxOptPct) 추출 (상대적 바 길이 계산용)
-        // [v58.0] 필터링 완화: 할인율(dis), 시즌(season), 아이템(item)의 경우 목표 비중이 0이더라도 모두 노출
-        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season' || m.id === 'item');
+        // [v58.0] 필터링 완화: 할인율(dis), 시즌(season), 아이템(item), 신선도(fresh) 의 경우 목표 비중이 0이더라도 모두 노출 (가을/겨울처럼 '-' 표시)
+        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season' || m.id === 'item' || m.id === 'fresh');
         const maxOptPct = Math.max(...validSegs.map(s => s.opt_pct || 0), 1);
 
         let shortageHtml = '';

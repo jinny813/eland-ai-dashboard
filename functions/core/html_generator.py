@@ -536,11 +536,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
             ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.20)),
         ]
     else:
+        # 정상 매장: 기획 비중 항상 0 (config에 관계없이) — FRESH_SCORES["normal"].plan=0 과 동일
         fresh_cfg = [
             ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.70)),
-            ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.00)),
+            ('plan', '기획', _plan_mask, 0.00),
         ]
-    
+
     fresh_segs = []
     for key, lbl, mask, ratio in fresh_cfg:
         ref = _get_stock_ref_gen(df[mask], outlet)
