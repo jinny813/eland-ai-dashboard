@@ -182,8 +182,10 @@ def get_display_label(store_name: str, brand_name: str, fallback: str = "") -> s
 
 
 def _to_display(raw: str) -> str:
-    if raw in ("#N/A", "nan", "none", ""):
+    if raw in ("nan", "none", ""):
         return "미확인"
+    if raw == "#N/A":
+        return "상설"
     if raw == "복합":
         return "상설(복합)"
     return raw

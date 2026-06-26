@@ -313,6 +313,19 @@ def preprocess_raw_records(
             mask = df['brand_name'].str.contains(b, na=False)
             df.loc[mask, 'store_type'] = '정상'
 
+    # ── config 기반 store_type 일괄 업데이트 (가장 마지막에 적용하여 config 우선) ──
+    if 'store_name' in df.columns and 'brand_name' in df.columns and 'store_type' in df.columns:
+        try:
+            import config.store_type_config as _cfg_type_mod
+            _pairs = df[['store_name', 'brand_name']].drop_duplicates()
+            for _, _pair in _pairs.iterrows():
+                _cfg_t = _cfg_type_mod.get_store_type(str(_pair['store_name']), str(_pair['brand_name']))
+                if _cfg_t:
+                    _mask = (df['store_name'] == _pair['store_name']) & (df['brand_name'] == _pair['brand_name'])
+                    df.loc[_mask, 'store_type'] = _cfg_t
+        except Exception as _ste:
+            logger.warning("[preprocess] config store_type 업데이트 실패: %s", _ste)
+
     # ── 가용 월 목록 ──
     def _get_m_num(m_str):
         try:
