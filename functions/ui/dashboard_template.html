@@ -3984,12 +3984,15 @@
         'rgba(148, 163, 184, 0.75)',   // 중간 달
         'rgba(239, 68, 68, 0.9)'       // 최신 달 (레드)
       ];
-      const labels = ['할인율', 'BEST상품', '신선도', '시즌'];
-      const metricKeys = ['dis', 'best', 'fresh', 'season'];
+      const labels = ['총점수', '할인율', 'BEST상품', '신선도', '시즌'];
+      const metricKeys = ['total', 'dis', 'best', 'fresh', 'season'];
 
       const datasets = recentData.map((item, i) => ({
         label: item.month,
-        data: metricKeys.map(k => item.brand[k] || 0),
+        data: metricKeys.map(k => {
+          if (k === 'total') return item.brand.product_score || item.brand.total || 0;
+          return item.brand[k] || 0;
+        }),
         backgroundColor: METRIC_COLORS[Math.max(0, METRIC_COLORS.length - recentData.length + i)],
         borderRadius: 6,
         barPercentage: 0.75,
@@ -4006,8 +4009,9 @@
             // [v200] 차트 클릭 시 → 구간별 상세 팝업 (채점로직 팝업 아님)
             const active = chart.getElementsAtEventForMode(event, 'index', { intersect: false }, true);
             if (active && active.length > 0) {
-              const metricIds = ['dis', 'best', 'fresh', 'season', 'item'];
-              showSegmentDetailMoM(metricIds[active[0].index]);
+              const metricIds = ['total', 'dis', 'best', 'fresh', 'season'];
+              const clickedId = metricIds[active[0].index];
+              if (clickedId && clickedId !== 'total') showSegmentDetailMoM(clickedId);
             }
           },
           onHover: (event, chartElement) => {
