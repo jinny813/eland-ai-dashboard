@@ -177,6 +177,21 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
         if _time.time() - _ts < _NAME_SEARCH_TTL:
             return (_result, _img)
 
+    # style_master.json 파일 캐시 확인 (재시작 후에도 유지되는 영구 캐시)
+    try:
+        _json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
+        if os.path.exists(_json_path):
+            with open(_json_path, 'r', encoding='utf-8') as _jf:
+                _master = json.load(_jf)
+            _cached_entry = _master.get(style_code, {})
+            _cached_title = _cached_entry.get('style_name', '')
+            if _cached_title:
+                with _NAME_SEARCH_CACHE_LOCK:
+                    _NAME_SEARCH_CACHE[style_code] = (_cached_title, '', _time.time())
+                return (_cached_title, '')
+    except Exception:
+        pass
+
     # 1. API 키가 있으면 OpenAPI 우선 시도
     if client_id and client_secret:
         def fetch_api(q):
@@ -633,8 +648,27 @@ def _build_bp_detail(config: dict, bp_df=None) -> dict:
     return { "item":{"segs":[]}, "dis":{"segs":[]}, "fresh":{"segs":[]}, "best":{"segs":[]}, "season":{"segs":[]} }
 
 def _get_product_info(style_codes: list) -> dict:
-    """DB에서 스타일 정보를 딕셔너리 형태로 일괄 로드"""
+    """DB + style_master.json 에서 스타일 정보를 딕셔너리 형태로 일괄 로드"""
     if not style_codes: return {}
+    # style_master.json 파일 캐시 우선 로드
+    res = {}
+    try:
+        _json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
+        if os.path.exists(_json_path):
+            with open(_json_path, 'r', encoding='utf-8') as _jf:
+                _master = json.load(_jf)
+            for _c in style_codes:
+                _entry = _master.get(_c)
+                if _entry and _entry.get('style_name'):
+                    res[_c] = {
+                        "item_name": _entry.get('item_name', ''),
+                        "style_name": _entry.get('style_name', ''),
+                        "keywords": [],
+                        "normal_price": 0,
+                    }
+    except Exception:
+        pass
+
     db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
     try:
         conn = sqlite3.connect(db_path)
@@ -654,7 +688,6 @@ def _get_product_info(style_codes: list) -> dict:
         df_p = pd.read_sql(query, conn)
         conn.close()
 
-        res = {}
         for _, row in df_p.iterrows():
             res[row['style_code']] = {
                 "item_name": row['category'],
@@ -663,8 +696,8 @@ def _get_product_info(style_codes: list) -> dict:
                 "normal_price": row.get('normal_price', 0)
             }
         return res
-    except:
-        return {}
+    except Exception:
+        return res  # DB 실패해도 style_master.json 로드 결과 반환
 
 _EMPTY_VALS = {'', '—', '-', 'nan', 'None', 'none'}
 
