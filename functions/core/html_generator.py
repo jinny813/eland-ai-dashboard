@@ -673,18 +673,7 @@ def _get_product_info(style_codes: list) -> dict:
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
-        # crawled_product_names 테이블이 있으면 우선 사용, 없으면 products만 조회
-        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
-        if 'crawled_product_names' in tables:
-            query = f"""
-                SELECT p.style_code, p.category, p.keywords, p.normal_price,
-                       COALESCE(c.product_name, p.product_name) as product_name
-                FROM products p
-                LEFT JOIN crawled_product_names c ON p.style_code = c.style_code
-                WHERE p.style_code IN ('{codes_str}')
-            """
-        else:
-            query = f"SELECT style_code, category, keywords, normal_price, product_name FROM products WHERE style_code IN ('{codes_str}')"
+        query = f"SELECT style_code, category, keywords, normal_price, product_name FROM products WHERE style_code IN ('{codes_str}')"
         df_p = pd.read_sql(query, conn)
         conn.close()
 
@@ -721,28 +710,26 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 1+2+3) Google Sheet (df) 및 DB 마스터에서 상품명(style_name) 추출 ──
-        # 구글 스프레드시트(Raw Data)에 이미 상품명이 있는 경우 우선 적용합니다.
+        # ── 상품명(style_name) 추출: DB 우선 → GSheet → 크롤링 ──
         raw_item_name = str(row.get('item_name', '') or '').strip()
         raw_style_name = ''
 
-        # 1. Raw Data (df) 우선 확인 (구글 스프레드시트 우선)
-        for _, srow in df[df['style_code'] == s].iterrows():
-            sn = str(srow.get('style_name', '')).strip()
-            if sn and sn not in _EMPTY_VALS:
-                raw_style_name = sn
-                break
-
-        # 2. DB 마스터 확인 (Raw Data에 없을 경우 p_map 확인)
+        # 1. DB 마스터 우선 확인 (products 테이블 원본 상품명)
         if s in p_map:
             db_item = p_map[s].get('item_name') or ''
             db_style = p_map[s].get('style_name') or ''
             if db_item and db_item not in _EMPTY_VALS:
-                # 아이템명은 마스터 정보로 보완
                 raw_item_name = db_item
-            if not raw_style_name or raw_style_name in _EMPTY_VALS:
-                if db_style and db_style not in _EMPTY_VALS:
-                    raw_style_name = str(db_style).strip()
+            if db_style and db_style not in _EMPTY_VALS:
+                raw_style_name = str(db_style).strip()
+
+        # 2. DB에 없으면 GSheet(Raw Data) 확인
+        if not raw_style_name or raw_style_name in _EMPTY_VALS:
+            for _, srow in df[df['style_code'] == s].iterrows():
+                sn = str(srow.get('style_name', '')).strip()
+                if sn and sn not in _EMPTY_VALS:
+                    raw_style_name = sn
+                    break
 
         # ── 4) item_name: item_code 기반 한국어 카테고리명
         if raw_item_name in _EMPTY_VALS:

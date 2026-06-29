@@ -645,18 +645,7 @@ def _get_product_info(style_codes: list) -> dict:
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
-        # crawled_product_names 테이블이 있으면 우선 사용, 없으면 products만 조회
-        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
-        if 'crawled_product_names' in tables:
-            query = f"""
-                SELECT p.style_code, p.category, p.keywords, p.normal_price,
-                       COALESCE(c.product_name, p.product_name) as product_name
-                FROM products p
-                LEFT JOIN crawled_product_names c ON p.style_code = c.style_code
-                WHERE p.style_code IN ('{codes_str}')
-            """
-        else:
-            query = f"SELECT style_code, category, keywords, normal_price, product_name FROM products WHERE style_code IN ('{codes_str}')"
+        query = f"SELECT style_code, category, keywords, normal_price, product_name FROM products WHERE style_code IN ('{codes_str}')"
         df_p = pd.read_sql(query, conn)
         conn.close()
 
@@ -708,25 +697,23 @@ def _build_best_items(df) -> dict:
         if sub.empty: continue
         row = sub.iloc[0]
 
-        # ── 1+2+3) 상품명(style_name) 추출 ──
-        # 우선순위: GSheet(원본 ERP 데이터) > SQLite 마스터 > 네이버 크롤링
-        # 이랜드(로엠/클라비스/뉴발란스 등)는 GSheet에 한국어 이름이 있으므로 크롤링 불필요
+        # ── 상품명(style_name) 추출: DB 우선 → GSheet → 크롤링 ──
         raw_style_name = ''
         raw_item_name = ''
 
-        # 1. GSheet 원본 style_name 우선 확인 (카테고리명처럼 보이면 건너뜀)
-        for _, srow in df[df['style_code'] == s].iterrows():
-            sn = str(srow.get('style_name', '')).strip()
-            if sn and sn not in _EMPTY_VALS and sn not in _CATEGORY_LIKE_NAMES:
-                raw_style_name = sn
-                break
+        # 1. SQLite 마스터(DB) 우선 확인
+        if s in p_map:
+            db_style = str(p_map[s].get('style_name') or '').strip()
+            if db_style and db_style not in _EMPTY_VALS and db_style not in _CATEGORY_LIKE_NAMES:
+                raw_style_name = db_style
 
-        # 2. GSheet에 없으면 SQLite 마스터 확인
-        if raw_style_name in _EMPTY_VALS:
-            if s in p_map:
-                db_style = str(p_map[s].get('style_name') or '').strip()
-                if db_style and db_style not in _EMPTY_VALS and db_style not in _CATEGORY_LIKE_NAMES:
-                    raw_style_name = db_style
+        # 2. DB에 없으면 GSheet 원본 확인 (카테고리명처럼 보이면 건너뜀)
+        if not raw_style_name or raw_style_name in _EMPTY_VALS:
+            for _, srow in df[df['style_code'] == s].iterrows():
+                sn = str(srow.get('style_name', '')).strip()
+                if sn and sn not in _EMPTY_VALS and sn not in _CATEGORY_LIKE_NAMES:
+                    raw_style_name = sn
+                    break
 
         # ── item_name: item_code 기반 매핑 우선 (GSheet의 잘못된 카테고리 데이터 방지)
         ic = str(row.get('item_code', '') or '').strip()
