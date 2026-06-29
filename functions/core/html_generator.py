@@ -538,10 +538,11 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
             "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
         })
 
-    # 3. 신선도 세부
+    # 3. 신선도 세부 — scoring_logic.py와 동일한 신상 판별 조건 사용
     ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series(['']*len(df))
-    # [v4.4.5] 사용자 요청: _age나 _dis_rate 추정 로직을 전면 배제하고 오직 DB의 freshness_type 텍스트만 신뢰
-    _new_mask = ft.str.contains('신상', na=False)
+    _dis_r = df['_dis_rate'] if '_dis_rate' in df.columns else pd.Series([0.0]*len(df))
+    # freshness_type에 '신상' OR 할인율 0%(정상가) = 신상 (scoring_logic 동일 기준)
+    _new_mask = ft.str.contains('신상', na=False) | (_dis_r == 0)
     _plan_mask = ft.str.contains('기획', na=False)
 
     _fresh_w = inv_w.get('fresh', {})
