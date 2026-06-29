@@ -41,14 +41,12 @@
       background: var(--bg-main);
       color: var(--text-main);
       letter-spacing: -0.03em;
-      overflow-y: auto; /* 짤림 방지: 필요시 스크롤 허용 */
-      margin: 0;
-      padding: 0;
+      overflow-y: auto;
+      min-height: 100vh;
     }
 
     .app {
       display: flex;
-      align-items: stretch;
     }
 
     /* ──────────────────────────────────────────────
@@ -1966,21 +1964,43 @@
           <div style="margin-top:24px; margin-bottom:40px; display:none;" id="momScoreChartContainer">
             <div style="display:grid; grid-template-columns:3fr 7fr; gap:20px; width:100%;">
 
-              <!-- 좌측: 점수 변동 사항 카드 -->
-              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF; background:#F8FAFF; display:flex; flex-direction:column; justify-content:space-between;">
-                <div>
-                  <div style="font-size:16px; font-weight:800; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+              <!-- 좌측: 점수 변동 사항 + 매출 변동 사항 카드 (B안) -->
+              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF; background:#F8FAFF; display:flex; flex-direction:column; gap:0; overflow-y:auto;">
+
+                <!-- ① 점수 변동 섹션 -->
+                <div style="margin-bottom:12px;">
+                  <div style="font-size:16px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
                     <span style="font-size:20px;">🏆</span> 점수 변동 사항
                   </div>
-                  <div id="momTotalScoreLabel" style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:10px;">전월 대비 총점수 변동</div>
-                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:12px;">
-                    <div id="momTotalScoreCur" style="font-size:48px; font-weight:950; color:#1E293B; line-height:1;">0</div>
-                    <span style="font-size:18px; font-weight:800; color:#64748B;">점</span>
-                    <span id="momTotalScoreDelta" style="font-size:18px; font-weight:900; margin-left:10px;">-</span>
+                  <div id="momTotalScoreLabel" style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:8px;">전월 대비 총점수 변동</div>
+                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:8px;">
+                    <div id="momTotalScoreCur" style="font-size:44px; font-weight:950; color:#1E293B; line-height:1;">0</div>
+                    <span style="font-size:16px; font-weight:800; color:#64748B;">점</span>
+                    <span id="momTotalScoreDelta" style="font-size:16px; font-weight:900; margin-left:8px;">-</span>
                   </div>
-                  <div id="momTotalScorePrev" style="font-size:13px; font-weight:700; color:#64748B; margin-bottom:20px;">전월 점수: -</div>
+                  <div id="momTotalScorePrev" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:12px;">전월 점수: -</div>
                 </div>
-                <div id="momScoreSummary" style="background:#fff; border:1px solid #E2E8F0; padding:14px 16px; border-radius:12px; font-size:13px; color:#1E293B; line-height:1.5; font-weight:500;"></div>
+                <div id="momScoreSummary" style="background:#fff; border:1px solid #E2E8F0; padding:12px 14px; border-radius:12px; font-size:12px; color:#1E293B; line-height:1.5; font-weight:500; margin-bottom:16px;"></div>
+
+                <!-- 구분선 -->
+                <div style="border-top:1.5px dashed #CBD5E1; margin-bottom:16px;"></div>
+
+                <!-- ② 매출 변동 섹션 -->
+                <div style="margin-bottom:12px;">
+                  <div style="font-size:15px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:7px;">
+                    <span style="font-size:18px;">💰</span> 매출 변동 사항
+                  </div>
+                  <div style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:6px;">당월 매출 (전월 대비)</div>
+                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:6px;">
+                    <div id="momSalesCur" style="font-size:34px; font-weight:950; color:#1E293B; line-height:1;">-</div>
+                    <span style="font-size:13px; font-weight:800; color:#64748B;">백만원</span>
+                    <span id="momSalesMoMDelta" style="font-size:14px; font-weight:900; margin-left:6px;">-</span>
+                  </div>
+                  <div id="momSalesPrev" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:4px;">전월 매출: -</div>
+                  <div id="momSalesYoY" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:12px;">전년동월 대비: -</div>
+                </div>
+                <div id="momSalesSummary" style="background:#fff; border:1px solid #E2E8F0; padding:12px 14px; border-radius:12px; font-size:12px; color:#1E293B; line-height:1.5; font-weight:500;"></div>
+
               </div>
 
               <!-- 우측: 최근 3개월 지표별 점수 변화 차트 -->
@@ -2207,7 +2227,7 @@
                 <th style="text-align:left; padding-left:24px; color:#fff; background:#1D1E1E; width:16%;">입점 매장명</th>
                 <th style="background:#1D1E1E; width:14%; font-size:13px; color:#FFFFFF;">월 매출(성장률)</th>
                 <th style="background:#1D1E1E; color:#FFFFFF; width:11%; font-size:14px; font-weight:900;">종합 점수</th>
-                <th style="background:#1D1E1E; color:#fff; width:19%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(평수 기반 / tM×3 fallback)</span></th>
+                <th style="background:#1D1E1E; color:#fff; width:19%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x3배)</span></th>
                 <th style="background:#E30019; color:#fff; width:10%;">할인율</th>
                 <th style="background:#2563EB; color:#fff; width:10%;">신선도</th>
                 <th style="background:#F59E0B; color:#fff; width:10%;">시즌</th>
@@ -2714,6 +2734,15 @@
 
       if (id === 'p2') buildBrandComparisonTable();
       if (id === 'p3') initP2Selectors();
+
+      // 페이지 전환 후 실제 콘텐츠 높이를 Streamlit iframe에 전달
+      setTimeout(function() {
+        var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+        try {
+          window.parent.postMessage({ type: 'streamlit:componentReady', apiVersion: 1 }, '*');
+          window.parent.postMessage({ type: 'streamlit:setFrameHeight', height: h }, '*');
+        } catch(e) {}
+      }, 200);
     }
 
     // ─── [v100.7] P2 전용 네비게이터 로직 ───
@@ -2847,7 +2876,7 @@
     <th style="text-align:left;padding-left:24px;background:#1D1E1E;width:16%;">브랜드명</th>
     <th style="background:#1D1E1E; width:14%; font-size:13px; color:#FFFFFF;">월 매출(성장률)</th>
     <th style="background:#1D1E1E; color:#FFFFFF; width:11%; font-size:14px; font-weight:900;">종합 점수</th>
-    <th style="background:#1D1E1E; width:19%; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(평수 기반 / tM×3 fallback)</span></th>
+    <th style="background:#1D1E1E; width:19%; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x3배)</span></th>
     <th style="background:#E30019; width:10%;">할인율</th>
     <th style="background:#2563EB; width:10%;">신선도</th>
     <th style="background:#F59E0B; width:10%;">시즌</th>
@@ -3024,7 +3053,7 @@
       document.getElementById('alertArea').innerHTML = supply < 100 ? `
     <div class="alert-box">
       <div class="alert-icon">!</div>
-      <div class="alert-text">목표 재고 미달 — 목표 재고액 대비 ${supply}% 보유 (${gap}%p 부족)</div>
+      <div class="alert-text">목표 재고 미달 — 필요 재고액(목표매출 × 3) 대비 ${supply}% 보유 (${gap}%p 부족)</div>
     </div>` : '';
 
       // KPI 4종 카드 (원 단위) — 유일한 dStore/d/typeLabel 선언 지점
@@ -3151,7 +3180,7 @@
     </div>
   `;
 
-      // 1. 4개 지표 카드 — 100점 환산 표시 (달성률% 그대로)
+      // 1. 4개 지표 카드 — 100점 환산 원점수 표시 (P1 팝업과 동일 방식)
       const mList = [
         { id: 'dis',    l: '할인율 점수', s: Math.round(b.dis    || 0), maxPt: 100, c: 'm-dis',    estimated: !!b.dis_estimated },
         { id: 'fresh',  l: '신선도 점수', s: Math.round(b.fresh  || 0), maxPt: 100, c: 'm-fresh',  estimated: false },
@@ -3229,8 +3258,8 @@
         if (m.id === 'best') segs = segs.filter(s => !s.key.includes('worst'));
 
         // [v35.0] 그룹 내 최대 비중(maxOptPct) 추출 (상대적 바 길이 계산용)
-        // [v58.0] 필터링 완화: 할인율(dis), 시즌(season), 아이템(item), 신선도(fresh) 의 경우 목표 비중이 0이더라도 모두 노출 (가을/겨울처럼 '-' 표시)
-        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season' || m.id === 'item' || m.id === 'fresh');
+        // [v58.0] 필터링 완화: 할인율(dis), 시즌(season), 아이템(item)의 경우 목표 비중이 0이더라도 모두 노출
+        const validSegs = segs.filter(s => (s.opt_pct || 0) > 0 || m.id === 'dis' || m.id === 'season' || m.id === 'item');
         const maxOptPct = Math.max(...validSegs.map(s => s.opt_pct || 0), 1);
 
         let shortageHtml = '';
@@ -3354,7 +3383,7 @@
             ${m.id === 'dis' && b.avg_discount_rate !== undefined ? `<span style="font-size:11px; font-weight:850; color:#E30019; background:#FFF1F2; border:1px solid #FFE4E6; padding:2px 8px; border-radius:6px; margin-left:6px;">평균 ${b.avg_discount_rate}%</span>` : ''}
           </div>
           <div style="text-align:right;">
-            <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">점</span>
+            <span class="m-score" style="color:${baseColor}">${m.s}</span><span class="m-score-unit">/100점</span>
           </div>
         </div>
         ${shortageHtml}
@@ -3877,6 +3906,76 @@
           if (decreased.length > 0) reasons.push(`하락 원인 지표: ` + decreased.map(m => `<b>${m.name}(${m.diff})</b>`).join(', '));
           summaryDiv.innerHTML = `총점수는 전월대비 ${totalStr}했습니다.<br><span style="font-size:12px; color:#475569; margin-top:6px; display:inline-block; line-height:1.4;">💡 ${reasons.join('<br>') || '세부 지표 점수가 모두 전월과 동일합니다.'}</span>`;
         }
+      }
+
+      // ── 매출 변동 섹션 업데이트 ──
+      const salesCurEl   = document.getElementById('momSalesCur');
+      const salesMoMEl   = document.getElementById('momSalesMoMDelta');
+      const salesPrevEl2 = document.getElementById('momSalesPrev');
+      const salesYoYEl   = document.getElementById('momSalesYoY');
+      const salesSummary = document.getElementById('momSalesSummary');
+
+      const curSales  = parseFloat(b.sales_amt || 0);
+      const prevSales = prevB ? parseFloat(prevB.sales_amt || 0) : null;
+      const growthPct = parseFloat(b.growth_pct || 0);
+      const prevYrSales = parseFloat(b.prev_yr_sales_amt || 0);
+
+      if (salesCurEl) salesCurEl.textContent = curSales.toFixed(1);
+
+      // 전월 대비 매출 delta
+      if (salesMoMEl) {
+        if (prevSales !== null && prevSales > 0) {
+          const momDiff = curSales - prevSales;
+          const momPct  = (momDiff / prevSales * 100).toFixed(1);
+          if (momDiff > 0) {
+            salesMoMEl.innerHTML = `<span style="color:#DC2626;">▲${momDiff.toFixed(1)}M (+${momPct}%)</span>`;
+          } else if (momDiff < 0) {
+            salesMoMEl.innerHTML = `<span style="color:#2563EB;">▼${Math.abs(momDiff).toFixed(1)}M (${momPct}%)</span>`;
+          } else {
+            salesMoMEl.innerHTML = `<span style="color:#64748B;">동일</span>`;
+          }
+        } else {
+          salesMoMEl.textContent = '-';
+        }
+      }
+
+      if (salesPrevEl2) {
+        salesPrevEl2.textContent = prevSales !== null
+          ? `전월 매출: ${prevSales.toFixed(1)}백만원`
+          : '전월 매출: 데이터 없음';
+      }
+
+      // 전년동월 대비
+      if (salesYoYEl) {
+        if (prevYrSales > 0) {
+          const yoyColor = growthPct >= 0 ? '#DC2626' : '#2563EB';
+          const yoySign  = growthPct >= 0 ? '▲' : '▼';
+          salesYoYEl.innerHTML = `전년동월 대비: <strong style="color:${yoyColor};">${yoySign}${Math.abs(growthPct).toFixed(1)}%</strong> <span style="color:#94A3B8;">(전년: ${prevYrSales.toFixed(1)}백만원)</span>`;
+        } else {
+          salesYoYEl.textContent = '전년동월 대비: 비교 데이터 없음';
+        }
+      }
+
+      // 매출 요약 텍스트
+      if (salesSummary) {
+        const lines = [];
+        if (prevSales !== null && prevSales > 0) {
+          const momDiff = curSales - prevSales;
+          const momPct  = (momDiff / prevSales * 100).toFixed(1);
+          const momStr  = momDiff === 0 ? '전월과 동일' : (momDiff > 0
+            ? `<strong style="color:#DC2626;">▲${momDiff.toFixed(1)}백만원(+${momPct}%) 증가</strong>`
+            : `<strong style="color:#2563EB;">▼${Math.abs(momDiff).toFixed(1)}백만원(${momPct}%) 감소</strong>`);
+          lines.push(`전월대비 매출은 ${momStr}했습니다.`);
+        }
+        if (prevYrSales > 0) {
+          const yoyStr = growthPct === 0 ? '전년과 동일' : (growthPct > 0
+            ? `<strong style="color:#DC2626;">▲${growthPct.toFixed(1)}% 성장</strong>`
+            : `<strong style="color:#2563EB;">▼${Math.abs(growthPct).toFixed(1)}% 역신장</strong>`);
+          lines.push(`전년동월 대비 ${yoyStr}입니다.`);
+        }
+        salesSummary.innerHTML = lines.length
+          ? lines.join('<br>')
+          : `<span style="color:#64748B;">매출 비교 데이터가 없습니다.</span>`;
       }
 
       // 4대 지표 데이터셋 구성 (최근 3개월)
@@ -4683,27 +4782,18 @@
       <div id="_pImgErr" style="display:none;color:#9CA3AF;font-size:12px;padding:20px;">네이버에서 이미지를 찾을 수 없습니다.</div>
     </div>
   </div>
-  <!-- [v205.1] Safe sendHeight: MutationObserver(무한루프) 제거, 로드 및 탭 전환 시 1회성 postMessage로 iframe 동적 높이 조절 -->
+  <!-- [v204.0] 초기 로드 시 실제 콘텐츠 높이를 Streamlit에 전달 (페이지 전환은 showPage 내부에서 처리) -->
   <script>
-    function safeSendHeight() {
-      if (!window.parent) return;
-      // 짤림 방지를 위해 +100px 여유 추가
-      const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight) + 100;
-      window.parent.postMessage({ isStreamlitMessage: true, type: "streamlit:setFrameHeight", height: h }, "*");
-    }
-    // 페이지 로드 완료 시
-    window.addEventListener("load", () => setTimeout(safeSendHeight, 500));
-    // 브라우저 리사이즈 시
-    window.addEventListener("resize", () => setTimeout(safeSendHeight, 300));
-    
-    // showPage(탭 전환) 함수를 래핑하여 탭 이동 시 높이 재계산
-    const originalShowPage = window.showPage;
-    if (typeof originalShowPage === 'function') {
-      window.showPage = function(id, el) {
-        originalShowPage(id, el);
-        setTimeout(safeSendHeight, 100);
-      };
-    }
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+      try {
+        window.parent.postMessage({ type: 'streamlit:componentReady', apiVersion: 1 }, '*');
+        window.parent.postMessage({ type: 'streamlit:setFrameHeight', height: h }, '*');
+      } catch(e) {}
+    }, 300);
+  });
   </script>
 </body>
+
 </html>
