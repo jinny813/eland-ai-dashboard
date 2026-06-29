@@ -1987,14 +1987,14 @@
 
                 <!-- ② 매출 변동 섹션 -->
                 <div style="margin-bottom:12px;">
-                  <div style="font-size:15px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:7px;">
-                    <span style="font-size:18px;">💰</span> 매출 변동 사항
+                  <div style="font-size:16px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">💰</span> 매출 변동 사항
                   </div>
-                  <div style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:6px;">당월 매출 (전월 대비)</div>
-                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:6px;">
-                    <div id="momSalesCur" style="font-size:34px; font-weight:950; color:#1E293B; line-height:1;">-</div>
-                    <span style="font-size:13px; font-weight:800; color:#64748B;">백만원</span>
-                    <span id="momSalesMoMDelta" style="font-size:14px; font-weight:900; margin-left:6px;">-</span>
+                  <div style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:8px;">당월 매출 (전월 대비)</div>
+                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:8px;">
+                    <div id="momSalesCur" style="font-size:44px; font-weight:950; color:#1E293B; line-height:1;">-</div>
+                    <span style="font-size:16px; font-weight:800; color:#64748B;">백만원</span>
+                    <span id="momSalesMoMDelta" style="font-size:16px; font-weight:900; margin-left:8px;">-</span>
                   </div>
                   <div id="momSalesPrev" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:4px;">전월 매출: -</div>
                   <div id="momSalesYoY" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:12px;">전년동월 대비: -</div>
@@ -2004,7 +2004,7 @@
               </div>
 
               <!-- 우측: 최근 3개월 지표별 점수 변화 차트 -->
-              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF;">
+              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF; display:flex; flex-direction:column;">
                 <div style="font-size:16px; font-weight:800; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
                   <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:20px;">📊</span> 4대 지표별 점수 변화 (최근 3개월)
@@ -2012,7 +2012,7 @@
                   <span style="font-size:11px; font-weight:800; color:#3B82F6; background:#EFF6FF; padding:3px 10px; border-radius:12px; border:1px solid #BFDBFE;">💡 지표 클릭 시 세부 구간 비교</span>
                 </div>
                 <div style="font-size:12px; color:#94A3B8; font-weight:700; margin-bottom:20px;">막대를 클릭하시면 해당 지표의 구간별 재고 변화를 상세히 보실 수 있습니다.</div>
-                <div style="position:relative; height:260px; width:100%;">
+                <div style="position:relative; flex:1; min-height:300px; width:100%;">
                   <canvas id="momScoreChart"></canvas>
                 </div>
               </div>
