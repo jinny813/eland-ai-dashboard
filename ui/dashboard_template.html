@@ -1960,60 +1960,52 @@
             </div>
           </div>
 
-          <!-- [v200] 점수 변동 사항 카드 + 최근 3개월 차트 (2컬럼 복원) -->
-          <div style="margin-top:24px; margin-bottom:40px; display:none;" id="momScoreChartContainer">
+          <!-- [v200] 점수 변동 사항 카드 + 최근 3개월 차트 (2컬럼) -->
+          <div style="margin-top:16px; margin-bottom:20px; display:none;" id="momScoreChartContainer">
             <div style="display:grid; grid-template-columns:3fr 7fr; gap:20px; width:100%;">
 
-              <!-- 좌측: 점수 변동 사항 + 매출 변동 사항 카드 (B안) -->
-              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF; background:#F8FAFF; display:flex; flex-direction:column; gap:0; overflow-y:auto;">
-
-                <!-- ① 점수 변동 섹션 -->
-                <div style="margin-bottom:12px;">
-                  <div style="font-size:16px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:20px;">🏆</span> 점수 변동 사항
-                  </div>
-                  <div id="momTotalScoreLabel" style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:8px;">전월 대비 총점수 변동</div>
-                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:8px;">
-                    <div id="momTotalScoreCur" style="font-size:44px; font-weight:950; color:#1E293B; line-height:1;">0</div>
-                    <span style="font-size:16px; font-weight:800; color:#64748B;">점</span>
-                    <span id="momTotalScoreDelta" style="font-size:16px; font-weight:900; margin-left:8px;">-</span>
-                  </div>
-                  <div id="momTotalScorePrev" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:12px;">전월 점수: -</div>
+              <!-- 좌측: 점수 변동 사항 카드 -->
+              <div class="card" style="padding:20px; border:1.5px solid #EEF2FF; background:#F8FAFF; display:flex; flex-direction:column; gap:0;">
+                <div style="font-size:16px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:20px;">🏆</span> 점수 변동 사항
                 </div>
-                <div id="momScoreSummary" style="background:#fff; border:1px solid #E2E8F0; padding:12px 14px; border-radius:12px; font-size:12px; color:#1E293B; line-height:1.5; font-weight:500; margin-bottom:16px;"></div>
-
-                <!-- 구분선 -->
-                <div style="border-top:1.5px dashed #CBD5E1; margin-bottom:16px;"></div>
-
-                <!-- ② 매출 변동 섹션 -->
-                <div style="margin-bottom:12px;">
-                  <div style="font-size:16px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:20px;">💰</span> 매출 변동 사항
-                  </div>
-                  <div style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:8px;">당월 매출 (전월 대비)</div>
-                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:8px;">
-                    <div id="momSalesCur" style="font-size:44px; font-weight:950; color:#1E293B; line-height:1;">-</div>
-                    <span style="font-size:16px; font-weight:800; color:#64748B;">백만원</span>
-                    <span id="momSalesMoMDelta" style="font-size:16px; font-weight:900; margin-left:8px;">-</span>
-                  </div>
-                  <div id="momSalesPrev" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:4px;">전월 매출: -</div>
-                  <div id="momSalesYoY" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:12px;">전년동월 대비: -</div>
+                <div id="momTotalScoreLabel" style="font-size:12px; font-weight:800; color:#64748B; margin-bottom:8px;">전월 대비 총점수 변동</div>
+                <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:8px;">
+                  <div id="momTotalScoreCur" style="font-size:44px; font-weight:950; color:#1E293B; line-height:1;">0</div>
+                  <span style="font-size:16px; font-weight:800; color:#64748B;">점</span>
+                  <span id="momTotalScoreDelta" style="font-size:16px; font-weight:900; margin-left:8px;">-</span>
                 </div>
-                <div id="momSalesSummary" style="background:#fff; border:1px solid #E2E8F0; padding:12px 14px; border-radius:12px; font-size:12px; color:#1E293B; line-height:1.5; font-weight:500;"></div>
-
+                <div id="momTotalScorePrev" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:12px;">전월 점수: -</div>
+                <div id="momScoreSummary" style="background:#fff; border:1px solid #E2E8F0; padding:12px 14px; border-radius:12px; font-size:12px; color:#1E293B; line-height:1.5; font-weight:500;"></div>
               </div>
 
               <!-- 우측: 최근 3개월 지표별 점수 변화 차트 -->
-              <div class="card" style="padding:24px; border:1.5px solid #EEF2FF; display:flex; flex-direction:column;">
-                <div style="font-size:16px; font-weight:800; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+              <div class="card" style="padding:20px; border:1.5px solid #EEF2FF; display:flex; flex-direction:column;">
+                <div style="font-size:16px; font-weight:800; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                   <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:20px;">📊</span> 4대 지표별 점수 변화 (최근 3개월)
                   </div>
-                  <span style="font-size:11px; font-weight:800; color:#3B82F6; background:#EFF6FF; padding:3px 10px; border-radius:12px; border:1px solid #BFDBFE;">💡 지표 클릭 시 세부 구간 비교</span>
+                  <span style="font-size:11px; font-weight:800; color:#3B82F6; background:#EFF6FF; padding:3px 10px; border-radius:12px; border:1px solid #BFDBFE;">💡 지표 클릭 시 세부 구간 비교 · 총점수 클릭 시 매출 변동</span>
                 </div>
-                <div style="font-size:12px; color:#94A3B8; font-weight:700; margin-bottom:20px;">막대를 클릭하시면 해당 지표의 구간별 재고 변화를 상세히 보실 수 있습니다.</div>
-                <div style="position:relative; flex:1; min-height:300px; width:100%;">
+                <div style="font-size:12px; color:#94A3B8; font-weight:700; margin-bottom:12px;">막대를 클릭하시면 해당 지표의 구간별 재고 변화를 상세히 보실 수 있습니다.</div>
+                <div style="position:relative; flex:1; min-height:240px; width:100%;">
                   <canvas id="momScoreChart"></canvas>
+                </div>
+                <!-- 총점수 클릭 시 매출 변동 패널 -->
+                <div id="momSalesPanel" style="display:none; margin-top:14px; border-top:1.5px dashed #CBD5E1; padding-top:14px;">
+                  <div style="font-size:14px; font-weight:800; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">💰</span> 매출 변동 사항
+                    <span id="momSalesPanelLabel" style="font-size:11px; font-weight:700; color:#64748B; margin-left:4px;"></span>
+                    <button onclick="document.getElementById('momSalesPanel').style.display='none';" style="margin-left:auto; background:none; border:none; color:#94A3B8; font-size:16px; cursor:pointer; line-height:1;">✕</button>
+                  </div>
+                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:6px;">
+                    <div id="momSalesCur" style="font-size:32px; font-weight:950; color:#1E293B; line-height:1;">-</div>
+                    <span style="font-size:14px; font-weight:800; color:#64748B;">백만원</span>
+                    <span id="momSalesMoMDelta" style="font-size:14px; font-weight:900; margin-left:6px;">-</span>
+                  </div>
+                  <div id="momSalesPrev" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:3px;">전월 매출: -</div>
+                  <div id="momSalesYoY" style="font-size:12px; font-weight:700; color:#64748B; margin-bottom:10px;">전년동월 대비: -</div>
+                  <div id="momSalesSummary" style="background:#F8FAFF; border:1px solid #E2E8F0; padding:10px 12px; border-radius:10px; font-size:12px; color:#1E293B; line-height:1.5; font-weight:500;"></div>
                 </div>
               </div>
 
@@ -3908,40 +3900,51 @@
         }
       }
 
-      // ── 매출 변동 섹션 업데이트 ──
+      // ── 매출 변동 패널 업데이트 (재고월 + 1 = 매출 비교월) ──
+      // b = 현재 달(예: 5월 재고) → 비교 매출월 = 6월 → 아직 없음
+      // prevB = 전월(예: 4월 재고) → 비교 매출월 = 5월 → b.sales_amt 사용
       const salesCurEl   = document.getElementById('momSalesCur');
       const salesMoMEl   = document.getElementById('momSalesMoMDelta');
       const salesPrevEl2 = document.getElementById('momSalesPrev');
       const salesYoYEl   = document.getElementById('momSalesYoY');
       const salesSummary = document.getElementById('momSalesSummary');
+      const salesPanelLabel = document.getElementById('momSalesPanelLabel');
 
-      const curSales  = parseFloat(b.sales_amt || 0);
-      const prevSales = prevB ? parseFloat(prevB.sales_amt || 0) : null;
-      const growthPct = parseFloat(b.growth_pct || 0);
+      // 시프트: 현재 달 재고의 비교 매출 = 다음 달 매출 → 없음(null)
+      //         전월 재고의 비교 매출 = 현재 달 매출 = b.sales_amt
+      const shiftedCurSales  = null; // 현재 달 다음 달 매출 없음
+      const shiftedPrevSales = parseFloat(b.sales_amt || 0); // 전월 재고 기준 당월 매출
+      const shiftedPrevPrevSales = prevB ? parseFloat(prevB.sales_amt || 0) : null; // 전월 재고 기준 전월 매출
+      const growthPct   = parseFloat(b.growth_pct || 0);
       const prevYrSales = parseFloat(b.prev_yr_sales_amt || 0);
 
-      if (salesCurEl) salesCurEl.textContent = curSales.toFixed(1);
+      // 패널 라벨: 비교 기준월 안내
+      const curMonthLabel = b.data_month || b.month || '';
+      if (salesPanelLabel) {
+        salesPanelLabel.textContent = curMonthLabel ? `(${curMonthLabel} 재고 기준 → 다음달 매출 데이터 준비 중)` : '';
+      }
 
-      // 전월 대비 매출 delta
+      // 당월 매출: 현재 달은 없음 → 전월 재고 기준 매출(shiftedPrevSales) 표시
+      if (salesCurEl) {
+        salesCurEl.textContent = shiftedPrevSales > 0 ? shiftedPrevSales.toFixed(1) : '-';
+      }
+
+      // 전월 대비 매출 delta (전월 재고 기준: shiftedPrevSales vs shiftedPrevPrevSales)
       if (salesMoMEl) {
-        if (prevSales !== null && prevSales > 0) {
-          const momDiff = curSales - prevSales;
-          const momPct  = (momDiff / prevSales * 100).toFixed(1);
-          if (momDiff > 0) {
-            salesMoMEl.innerHTML = `<span style="color:#DC2626;">▲${momDiff.toFixed(1)}M (+${momPct}%)</span>`;
-          } else if (momDiff < 0) {
-            salesMoMEl.innerHTML = `<span style="color:#2563EB;">▼${Math.abs(momDiff).toFixed(1)}M (${momPct}%)</span>`;
-          } else {
-            salesMoMEl.innerHTML = `<span style="color:#64748B;">동일</span>`;
-          }
+        if (shiftedPrevSales > 0 && shiftedPrevPrevSales !== null && shiftedPrevPrevSales > 0) {
+          const momDiff = shiftedPrevSales - shiftedPrevPrevSales;
+          const momPct  = (momDiff / shiftedPrevPrevSales * 100).toFixed(1);
+          if (momDiff > 0)      salesMoMEl.innerHTML = `<span style="color:#DC2626;">▲${momDiff.toFixed(1)}M (+${momPct}%)</span>`;
+          else if (momDiff < 0) salesMoMEl.innerHTML = `<span style="color:#2563EB;">▼${Math.abs(momDiff).toFixed(1)}M (${momPct}%)</span>`;
+          else                  salesMoMEl.innerHTML = `<span style="color:#64748B;">동일</span>`;
         } else {
           salesMoMEl.textContent = '-';
         }
       }
 
       if (salesPrevEl2) {
-        salesPrevEl2.textContent = prevSales !== null
-          ? `전월 매출: ${prevSales.toFixed(1)}백만원`
+        salesPrevEl2.textContent = shiftedPrevPrevSales !== null
+          ? `전월 매출: ${shiftedPrevPrevSales.toFixed(1)}백만원`
           : '전월 매출: 데이터 없음';
       }
 
@@ -3958,24 +3961,26 @@
 
       // 매출 요약 텍스트
       if (salesSummary) {
-        const lines = [];
-        if (prevSales !== null && prevSales > 0) {
-          const momDiff = curSales - prevSales;
-          const momPct  = (momDiff / prevSales * 100).toFixed(1);
-          const momStr  = momDiff === 0 ? '전월과 동일' : (momDiff > 0
-            ? `<strong style="color:#DC2626;">▲${momDiff.toFixed(1)}백만원(+${momPct}%) 증가</strong>`
-            : `<strong style="color:#2563EB;">▼${Math.abs(momDiff).toFixed(1)}백만원(${momPct}%) 감소</strong>`);
-          lines.push(`전월대비 매출은 ${momStr}했습니다.`);
+        if (shiftedPrevSales <= 0) {
+          salesSummary.innerHTML = `<span style="color:#64748B;">현재 달 다음 매출 데이터가 아직 없습니다.</span>`;
+        } else {
+          const lines = [];
+          if (shiftedPrevPrevSales !== null && shiftedPrevPrevSales > 0) {
+            const momDiff = shiftedPrevSales - shiftedPrevPrevSales;
+            const momPct  = (momDiff / shiftedPrevPrevSales * 100).toFixed(1);
+            const momStr  = momDiff === 0 ? '전월과 동일' : (momDiff > 0
+              ? `<strong style="color:#DC2626;">▲${momDiff.toFixed(1)}백만원(+${momPct}%) 증가</strong>`
+              : `<strong style="color:#2563EB;">▼${Math.abs(momDiff).toFixed(1)}백만원(${momPct}%) 감소</strong>`);
+            lines.push(`전월대비 매출은 ${momStr}했습니다.`);
+          }
+          if (prevYrSales > 0) {
+            const yoyStr = growthPct === 0 ? '전년과 동일' : (growthPct > 0
+              ? `<strong style="color:#DC2626;">▲${growthPct.toFixed(1)}% 성장</strong>`
+              : `<strong style="color:#2563EB;">▼${Math.abs(growthPct).toFixed(1)}% 역신장</strong>`);
+            lines.push(`전년동월 대비 ${yoyStr}입니다.`);
+          }
+          salesSummary.innerHTML = lines.length ? lines.join('<br>') : `<span style="color:#64748B;">비교 데이터가 없습니다.</span>`;
         }
-        if (prevYrSales > 0) {
-          const yoyStr = growthPct === 0 ? '전년과 동일' : (growthPct > 0
-            ? `<strong style="color:#DC2626;">▲${growthPct.toFixed(1)}% 성장</strong>`
-            : `<strong style="color:#2563EB;">▼${Math.abs(growthPct).toFixed(1)}% 역신장</strong>`);
-          lines.push(`전년동월 대비 ${yoyStr}입니다.`);
-        }
-        salesSummary.innerHTML = lines.length
-          ? lines.join('<br>')
-          : `<span style="color:#64748B;">매출 비교 데이터가 없습니다.</span>`;
       }
 
       // 4대 지표 데이터셋 구성 (최근 3개월)
@@ -4011,7 +4016,12 @@
             if (active && active.length > 0) {
               const metricIds = ['total', 'dis', 'best', 'fresh', 'season'];
               const clickedId = metricIds[active[0].index];
-              if (clickedId && clickedId !== 'total') showSegmentDetailMoM(clickedId);
+              if (clickedId === 'total') {
+                const panel = document.getElementById('momSalesPanel');
+                if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+              } else if (clickedId) {
+                showSegmentDetailMoM(clickedId);
+              }
             }
           },
           onHover: (event, chartElement) => {
