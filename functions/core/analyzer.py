@@ -1,4 +1,5 @@
 import sqlite3
+import json
 import pandas as pd
 import logging
 from core.scoring_logic import AssortmentScorer
@@ -9,6 +10,20 @@ logger = logging.getLogger(__name__)
 
 import os
 
+_CATEGORY_LIKE_NAMES = {
+    '가방', '백', '파우치', '지갑', '토트백', '숄더백', '크로스백', '클러치', '배낭', '백팩',
+    '티셔츠', '티', '반팔티', '긴팔티', '맨투맨', '후드티', '후드',
+    '셔츠', '블라우스', '남방',
+    '팬츠', '바지', '슬랙스', '청바지', '데님', '반바지', '쇼츠', '레깅스',
+    '스커트', '치마', '원피스', '드레스',
+    '자켓', '재킷', '점퍼', '코트', '패딩', '아우터', '가디건', '조끼', '베스트',
+    '니트', '스웨터',
+    '세트', '수트', '정장',
+    '신발', '운동화', '스니커즈', '구두', '슬리퍼', '샌들', '부츠',
+    '모자', '캡', '비니', '머플러', '스카프', '벨트', '양말',
+    '상의', '하의', '이너', '언더웨어',
+}
+
 class ActionAnalyzer:
     """
     프로덕션 급 분석 엔진: KPI 지표 부족분 기반 가중치 산출 및 
@@ -16,8 +31,12 @@ class ActionAnalyzer:
     """
     def __init__(self, db_path=None):
         if db_path is None:
-            # __file__ 기준으로 database/product_master.db의 절대 경로를 안전하게 조립
-            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
+            # functions/core/ → functions/ → project root → database/
+            _base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            _candidate = os.path.join(_base, "database", "product_master.db")
+            if not os.path.exists(_candidate):
+                _candidate = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
+            db_path = _candidate
         self.db_path = db_path
         self.scorer = AssortmentScorer(SCORING_CONFIG)
 
@@ -57,17 +76,48 @@ class ActionAnalyzer:
         style_codes = list(set(style_codes))
         p_map = {}
         if style_codes:
-            conn = self._get_db_connection()
-            codes_str = "', '".join([s.replace("'", "''") for s in style_codes])
-            p_master = pd.read_sql(f"SELECT style_code, product_name, category FROM products WHERE style_code IN ('{codes_str}')", conn)
-            p_map = p_master.set_index('style_code').to_dict('index')
-            conn.close()
+            try:
+                conn = self._get_db_connection()
+                codes_str = "', '".join([s.replace("'", "''") for s in style_codes])
+                p_master = pd.read_sql(f"SELECT style_code, product_name, category FROM products WHERE style_code IN ('{codes_str}')", conn)
+                p_map = p_master.set_index('style_code').to_dict('index')
+                conn.close()
+            except Exception:
+                pass
+
+        # style_master.json 크롤링 캐시 로드
+        _style_master = {}
+        try:
+            _base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            _jsm = os.path.join(_base, "core", "style_master.json")
+            if not os.path.exists(_jsm):
+                _jsm = os.path.join(os.path.dirname(__file__), "style_master.json")
+            if os.path.exists(_jsm):
+                with open(_jsm, 'r', encoding='utf-8') as _f:
+                    _style_master = json.load(_f)
+        except Exception:
+            pass
+
+        _empty = {'', '—', '-', 'nan', 'None', 'none'}
 
         def get_name(sc, row):
-            if sc in p_map: 
-                name = p_map[sc]['product_name'] or p_map[sc]['category']
-                if name: return name
-            return str(row.get('style_name', row.get('product_name', row.get('item_name', sc))))
+            # 1. GSheet 컬럼 (카테고리명 필터)
+            for col in ('style_name', 'product_name'):
+                v = str(row.get(col, '') or '').strip()
+                if v and v not in _empty and v not in _CATEGORY_LIKE_NAMES:
+                    return v
+            # 2. DB product_name
+            if sc in p_map:
+                name = str(p_map[sc].get('product_name') or '').strip()
+                if name and name not in _empty and name not in _CATEGORY_LIKE_NAMES:
+                    return name
+            # 3. style_master.json 크롤링 캐시
+            if sc in _style_master:
+                name = str(_style_master[sc].get('style_name') or '').strip()
+                if name and name not in _empty and name not in _CATEGORY_LIKE_NAMES:
+                    return name
+            # 4. 최후 폴백: 품번
+            return sc
 
         # 1. 자사 판매 BEST 10 추출 및 재고량별 액션 가이드 분류
         agg_dict = {

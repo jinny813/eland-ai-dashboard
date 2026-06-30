@@ -643,8 +643,27 @@ def _build_bp_detail(config: dict, bp_df=None) -> dict:
     return { "item":{"segs":[]}, "dis":{"segs":[]}, "fresh":{"segs":[]}, "best":{"segs":[]}, "season":{"segs":[]} }
 
 def _get_product_info(style_codes: list) -> dict:
-    """DB에서 스타일 정보를 딕셔너리 형태로 일괄 로드"""
+    """style_master.json → DB 순서로 스타일 정보 일괄 로드"""
     if not style_codes: return {}
+    res = {}
+    # 1. style_master.json 우선 로드
+    try:
+        _json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
+        if os.path.exists(_json_path):
+            with open(_json_path, 'r', encoding='utf-8') as _jf:
+                _master = json.load(_jf)
+            for _c in style_codes:
+                _entry = _master.get(_c)
+                if _entry and _entry.get('style_name'):
+                    res[_c] = {
+                        "item_name": _entry.get('item_name', ''),
+                        "style_name": _entry.get('style_name', ''),
+                        "keywords": [],
+                        "normal_price": 0,
+                    }
+    except Exception:
+        pass
+    # 2. DB로 보완 (product_name이 있는 경우 style_master.json 값을 덮어씀)
     db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
     try:
         conn = sqlite3.connect(db_path)
@@ -653,17 +672,18 @@ def _get_product_info(style_codes: list) -> dict:
         df_p = pd.read_sql(query, conn)
         conn.close()
 
-        res = {}
         for _, row in df_p.iterrows():
+            kw = row['keywords']
+            pname = row['product_name']
             res[row['style_code']] = {
                 "item_name": row['category'],
-                "style_name": row['product_name'],
-                "keywords": row['keywords'].split(", ") if row['keywords'] else [],
+                "style_name": pname,
+                "keywords": kw.split(", ") if isinstance(kw, str) and kw.strip() else [],
                 "normal_price": row.get('normal_price', 0)
             }
         return res
-    except:
-        return {}
+    except Exception:
+        return res  # DB 실패해도 style_master.json 로드 결과 반환
 
 _EMPTY_VALS = {'', '—', '-', 'nan', 'None', 'none'}
 

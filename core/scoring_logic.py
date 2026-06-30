@@ -462,12 +462,18 @@ class AssortmentScorer:
             ]
         # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
         dis_scale = 1.0
+        _total_d_amt = _get_record_ref(pd.Series(True, index=df.index))['_amt'].sum()
         if _use_rate_dis:
-            _total_d_amt = _get_record_ref(pd.Series(True, index=df.index))['_amt'].sum()
             _known_d_amt = _get_record_ref(df['_dis_rate'] >= 0)['_amt'].sum()
             if 0 < _known_d_amt < _total_d_amt:
                 dis_scale = _total_d_amt / _known_d_amt
         dis_estimated = dis_scale > 1.0
+
+        # dis_estimated: 재고량 비중 × 전체 재고액으로 구간별 추정 (단순 스케일업 → 100% 고착 방지)
+        _dis_total_qty = 0.0
+        if dis_estimated and 'stock_qty' in df.columns:
+            _total_ref_df = _get_record_ref(pd.Series(True, index=df.index))
+            _dis_total_qty = pd.to_numeric(_total_ref_df['stock_qty'], errors='coerce').fillna(0.0).sum()
 
         # 점수 가중치 = 구간 점수 / 지표 내 점수 합계 (점수 0인 구간 제외 후 정규화)
         sum_s = sum(item['s'] for item in dis_cfg if item.get('s', 0) > 0)
@@ -476,7 +482,16 @@ class AssortmentScorer:
             for item in dis_cfg:
                 seg_score = item.get('s', 0)
                 if item['r'] > 0 and seg_score > 0:
-                    act = _get_record_ref(item['m'])['_amt'].sum() * dis_scale
+                    if dis_estimated and _dis_total_qty > 0:
+                        # 구간 재고량 비중 × 전체 재고액 = 추정 구간 재고액
+                        _seg_ref = _get_record_ref(item['m'])
+                        _seg_qty = pd.to_numeric(
+                            _seg_ref['stock_qty'] if 'stock_qty' in _seg_ref.columns else pd.Series([], dtype=float),
+                            errors='coerce'
+                        ).fillna(0.0).sum()
+                        act = _total_d_amt * (_seg_qty / _dis_total_qty)
+                    else:
+                        act = _get_record_ref(item['m'])['_amt'].sum() * dis_scale
                     tgt = target_total * item['r']
                     segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
                     discount_score += segment_pct * (seg_score / sum_s)
@@ -485,7 +500,8 @@ class AssortmentScorer:
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
         fresh_inv = inv_weights.get('fresh', {})
 
-        _new_mask  = ft.str.contains('신상', na=False)
+        # 신상 판별: freshness_type '신상' 포함 OR 할인율 0%(정상가) — get_shortage_segments와 동일 기준
+        _new_mask  = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
         _plan_mask = ft.str.contains('기획', na=False)
 
         _fresh_score_tbl = FRESH_SCORES["outlet"] if is_outlet else FRESH_SCORES["normal"]

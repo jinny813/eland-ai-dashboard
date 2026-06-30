@@ -1,4 +1,5 @@
 import sqlite3
+import json
 import pandas as pd
 import logging
 from core.scoring_logic import AssortmentScorer
@@ -6,6 +7,23 @@ from core.comparison_engine import ComparisonEngine
 from config.scoring_config import SCORING_CONFIG
 
 logger = logging.getLogger(__name__)
+
+# GSheet style_name 컬럼에 카테고리명이 잘못 입력된 경우 걸러내기 위한 집합
+# (상품명이 아닌 아이템 분류명 목록)
+_CATEGORY_LIKE_NAMES = {
+    '가방', '백', '파우치', '지갑', '토트백', '숄더백', '크로스백', '클러치', '배낭', '백팩',
+    '티셔츠', '티', '반팔티', '긴팔티', '맨투맨', '후드티', '후드',
+    '셔츠', '블라우스', '남방',
+    '팬츠', '바지', '슬랙스', '청바지', '데님', '반바지', '쇼츠', '레깅스',
+    '스커트', '치마',
+    '원피스', '드레스',
+    '자켓', '재킷', '점퍼', '코트', '패딩', '아우터', '가디건', '조끼', '베스트',
+    '니트', '스웨터', '가디건',
+    '세트', '수트', '정장',
+    '신발', '운동화', '스니커즈', '구두', '슬리퍼', '샌들', '부츠',
+    '모자', '캡', '비니', '머플러', '스카프', '벨트', '양말',
+    '상의', '하의', '아우터', '이너', '언더웨어',
+}
 
 import os
 
@@ -65,17 +83,33 @@ class ActionAnalyzer:
 
         _empty = {'', '—', '-', 'nan', 'None', 'none'}
 
+        # style_master.json 로드 (크롤링 캐시 3000+ 항목)
+        _style_master = {}
+        try:
+            _jsm_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "core", "style_master.json")
+            if os.path.exists(_jsm_path):
+                with open(_jsm_path, 'r', encoding='utf-8') as _jf:
+                    _style_master = json.load(_jf)
+        except Exception:
+            pass
+
         def get_name(sc, row):
-            # 1. GSheet 원본 style_name 우선 (이랜드 등 ERP 한국어 이름 보존)
-            for col in ('style_name', 'product_name', 'item_name'):
+            # 1. GSheet style_name / product_name — 카테고리명처럼 보이면 건너뜀
+            for col in ('style_name', 'product_name'):
                 v = str(row.get(col, '') or '').strip()
-                if v and v not in _empty:
+                if v and v not in _empty and v not in _CATEGORY_LIKE_NAMES:
                     return v
-            # 2. GSheet에 없으면 SQLite 마스터
+            # 2. SQLite 마스터 product_name
             if sc in p_map:
-                name = p_map[sc].get('product_name') or p_map[sc].get('category') or ''
-                if name and name not in _empty:
+                name = str(p_map[sc].get('product_name') or '').strip()
+                if name and name not in _empty and name not in _CATEGORY_LIKE_NAMES:
                     return name
+            # 3. style_master.json 크롤링 캐시
+            if sc in _style_master:
+                name = str(_style_master[sc].get('style_name') or '').strip()
+                if name and name not in _empty and name not in _CATEGORY_LIKE_NAMES:
+                    return name
+            # 4. 최후 폴백: 품번 그대로 (카테고리명 절대 표시 안 함)
             return sc
 
         # 1. 본 매장(자사) 판매 BEST 10 추출 (재고 확보 필요 상품)

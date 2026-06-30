@@ -1706,6 +1706,9 @@
       border-radius: 6px;
       background: #F1F5F9;
     }
+    /* 잡화 카테고리: 신선도/시즌 요소 숨김 + 2카드 레이아웃 */
+    body.jabh-mode .jabh-hide { display: none !important; }
+    body.jabh-mode .metrics-4-grid { grid-template-columns: repeat(2, 1fr) !important; }
   </style>
 </head>
 
@@ -1869,8 +1872,8 @@
                     <th style="text-align:left; padding:12px; padding-left:24px; color:#fff; width:30%;">브랜드명</th>
                     <th style="text-align:center; padding:12px; color:#fff; width:14%;">종합점수</th>
                     <th style="text-align:center; padding:12px; color:#fff; width:14%;">할인율</th>
-                    <th style="text-align:center; padding:12px; color:#fff; width:14%;">신선도</th>
-                    <th style="text-align:center; padding:12px; color:#fff; width:14%;">시즌</th>
+                    <th class="jabh-hide" style="text-align:center; padding:12px; color:#fff; width:14%;">신선도</th>
+                    <th class="jabh-hide" style="text-align:center; padding:12px; color:#fff; width:14%;">시즌</th>
                     <th style="text-align:center; padding:12px; color:#fff; width:14%;">BEST상품</th>
                   </tr>
                 </thead>
@@ -2221,8 +2224,8 @@
                 <th style="background:#1D1E1E; color:#FFFFFF; width:11%; font-size:14px; font-weight:900;">종합 점수</th>
                 <th style="background:#1D1E1E; color:#fff; width:19%;">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x3배)</span></th>
                 <th style="background:#E30019; color:#fff; width:10%;">할인율</th>
-                <th style="background:#2563EB; color:#fff; width:10%;">신선도</th>
-                <th style="background:#F59E0B; color:#fff; width:10%;">시즌</th>
+                <th class="jabh-hide" style="background:#2563EB; color:#fff; width:10%;">신선도</th>
+                <th class="jabh-hide" style="background:#F59E0B; color:#fff; width:10%;">시즌</th>
                 <th style="background:#16A34A; color:#fff; width:10%;">BEST</th>
               </tr>
             </thead>
@@ -2250,9 +2253,9 @@
               <th style="background:#1D1E1E;">총 점수</th>
               <th style="background:#1D1E1E;">목표대비 재고</th>
               <th style="background:#DC2626;">할인율</th>
-              <th style="background:#2563EB;">신선도</th>
+              <th class="jabh-hide" style="background:#2563EB;">신선도</th>
               <th style="background:#16A34A;">BEST</th>
-              <th style="background:#D97706;">시즌</th>
+              <th class="jabh-hide" style="background:#D97706;">시즌</th>
             </tr>
           </thead>
           <tbody id="modalTbody"></tbody>
@@ -2587,6 +2590,7 @@
       const tbody = document.getElementById('p2BrandTbody');
       if (!tbody) return;
       tbody.innerHTML = '';
+      document.body.classList.toggle('jabh-mode', currentP2Category === '잡화');
 
       const catBrands = BRANDS.filter(b => b.category === currentP2Category);
       if (catBrands.length === 0) {
@@ -2632,8 +2636,8 @@
           <td style="text-align:left; padding:12px; padding-left:24px; font-weight:800; color:#111; text-decoration:underline; width:30%;">${b.name}</td>
           <td style="text-align:center; width:14%;">${getMetricBadgeHtml(b.total)}</td>
           <td style="text-align:center; width:14%;">${formatScore(b.dis, '#E30019')}</td>
-          <td style="text-align:center; width:14%;">${formatScore(b.fresh, '#2563EB')}</td>
-          <td style="text-align:center; width:14%;">${formatScore(b.season, '#F59E0B')}</td>
+          <td class="jabh-hide" style="text-align:center; width:14%;">${formatScore(b.fresh, '#2563EB')}</td>
+          <td class="jabh-hide" style="text-align:center; width:14%;">${formatScore(b.season, '#F59E0B')}</td>
           <td style="text-align:center; width:14%;">${formatScore(b.best, '#16A34A')}</td>
         `;
         tbody.appendChild(tr);
@@ -2703,8 +2707,8 @@
             </div>
           </td>
           <td><span class="score-cell" style="color:#E30019">${b.dis || 0}</span></td>
-          <td><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
-          <td><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
+          <td class="jabh-hide"><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
+          <td class="jabh-hide"><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
           <td><span class="score-cell" style="color:#16A34A">${b.best || 0}</span></td>
         `;
         tbody.appendChild(tr);
@@ -2848,6 +2852,7 @@
         return;
       }
 
+      document.body.classList.toggle('jabh-mode', cat === '잡화');
       const catLabel = `${cat} 카테고리`;
       document.getElementById('mTitle').textContent = `${store} · ${catLabel} 분석`;
 
@@ -2870,8 +2875,8 @@
     <th style="background:#1D1E1E; color:#FFFFFF; width:11%; font-size:14px; font-weight:900;">종합 점수</th>
     <th style="background:#1D1E1E; width:19%; cursor:pointer;" title="평매출 10만원 달성 필요 재고액">목표대비 재고액<br><span style="font-weight:400;opacity:0.8;font-size:10px">(목표매출 x3배)</span></th>
     <th style="background:#E30019; width:10%;">할인율</th>
-    <th style="background:#2563EB; width:10%;">신선도</th>
-    <th style="background:#F59E0B; width:10%;">시즌</th>
+    <th class="jabh-hide" style="background:#2563EB; width:10%;">신선도</th>
+    <th class="jabh-hide" style="background:#F59E0B; width:10%;">시즌</th>
     <th style="background:#16A34A; width:10%;">BEST</th>
   `;
 
@@ -2931,8 +2936,8 @@
           </div>
         </td>
         <td><span class="score-cell" style="color:#E30019">${b.dis || 0}</span></td>
-        <td><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
-        <td><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
+        <td class="jabh-hide"><span class="score-cell" style="color:#2563EB">${b.fresh || 0}</span></td>
+        <td class="jabh-hide"><span class="score-cell" style="color:#F59E0B">${b.season || 0}</span></td>
         <td><span class="score-cell" style="color:#16A34A">${b.best || 0}</span></td>
       `;
           tb.appendChild(tr);
@@ -2989,6 +2994,11 @@
     function renderBrandDetail() {
       if (!currentBrand) return;
       const b = currentBrand;
+      const _isJabh = !!(b.category === '잡화');
+      document.body.classList.toggle('jabh-mode', _isJabh);
+      // 브랜드 전환 시 매출 패널 자동 닫기
+      const _salesPanel = document.getElementById('momSalesPanel');
+      if (_salesPanel) _salesPanel.style.display = 'none';
       const st = b.store;
 
       document.getElementById('h-brand').textContent = b.name;
@@ -3172,13 +3182,14 @@
     </div>
   `;
 
-      // 1. 4개 지표 카드 — 100점 환산 원점수 표시 (P1 팝업과 동일 방식)
-      const mList = [
+      // 1. 4개(잡화: 2개) 지표 카드 — 100점 환산 원점수 표시 (P1 팝업과 동일 방식)
+      const _mListAll = [
         { id: 'dis',    l: '할인율 점수', s: Math.round(b.dis    || 0), maxPt: 100, c: 'm-dis',    estimated: !!b.dis_estimated },
         { id: 'fresh',  l: '신선도 점수', s: Math.round(b.fresh  || 0), maxPt: 100, c: 'm-fresh',  estimated: false },
         { id: 'season', l: '시즌 점수',   s: Math.round(b.season || 0), maxPt: 100, c: 'm-season', estimated: false },
         { id: 'best',   l: 'BEST 점수',   s: Math.round(_bestActualPct), maxPt: 100, c: 'm-best',   estimated: false }
       ];
+      const mList = _isJabh ? _mListAll.filter(m => m.id !== 'fresh' && m.id !== 'season') : _mListAll;
 
       function getRateColor(r) {
         if (r >= 100) return '#059669'; // Emerald 600
@@ -3839,6 +3850,7 @@
 
     let momScoreChartInstance = null;
     function renderMoMScoreChart(b) {
+      const _isJabh = !!(b && b.category === '잡화');
       const container = document.getElementById('momScoreChartContainer');
       if (!b) {
         container.style.display = 'none';
@@ -3882,12 +3894,13 @@
         if (!prevB) {
           summaryDiv.innerHTML = `<span style="color:#64748B;">이전 달 데이터가 없어 전월대비 점수 비교 분석이 불가능합니다.</span>`;
         } else {
-          const diffs = [
+          const _diffsAll = [
             {name: '할인율', diff: (b.dis||0) - (prevB.dis||0)},
             {name: 'BEST상품', diff: (b.best||0) - (prevB.best||0)},
             {name: '신선도', diff: (b.fresh||0) - (prevB.fresh||0)},
             {name: '시즌', diff: (b.season||0) - (prevB.season||0)}
           ];
+          const diffs = _isJabh ? _diffsAll.filter(m => m.name !== '신선도' && m.name !== '시즌') : _diffsAll;
           const totalStr = totalDiff === 0 ? "동일" : (totalDiff > 0
             ? `<strong style="color:#DC2626; font-size:15px;">▲${totalDiff}점 상승</strong>`
             : `<strong style="color:#2563EB; font-size:15px;">▼${Math.abs(totalDiff)}점 하락</strong>`);
@@ -3914,7 +3927,10 @@
       //         전월 재고의 비교 매출 = 현재 달 매출 = b.sales_amt
       const shiftedCurSales  = null; // 현재 달 다음 달 매출 없음
       const shiftedPrevSales = parseFloat(b.sales_amt || 0); // 전월 재고 기준 당월 매출
-      const shiftedPrevPrevSales = prevB ? parseFloat(prevB.sales_amt || 0) : null; // 전월 재고 기준 전월 매출
+      // 전전월: prevB의 sales_amt 우선, 없으면 b.prev_sales(PREV_MONTH_SALES 정적값) 폴백
+      const _prevSalesAmt = prevB ? parseFloat(prevB.sales_amt || 0) : null;
+      const _prevSalesFallback = (!_prevSalesAmt && b.prev_sales > 0) ? parseFloat(b.prev_sales) : null;
+      const shiftedPrevPrevSales = _prevSalesAmt !== null ? _prevSalesAmt : _prevSalesFallback;
       const growthPct   = parseFloat(b.growth_pct || 0);
       const prevYrSales = parseFloat(b.prev_yr_sales_amt || 0);
 
@@ -3989,8 +4005,8 @@
         'rgba(148, 163, 184, 0.75)',   // 중간 달
         'rgba(239, 68, 68, 0.9)'       // 최신 달 (레드)
       ];
-      const labels = ['총점수', '할인율', 'BEST상품', '신선도', '시즌'];
-      const metricKeys = ['total', 'dis', 'best', 'fresh', 'season'];
+      const labels = _isJabh ? ['총점수', '할인율', 'BEST상품'] : ['총점수', '할인율', 'BEST상품', '신선도', '시즌'];
+      const metricKeys = _isJabh ? ['total', 'dis', 'best'] : ['total', 'dis', 'best', 'fresh', 'season'];
 
       const datasets = recentData.map((item, i) => ({
         label: item.month,
@@ -4014,7 +4030,7 @@
             // [v200] 차트 클릭 시 → 구간별 상세 팝업 (채점로직 팝업 아님)
             const active = chart.getElementsAtEventForMode(event, 'index', { intersect: false }, true);
             if (active && active.length > 0) {
-              const metricIds = ['total', 'dis', 'best', 'fresh', 'season'];
+              const metricIds = _isJabh ? ['total', 'dis', 'best'] : ['total', 'dis', 'best', 'fresh', 'season'];
               const clickedId = metricIds[active[0].index];
               if (clickedId === 'total') {
                 const panel = document.getElementById('momSalesPanel');

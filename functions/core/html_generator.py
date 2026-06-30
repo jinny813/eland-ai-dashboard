@@ -651,10 +651,12 @@ def _build_bp_detail(config: dict, bp_df=None) -> dict:
 def _get_product_info(style_codes: list) -> dict:
     """DB + style_master.json 에서 스타일 정보를 딕셔너리 형태로 일괄 로드"""
     if not style_codes: return {}
-    # style_master.json 파일 캐시 우선 로드
+    # style_master.json 파일 캐시 우선 로드 (project root/core/ 우선, 없으면 functions/core/)
     res = {}
     try:
-        _json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
+        _base_core = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "core", "style_master.json")
+        _local_json = os.path.join(os.path.dirname(__file__), "style_master.json")
+        _json_path = _base_core if os.path.exists(_base_core) else _local_json
         if os.path.exists(_json_path):
             with open(_json_path, 'r', encoding='utf-8') as _jf:
                 _master = json.load(_jf)
@@ -670,7 +672,12 @@ def _get_product_info(style_codes: list) -> dict:
     except Exception:
         pass
 
-    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
+    # functions/core/ → functions/ → project root → database/
+    _base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    db_path = os.path.join(_base, "database", "product_master.db")
+    if not os.path.exists(db_path):
+        # Streamlit Cloud 폴백: functions/database/
+        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
@@ -679,10 +686,11 @@ def _get_product_info(style_codes: list) -> dict:
         conn.close()
 
         for _, row in df_p.iterrows():
+            kw = row['keywords']
             res[row['style_code']] = {
                 "item_name": row['category'],
                 "style_name": row['product_name'],
-                "keywords": row['keywords'].split(", ") if row['keywords'] else [],
+                "keywords": kw.split(", ") if isinstance(kw, str) and kw.strip() else [],
                 "normal_price": row.get('normal_price', 0)
             }
         return res
