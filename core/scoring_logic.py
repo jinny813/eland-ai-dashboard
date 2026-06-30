@@ -390,6 +390,10 @@ class AssortmentScorer:
             'best':  self.config.get('weight_best', 0.35),
             'item':  self.config.get('weight_item', 0.00)
         }
+        # 잡화 카테고리: 할인율 60% + 베스트 40% (신선도/시즌/아이템 제외)
+        _cat_grp_s = str(df['category_group'].iloc[0]).strip() if 'category_group' in df.columns and not df.empty else ''
+        if _cat_grp_s == '잡화':
+            final_weights = {'dis': 0.60, 'fresh': 0.00, 'sea': 0.00, 'best': 0.40, 'item': 0.00}
 
         inv_weights = self.config.get('inv_weights', {})
 
@@ -637,6 +641,10 @@ class AssortmentScorer:
 
         res = {"dis": [], "fresh": [], "season": [], "item": [], "best": []}
 
+        # 잡화 카테고리: 신선도/시즌 부족 분석 생략 (할인율 + 베스트만 채점)
+        _cat_grp_sh = str(df['category_group'].iloc[0]).strip() if 'category_group' in df.columns and not df.empty else ''
+        _is_jabh_sh = (_cat_grp_sh == '잡화')
+
         # 할인율 부족
         df['_dis_rate'] = df['discount_rate'].apply(self._parse_discount_rate) if 'discount_rate' in df.columns else 0.0
         dis_inv = inv_weights.get('dis', {})
@@ -659,56 +667,57 @@ class AssortmentScorer:
         for label, mask, r_val in dis_cfg:
             if r_val > 0 and _get_ref_count(mask) * _dis_hint_scale < (target_total * r_val): res["dis"].append(label)
 
-        # 신선도 부족
-        ft_s = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
-        _fresh_w = inv_weights.get('fresh', {})
-        _has_dis_f = (df['_dis_rate'] > 0).any()
-        _brand_nm_f = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
-        if _brand_nm_f in {'스파오키즈', '뉴발란스키즈'}:
-            if is_outlet:
-                fresh_cfg = [('신상', ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.1)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.2))]
+        if not _is_jabh_sh:
+            # 신선도 부족
+            ft_s = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df))
+            _fresh_w = inv_weights.get('fresh', {})
+            _has_dis_f = (df['_dis_rate'] > 0).any()
+            _brand_nm_f = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns else ''
+            if _brand_nm_f in {'스파오키즈', '뉴발란스키즈'}:
+                if is_outlet:
+                    fresh_cfg = [('신상', ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.1)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.2))]
+                else:
+                    fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
             else:
-                fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
-        else:
-            _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
-            if is_outlet:
-                r_n = _fresh_w.get('new', 0.10)
-                r_p = _fresh_w.get('plan', 0.20)
+                _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
+                if is_outlet:
+                    r_n = _fresh_w.get('new', 0.10)
+                    r_p = _fresh_w.get('plan', 0.20)
+                else:
+                    r_n = 0.70
+                    r_p = 0.00
+                fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
+            for label, mask, r_val in fresh_cfg:
+                if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
+
+            # 시즌 부족 — score()와 동일한 data_month 기준 매핑
+            sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
+            CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
+            CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
+            _raw_m2 = df['data_month'].iloc[0] if 'data_month' in df.columns and not df.empty else ''
+            _m_str2 = str(_raw_m2).replace('월', '').strip()
+            month = int(_m_str2) if _m_str2.isdigit() else self.current_month
+            sea_inv = inv_weights.get('season', {})
+            non_zero_seasons = sum(1 for v in sea_inv.values() if v > 0)
+
+            if non_zero_seasons <= 2:
+                primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
+                secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
+                if month in [1, 2, 3]:      curr_codes, sub_codes = CO_SPRING, CO_SUMMER
+                elif month in [4, 5, 6]:    curr_codes, sub_codes = CO_SUMMER, CO_SPRING
+                elif month in [7, 8, 9]:    curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
+                else:                        curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
+                season_checks = [('봄(현시즌)', curr_codes, primary_r), ('여름(보조)', sub_codes, secondary_r)]
             else:
-                r_n = 0.70
-                r_p = 0.00
-            fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
-        for label, mask, r_val in fresh_cfg:
-            if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
+                season_checks = [
+                    ('봄', CO_SPRING, sea_inv.get('spring', 0.0)),
+                    ('여름', CO_SUMMER, sea_inv.get('summer', 0.0)),
+                    ('가을', CO_AUTUMN, sea_inv.get('autumn', 0.0)),
+                    ('겨울', CO_WINTER, sea_inv.get('winter', 0.0)),
+                ]
 
-        # 시즌 부족 — score()와 동일한 data_month 기준 매핑
-        sc = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series([''] * len(df))
-        CO_SPRING = ['봄', '1', '9', 'SS']; CO_SUMMER = ['여름', '2', '9', 'SS']
-        CO_AUTUMN = ['가을', '3', '8', '9', 'FW']; CO_WINTER = ['겨울', '4', '9', 'FW']
-        _raw_m2 = df['data_month'].iloc[0] if 'data_month' in df.columns and not df.empty else ''
-        _m_str2 = str(_raw_m2).replace('월', '').strip()
-        month = int(_m_str2) if _m_str2.isdigit() else self.current_month
-        sea_inv = inv_weights.get('season', {})
-        non_zero_seasons = sum(1 for v in sea_inv.values() if v > 0)
-
-        if non_zero_seasons <= 2:
-            primary_r   = sea_inv.get('spring', sea_inv.get('current', 0.50))
-            secondary_r = sea_inv.get('summer', sea_inv.get('other',   0.30))
-            if month in [1, 2, 3]:      curr_codes, sub_codes = CO_SPRING, CO_SUMMER
-            elif month in [4, 5, 6]:    curr_codes, sub_codes = CO_SUMMER, CO_SPRING
-            elif month in [7, 8, 9]:     curr_codes, sub_codes = CO_AUTUMN, CO_WINTER
-            else:                         curr_codes, sub_codes = CO_WINTER, CO_AUTUMN
-            season_checks = [('봄(현시즌)', curr_codes, primary_r), ('여름(보조)', sub_codes, secondary_r)]
-        else:
-            season_checks = [
-                ('봄', CO_SPRING, sea_inv.get('spring', 0.0)),
-                ('여름', CO_SUMMER, sea_inv.get('summer', 0.0)),
-                ('가을', CO_AUTUMN, sea_inv.get('autumn', 0.0)),
-                ('겨울', CO_WINTER, sea_inv.get('winter', 0.0)),
-            ]
-
-        for label, codes, r_val in season_checks:
-            if r_val > 0 and _get_ref_count(sc.isin(codes)) < (target_total * r_val): res["season"].append(label)
+            for label, codes, r_val in season_checks:
+                if r_val > 0 and _get_ref_count(sc.isin(codes)) < (target_total * r_val): res["season"].append(label)
 
         # BEST 부족
         if 'sales_qty' in df.columns:

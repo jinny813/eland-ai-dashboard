@@ -358,6 +358,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
             area = max(0.0, float(_a))
     target_total = calc_target_total(area, tM)
     inv_w = config.get('inv_weights', {})
+    _cat_grp = str(df['category_group'].iloc[0]).strip() if 'category_group' in df.columns and not df.empty else ''
+    _is_jabh = (_cat_grp == '잡화')
 
     # 1. 아이템 점수 세부 (조닝별 특화 로직 반영)
     scorer = AssortmentScorer(config)
@@ -550,16 +552,17 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         ]
     
     fresh_segs = []
-    for key, lbl, mask, ratio in fresh_cfg:
-        ref = _get_stock_ref_gen(df[mask], outlet)
-        amt = ref['_amt'].sum()
-        tgt_amt = target_total * ratio
-        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0
-        fresh_segs.append({
-            "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
-            "c": _get_dynamic_color(pct, "fresh"), "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
-            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
-        })
+    if not _is_jabh:
+        for key, lbl, mask, ratio in fresh_cfg:
+            ref = _get_stock_ref_gen(df[mask], outlet)
+            amt = ref['_amt'].sum()
+            tgt_amt = target_total * ratio
+            pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0
+            fresh_segs.append({
+                "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+                "c": _get_dynamic_color(pct, "fresh"), "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
+                "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
+            })
 
     # 4. 시즌 세부 (4개 계절 고정 노출)
     # 데이터 기준월 사용 (오늘 날짜가 아닌 실제 데이터 월 기준으로 시즌 목표 결정)
@@ -588,26 +591,26 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         
     sc_df = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series(['']*len(df))
     season_segs = []
-    
-    for item in season_map:
-        mask = sc_df.isin(item['codes'])
-        ref = _get_stock_ref_gen(df[mask], outlet)
-        amt = ref['_amt'].sum()
-        
-        # 해당 계절 라벨(봄, 여름 등) 추출하여 목표 비중 매칭
-        core_label = item['l'].split(' ')[0]
-        ratio = target_weights.get(core_label, 0.0)
-            
-        tgt_amt = target_total * ratio
-        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 else 0)
-        
-        season_segs.append({
-            "key": item['key'], "l": item['l'], "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
-            "c": _get_dynamic_color(pct, "season") if ratio > 0 else "#CBD5E1", 
-            "weight": int(ratio * 100), "pct": min(100.0, round(pct, 1)),
-            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio * 100),
-            "is_score_target": ratio > 0
-        })
+    if not _is_jabh:
+        for item in season_map:
+            mask = sc_df.isin(item['codes'])
+            ref = _get_stock_ref_gen(df[mask], outlet)
+            amt = ref['_amt'].sum()
+
+            # 해당 계절 라벨(봄, 여름 등) 추출하여 목표 비중 매칭
+            core_label = item['l'].split(' ')[0]
+            ratio = target_weights.get(core_label, 0.0)
+
+            tgt_amt = target_total * ratio
+            pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 else 0)
+
+            season_segs.append({
+                "key": item['key'], "l": item['l'], "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+                "c": _get_dynamic_color(pct, "season") if ratio > 0 else "#CBD5E1",
+                "weight": int(ratio * 100), "pct": min(100.0, round(pct, 1)),
+                "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio * 100),
+                "is_score_target": ratio > 0
+            })
 
     # 5. BEST 세부
     # [v128.0] scoring_logic.py와 동일하게 config의 inv_weights 참조 (하드코딩 0.25 제거)
