@@ -2246,6 +2246,7 @@
         <button class="modal-close" onclick="closeStoreModal()">✕</button>
       </div>
       <div class="modal-body">
+        <div id="disZeroNotice" style="display:none; margin-bottom:10px; padding:9px 14px; background:#FEF3C7; border:1px solid #F59E0B; border-radius:8px; font-size:12px; color:#92400E; line-height:1.5;"></div>
         <table class="modal-tbl">
           <thead>
             <tr>
@@ -2867,6 +2868,17 @@
 
       const tb = document.getElementById('modalTbody');
       const thRow = document.querySelector('#storeModal thead tr');
+
+      // dis==0 브랜드 알림 배너
+      const noticeEl = document.getElementById('disZeroNotice');
+      const disZeroBrands = storeBrands.filter(b => b.dis === 0);
+      if (disZeroBrands.length > 0) {
+        const names = disZeroBrands.map(b => `<b>${b.name}</b>`).join(', ');
+        noticeEl.innerHTML = `⚠️ ${names} — 할인율 데이터 없음 · 카테고리 점수 합산에서 제외`;
+        noticeEl.style.display = 'block';
+      } else {
+        noticeEl.style.display = 'none';
+      }
 
       // 헤더 개편 (브랜드명, 월 매출(성장률), 종합 점수, 재고 비중 + 4대 지표 점수)
       thRow.innerHTML = `
