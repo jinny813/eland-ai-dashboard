@@ -852,18 +852,16 @@ def load_dashboard_data(
                 action_plan[store][b_name][display_key] = _build_action_plan(b_df, nc_brand_df)
 
         # [v4.2] '전체' 점수: 카테고리별 점수를 카테고리 매출 비중으로 가중평균 (2단계 집계)
-        # [v4.4] 할인율 데이터가 하나도 없는 경우 전체 브랜드 폴백으로 점수 유지
+        # [v4.6] dis==0 브랜드 제외 시 폴백 없음 — 전체 dis=0이면 해당 카테고리 점수 미산출
         for store in stores:
             store_brands = [b for b in brands_list if b['store'] == store]
 
-            # Step 1: 개별 카테고리 점수 산출 (dis==0 브랜드 제외, 없으면 전체 포함)
+            # Step 1: 개별 카테고리 점수 산출 (dis==0 브랜드 제외, 유효 브랜드 없으면 0)
             cat_score_map = {}  # cat → (score, valid_sales_sum)
             for cat in cats:
                 if cat == '전체':
                     continue
                 valid = [b for b in store_brands if b['category'] == cat and b['dis'] != 0]
-                if not valid:
-                    valid = [b for b in store_brands if b['category'] == cat]
                 if not valid:
                     cat_score_map[cat] = (0, 0.0)
                     continue
