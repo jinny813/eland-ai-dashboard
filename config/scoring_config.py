@@ -121,6 +121,26 @@ _SPORTS_OUTLET_BASE = {
 }
 
 # ──────────────────────────────────────────────────────
+# 신규: 아웃도어/정상 매장 파라미터 (블랙야크 정상 등)
+# ──────────────────────────────────────────────────────
+_OUTDOOR_NORMAL_BASE = {
+    "zoning": "아웃도어",
+    "year_base": 2026,
+    "inv_weights": {
+        "dis":    {"s70": 0.00, "s50": 0.05, "s30": 0.10, "s10": 0.15},
+        "fresh":  {"new": 0.70},           # 정상 신상 목표 비중 70%
+        "best":   {"store10": 0.35},       # 정상 BEST 재고비중 35%
+        "season": {"spring": 0.50, "summer": 0.25, "autumn": 0.00, "winter": 0.00},
+        "item":   {"Outer": 0.40, "Top": 0.40, "Bottom": 0.20}
+    },
+    "weight_discount":  0.30,
+    "weight_freshness": 0.20,
+    "weight_season":    0.15,
+    "weight_best":      0.35,
+    "weight_item":      0.00,
+}
+
+# ──────────────────────────────────────────────────────
 # 신규: 아웃도어/상설 매장 파라미터 (네파, 블랙야크 등)
 # ──────────────────────────────────────────────────────
 _OUTDOOR_OUTLET_BASE = {
@@ -364,7 +384,7 @@ def get_weights_by_category(category: str, store_type: str, brand_name: str = ""
         from config.brand_metadata import get_brand_zoning
         zoning = get_brand_zoning(brand_name)
         if zoning == "아웃도어":
-            return _OUTDOOR_OUTLET_BASE
+            return _OUTDOOR_OUTLET_BASE if is_outlet else _OUTDOOR_NORMAL_BASE
         return _SPORTS_OUTLET_BASE if is_outlet else _SPORTS_NORMAL_BASE
     elif '남성' in category:
         return _MENS_OUTLET_BASE if is_outlet else _MENS_NORMAL_BASE
