@@ -131,7 +131,10 @@ def _cached_build_month(_mgr, max_no: int, month: str, report_version: str = REP
     import importlib, sys
     for _m in ['config.scoring_config', 'config.area_config', 'core.scoring_logic', 'core.html_generator', 'core.data_loader']:
         if _m in sys.modules:
-            importlib.reload(sys.modules[_m])
+            try:
+                importlib.reload(sys.modules[_m])
+            except Exception as _re:
+                logger.warning(f"[ModuleReload] {_m} 리로드 실패(무시): {_re}")
     from core.data_loader import load_dashboard_data
 
     import unicodedata
@@ -281,9 +284,14 @@ def cached_load_all_dashboard_data(mgr, available_months):
             raise ValueError("Empty available months from GSheet")
             
         for m in available_months:
-            res = _cached_build_month(mgr, max_no, m, report_version=REPORT_VERSION)
-            if res and isinstance(res, dict) and "error" not in res:
-                all_data[m] = res
+            try:
+                res = _cached_build_month(mgr, max_no, m, report_version=REPORT_VERSION)
+                if res and isinstance(res, dict) and "error" not in res:
+                    all_data[m] = res
+                elif res and isinstance(res, dict) and "error" in res:
+                    logger.warning(f"[BuildMonth] {m} 월 데이터 에러: {res['error']}")
+            except Exception as _me:
+                logger.warning(f"[BuildMonth] {m} 월 빌드 실패: {_me}")
             gc.collect()
 
         if not all_data:
