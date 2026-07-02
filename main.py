@@ -689,7 +689,7 @@ def main():
                         )
                         final_html = html_template.replace("<script>", script_inject + "<script>", 1)
 
-                        st.components.v1.html(final_html, scrolling=True, height=5500)
+                        st.components.v1.html(final_html, scrolling=True, height=15000)
 
                         # [v203.0] AI 브릿지: comm_plugin 완전 제거 (클라우드에서 invisible overlay 유발해 클릭 차단)
                         # comm_plugin의 declare_component가 Streamlit Cloud에서 포커스를 가로채는 iframe을 생성해
