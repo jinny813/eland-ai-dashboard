@@ -563,11 +563,11 @@ class AssortmentScorer:
             # [v3.8] 판매량이 0보다 큰 상품들만 베스트 후보군으로 선정
             sq_df = df.assign(_sq=sq)
             best_candidates = sq_df[sq_df['_sq'] > 0]
-            if not best_candidates.empty:
+            if not best_candidates.empty and 'style_code' in best_candidates.columns:
                 best_styles = best_candidates.groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
         
         act_best = 0.0
-        if best_styles:
+        if best_styles and 'style_code' in df.columns:
             act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
             
         tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
