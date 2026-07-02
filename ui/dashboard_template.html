@@ -3083,8 +3083,19 @@
       const _bestSegs = (d.best && d.best.segs) ? d.best.segs : [];
       const _bestActualPct = _bestSegs.length > 0 ? Math.min(100, _bestSegs[0].pct || 0) : (b.best || 0);
 
+      // 신선도 점수: segs에서 실시간 계산 (b.fresh는 캐시 구버전일 수 있음)
+      const _freshSegs = (d.fresh && d.fresh.segs) ? d.fresh.segs : [];
+      let _freshActualPct = b.fresh || 0;
+      if (_freshSegs.length > 0) {
+        const _efSegs = _freshSegs.filter(s => (s.weight || 0) > 0);
+        if (_efSegs.length > 0) {
+          const _fWtSum = _efSegs.reduce((acc, s) => acc + s.weight, 0);
+          _freshActualPct = Math.min(100, _efSegs.reduce((acc, s) => acc + (s.pct || 0) * s.weight / _fWtSum, 0));
+        }
+      }
+
       // 총점수 및 등급 업데이트 (v17.12: 4카드 합산 = 배너 총점)
-      const scoreVal = Math.round((b.dis||0)*_wDis/100) + Math.round((b.fresh||0)*_wFresh/100) + Math.round((b.season||0)*_wSea/100) + Math.round(_bestActualPct*_wBest/100);
+      const scoreVal = Math.round((b.dis||0)*_wDis/100) + Math.round(_freshActualPct*_wFresh/100) + Math.round((b.season||0)*_wSea/100) + Math.round(_bestActualPct*_wBest/100);
       const scoreElem = document.getElementById('h-score');
       scoreElem.textContent = scoreVal;
       scoreElem.style.color = '#FFFFFF';
@@ -3197,7 +3208,7 @@
       // 1. 4개(잡화: 2개) 지표 카드 — 100점 환산 원점수 표시 (P1 팝업과 동일 방식)
       const _mListAll = [
         { id: 'dis',    l: '할인율 점수', s: Math.round(b.dis    || 0), maxPt: 100, c: 'm-dis',    estimated: !!b.dis_estimated },
-        { id: 'fresh',  l: '신선도 점수', s: Math.round(b.fresh  || 0), maxPt: 100, c: 'm-fresh',  estimated: false },
+        { id: 'fresh',  l: '신선도 점수', s: Math.round(_freshActualPct), maxPt: 100, c: 'm-fresh',  estimated: false },
         { id: 'season', l: '시즌 점수',   s: Math.round(b.season || 0), maxPt: 100, c: 'm-season', estimated: false },
         { id: 'best',   l: 'BEST 점수',   s: Math.round(_bestActualPct), maxPt: 100, c: 'm-best',   estimated: false }
       ];
