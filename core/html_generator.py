@@ -556,7 +556,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         for key, lbl, mask, ratio in fresh_cfg:
             ref = _get_stock_ref_gen(df[mask], outlet)
             amt = ref['_amt'].sum()
-            tgt_amt = target_total * ratio
+            # 신선도는 비중 목표(실제 총재고의 r%) — target_total 아닌 실제 총재고 기준
+            tgt_amt = _total_d_amt * ratio
             pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0
             fresh_segs.append({
                 "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),

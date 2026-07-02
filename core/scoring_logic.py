@@ -525,7 +525,8 @@ class AssortmentScorer:
                 seg_score = item.get('s', 0)
                 if item['r'] > 0 and seg_score > 0:
                     act = _get_record_ref(item['m'])['_amt'].sum()
-                    tgt = target_total * item['r']
+                    # 신선도는 비중 목표(실제 총재고의 r%) — 절대금액(target_total)이 아닌 실제 재고 기준
+                    tgt = _total_d_amt * item['r']
                     segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
                     freshness_score += segment_pct * (seg_score / sum_s)
 
