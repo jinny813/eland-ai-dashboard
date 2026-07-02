@@ -587,12 +587,14 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
             _new_mask = ft.str.contains('신상', na=False)
         fresh_cfg = [
             ('new',  '신상', _new_mask,  0.70),
-            ('carry', '이월/기타', ~_new_mask, 0.00),
+            # 이월/기타: 대시보드에 표시하지 않음
         ]
     
     fresh_segs = []
     if not _is_jabh:
         for key, lbl, mask, ratio in fresh_cfg:
+            if key == 'carry':
+                continue  # 이월/기타는 화면에서 제외
             ref = _get_stock_ref_gen(df[mask], outlet)
             amt = ref['_amt'].sum()
             tgt_amt = target_total * ratio
