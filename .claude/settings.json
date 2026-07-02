@@ -3,7 +3,10 @@
     "allow": [
       "Bash(python -c ' *)",
       "Bash(python -c \"import sys; sys.stdout.buffer.write\\(sys.stdin.buffer.read\\(\\)\\)\")",
-      "Bash(python -m py_compile api/main.py)"
+      "Bash(python -m py_compile api/main.py)",
+      "Bash(git commit -m ' *)",
+      "Bash(python -m pytest tests/test_scoring_logic.py -x -q)",
+      "PowerShell(Copy-Item \"d:\\\\AI Assortment Agent\\\\data\\\\dashboard_backup.json\" \"d:\\\\AI Assortment Agent\\\\functions\\\\data\\\\dashboard_backup.json\" -Force)"
     ]
   }
 }

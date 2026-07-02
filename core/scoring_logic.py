@@ -500,18 +500,19 @@ class AssortmentScorer:
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
         fresh_inv = inv_weights.get('fresh', {})
 
-        # 신상 판별: freshness_type '신상' 포함 OR 할인율 0%(정상가) — get_shortage_segments와 동일 기준
-        _new_mask  = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
         _plan_mask = ft.str.contains('기획', na=False)
 
         _fresh_score_tbl = FRESH_SCORES["outlet"] if is_outlet else FRESH_SCORES["normal"]
         if is_outlet:
+            # 상설: 명시적 0% 할인만 신상 (미입력 항목 포함 시 구형 재고 과다 계상 위험)
+            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
             fresh_cfg = [
                 {'m': _new_mask, 'r': fresh_inv.get('new', 0.10), 's': _fresh_score_tbl['new']},
                 {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.20), 's': _fresh_score_tbl['plan']},
             ]
         else:
-            # 정상: 신상 70% / 기획 0% (기획 0점 → 점수 산출 제외)
+            # 정상: 할인율 미입력(-1) 포함 신상 판별 — 미할인=신상 프록시 (freshness_type 미입력 브랜드 대응)
+            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] <= 0)
             fresh_cfg = [
                 {'m': _new_mask, 'r': 0.70, 's': _fresh_score_tbl['new']},
                 {'m': _plan_mask, 'r': 0.00, 's': _fresh_score_tbl['plan']},
@@ -525,8 +526,8 @@ class AssortmentScorer:
                 seg_score = item.get('s', 0)
                 if item['r'] > 0 and seg_score > 0:
                     act = _get_record_ref(item['m'])['_amt'].sum()
-                    # 신선도는 비중 목표(실제 총재고의 r%) — 절대금액(target_total)이 아닌 실제 재고 기준
-                    tgt = _total_d_amt * item['r']
+                    # 신선도 목표비중(70%)으로 목표재고액을 산출함
+                    tgt = target_total * item['r']
                     segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
                     freshness_score += segment_pct * (seg_score / sum_s)
 
@@ -696,11 +697,12 @@ class AssortmentScorer:
                 else:
                     fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
             else:
-                _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
                 if is_outlet:
+                    _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
                     r_n = _fresh_w.get('new', 0.10)
                     r_p = _fresh_w.get('plan', 0.20)
                 else:
+                    _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] <= 0)
                     r_n = 0.70
                     r_p = 0.00
                 fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]

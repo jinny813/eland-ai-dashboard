@@ -445,16 +445,36 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         item_weights = default_item_w['남성']
     
     item_segs = []
+    item_mapped_amt = 0
+    item_mapped_qty = 0
+    item_mapped_weight = 0.0
     for i, (eng, kor) in enumerate(item_map.items()):
         ref = _get_stock_ref_gen(df[df['item_group'] == eng], outlet)
         amt = ref['_amt'].sum()
+        qty = ref['_qty'].sum()
         target_ratio = item_weights.get(eng, 0.0)
         tgt_amt = target_total * target_ratio
         pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0.0
+        item_mapped_amt += amt
+        item_mapped_qty += qty
+        item_mapped_weight += target_ratio
         item_segs.append({
-            "key": eng, "l": kor, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+            "key": eng, "l": kor, "valM": round(amt/1_000_000, 1), "qty": int(qty),
             "c": ITEM_COLORS[i % len(ITEM_COLORS)], "weight": int(target_ratio*100), "pct": min(100.0, round(pct, 1)),
             "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(target_ratio*100)
+        })
+
+    # [v18] 아이템 기타/미지정 영역 추가하여 총합 맞추기
+    _rem_item_amt = max(0, total_amt - item_mapped_amt)
+    if _rem_item_amt > 0:
+        _rem_item_qty = max(0, df['_qty'].sum() - item_mapped_qty)
+        _rem_item_weight = max(0.0, 1.0 - item_mapped_weight)
+        _rem_tgt_amt = target_total * _rem_item_weight
+        _rem_pct = (_rem_item_amt / _rem_tgt_amt * 100) if _rem_tgt_amt > 0 else 0.0
+        item_segs.append({
+            "key": "etc", "l": "기타", "valM": round(_rem_item_amt/1_000_000, 1), "qty": int(_rem_item_qty),
+            "c": "#9CA3AF", "weight": int(_rem_item_weight*100), "pct": min(100.0, round(_rem_pct, 1)),
+            "targetM": round(_rem_tgt_amt/1_000_000, 1), "mix_pct": round(_rem_item_amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(_rem_item_weight*100)
         })
 
     # [v8.7] 연차(Age) 계산: 기준 연도 정규화 (자릿수 보정)
@@ -496,10 +516,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         _d_s50 = dis_inv.get('s50', 0.20 if outlet else 0.05)
         _d_s30 = dis_inv.get('s30', 0.30 if outlet else 0.10)
         _d_s10 = dis_inv.get('s10', 0.10 if outlet else 0.15)
+        _d_s0  = dis_inv.get('s0', 0.00 if outlet else 0.70)
         dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), _d_s70),
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), _d_s50),
                    ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), _d_s30),
-                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), _d_s10)]
+                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), _d_s10),
+                   ('d0',  '정상가', (df['_dis_rate']<=0), _d_s0)]
     else:
         # 정상 또는 할인율 데이터 없는 상설: 연차(year) 기준 매핑
         dis_cfg = [('d70', '70% 이상', (df['_age']>=4), dis_inv.get('s70', 0.00)),
@@ -534,21 +556,22 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     # 3. 신선도 세부 — scoring_logic.py와 동일한 신상 판별 조건 사용
     ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series(['']*len(df))
     _dis_r = df['_dis_rate'] if '_dis_rate' in df.columns else pd.Series([0.0]*len(df))
-    # freshness_type에 '신상' OR 할인율 0%(정상가) = 신상 (scoring_logic 동일 기준)
-    _new_mask = ft.str.contains('신상', na=False) | (_dis_r == 0)
     _plan_mask = ft.str.contains('기획', na=False)
 
     _fresh_w = inv_w.get('fresh', {})
     if outlet:
+        _new_mask = ft.str.contains('신상', na=False) | (_dis_r == 0)
         fresh_cfg = [
             ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.10)),
             ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.20)),
+            ('carry', '이월/기타', ~(_new_mask | _plan_mask), max(0.0, 1.0 - _fresh_w.get('new', 0.10) - _fresh_w.get('plan', 0.20))),
         ]
     else:
-        # 정상 매장: 기획 비중 항상 0 (config에 관계없이) — FRESH_SCORES["normal"].plan=0 과 동일
+        _new_mask = ft.str.contains('신상', na=False) | (_dis_r <= 0)
         fresh_cfg = [
             ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.70)),
             ('plan', '기획', _plan_mask, 0.00),
+            ('carry', '이월/기타', ~(_new_mask | _plan_mask), max(0.0, 1.0 - _fresh_w.get('new', 0.70))),
         ]
     
     fresh_segs = []
@@ -556,13 +579,12 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         for key, lbl, mask, ratio in fresh_cfg:
             ref = _get_stock_ref_gen(df[mask], outlet)
             amt = ref['_amt'].sum()
-            # 신선도는 비중 목표(실제 총재고의 r%) — target_total 아닌 실제 총재고 기준
-            tgt_amt = _total_d_amt * ratio
+            tgt_amt = target_total * ratio
             pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0
             fresh_segs.append({
                 "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
-                "c": _get_dynamic_color(pct, "fresh"), "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
-                "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
+                "c": _get_dynamic_color(pct, "fresh") if key != 'carry' else '#9CA3AF', "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
+                "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(ratio*100)
             })
 
     # 4. 시즌 세부 (4개 계절 고정 노출)
