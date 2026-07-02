@@ -530,27 +530,38 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
                    ('d10', '1~30%', (df['_age']==1), dis_inv.get('s10', 0.15)),
                    ('d0',  '정상가', (df['_age']==0), dis_inv.get('s0', 0.70))]
 
-    # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
-    _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
-    dis_scale = 1.0
-    if _use_rate_dis_h:
-        _known_d_amt = _get_stock_ref_gen(df[df['_dis_rate'] >= 0], outlet)['_amt'].sum()
-        if 0 < _known_d_amt < _total_d_amt:
-            dis_scale = _total_d_amt / _known_d_amt
-
     dis_segs = []
+    dis_mapped_amt = 0
+    dis_mapped_qty = 0
+    dis_mapped_weight = 0.0
     for key, lbl, mask, ratio in dis_cfg:
         ref = _get_stock_ref_gen(df[mask], outlet)
-        raw_amt = ref['_amt'].sum()
-        raw_qty = ref['_qty'].sum()
-        amt = raw_amt * dis_scale
-        qty = round(raw_qty * dis_scale)
+        amt = ref['_amt'].sum()
+        qty = ref['_qty'].sum()
         tgt_amt = target_total * ratio
         pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 and amt <= 0 else 0)
+        dis_mapped_amt += amt
+        dis_mapped_qty += qty
+        dis_mapped_weight += ratio
         dis_segs.append({
             "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(qty),
             "c": "#EF4444" if ratio > 0 else "#CBD5E1", "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
-            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
+            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(ratio*100)
+        })
+
+    # 미분류/기타 할인율 보정
+    _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
+    _total_d_qty = _get_stock_ref_gen(df, outlet)['_qty'].sum()
+    _rem_dis_amt = max(0, _total_d_amt - dis_mapped_amt)
+    if _rem_dis_amt > 0:
+        _rem_dis_qty = max(0, _total_d_qty - dis_mapped_qty)
+        _rem_dis_weight = max(0.0, 1.0 - dis_mapped_weight)
+        _rem_dis_tgt = target_total * _rem_dis_weight
+        _rem_dis_pct = (_rem_dis_amt / _rem_dis_tgt * 100) if _rem_dis_tgt > 0 else 0.0
+        dis_segs.append({
+            "key": "other", "l": "기타/미분류", "valM": round(_rem_dis_amt/1_000_000, 1), "qty": int(_rem_dis_qty),
+            "c": "#9CA3AF", "weight": int(_rem_dis_weight*100), "pct": min(100.0, round(_rem_dis_pct, 1)),
+            "targetM": round(_rem_dis_tgt/1_000_000, 1), "mix_pct": round(_rem_dis_amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(_rem_dis_weight*100)
         })
 
     # 3. 신선도 세부 — scoring_logic.py와 동일한 신상 판별 조건 사용
