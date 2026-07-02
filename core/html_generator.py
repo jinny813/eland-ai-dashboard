@@ -578,11 +578,16 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
             ('carry', '이월/기타', ~(_new_mask | _plan_mask), max(0.0, 1.0 - _fresh_w.get('new', 0.10) - _fresh_w.get('plan', 0.20))),
         ]
     else:
-        _new_mask = ft.str.contains('신상', na=False) | (_dis_r <= 0)
+        # [정상매장] is_new==1 또는 freshness_type='신상' 만을 신상으로 판별 (scoring_logic.py와 동일)
+        # 이월/기타는 신선도 목표비중 0 (화면 표시만, 점수 미반영)
+        if 'is_new' in df.columns:
+            _is_new_col = pd.to_numeric(df['is_new'], errors='coerce').fillna(0).astype(int)
+            _new_mask = (_is_new_col == 1) | ft.str.contains('신상', na=False)
+        else:
+            _new_mask = ft.str.contains('신상', na=False)
         fresh_cfg = [
-            ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.70)),
-            ('plan', '기획', _plan_mask, 0.00),
-            ('carry', '이월/기타', ~(_new_mask | _plan_mask), max(0.0, 1.0 - _fresh_w.get('new', 0.70))),
+            ('new',  '신상', _new_mask,  0.70),
+            ('carry', '이월/기타', ~_new_mask, 0.00),
         ]
     
     fresh_segs = []

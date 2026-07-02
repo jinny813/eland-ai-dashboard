@@ -474,26 +474,32 @@ class AssortmentScorer:
                     segment_pct = (min(act, tgt) / tgt * 100.0) if tgt > 0 else 0.0
                     discount_score += segment_pct * (seg_score / sum_s)
 
-        # B. 신선도 — freshness_type 기준으로 통일
+        # B. 신선도 — freshness_type 또는 is_new 컬럼 기준
         ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series([''] * len(df), index=df.index)
         fresh_inv = inv_weights.get('fresh', {})
-
-        _plan_mask = ft.str.contains('기획', na=False)
 
         _fresh_score_tbl = FRESH_SCORES["outlet"] if is_outlet else FRESH_SCORES["normal"]
         if is_outlet:
             # 상설: 명시적 0% 할인만 신상 (미입력 항목 포함 시 구형 재고 과다 계상 위험)
+            _plan_mask = ft.str.contains('기획', na=False)
             _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
             fresh_cfg = [
                 {'m': _new_mask, 'r': fresh_inv.get('new', 0.10), 's': _fresh_score_tbl['new']},
                 {'m': _plan_mask, 'r': fresh_inv.get('plan', 0.20), 's': _fresh_score_tbl['plan']},
             ]
         else:
-            # 정상: 할인율 미입력(-1) 포함 신상 판별 — 미할인=신상 프록시 (freshness_type 미입력 브랜드 대응)
-            _new_mask = ft.str.contains('신상', na=False) | (df['_dis_rate'] <= 0)
+            # [정상매장] 신선도 = 신상품 비중만 측정 (목표비중 70%)
+            # is_new==1 또는 freshness_type에 '신상' 포함된 상품만 신상으로 판별
+            # 이월/기타 상품은 신선도 점수 계산에서 완전 제외 (기여도 0)
+            if 'is_new' in df.columns:
+                _is_new_col = pd.to_numeric(df['is_new'], errors='coerce').fillna(0).astype(int)
+                _new_mask = (_is_new_col == 1) | ft.str.contains('신상', na=False)
+            else:
+                # is_new 컬럼 없을 경우: freshness_type='신상' 만으로 판별
+                _new_mask = ft.str.contains('신상', na=False)
             fresh_cfg = [
                 {'m': _new_mask, 'r': 0.70, 's': _fresh_score_tbl['new']},
-                {'m': _plan_mask, 'r': 0.00, 's': _fresh_score_tbl['plan']},
+                # 이월/기타는 아예 r=0 → tgt=0 → 점수 기여 없음
             ]
 
         # 점수 가중치 = 구간 점수 / 지표 내 점수 합계 (점수 0인 구간 제외)
@@ -673,17 +679,29 @@ class AssortmentScorer:
                 if is_outlet:
                     fresh_cfg = [('신상', ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.1)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.2))]
                 else:
-                    fresh_cfg = [('신상', (df['_age']==0) | ft_s.str.contains('신상', na=False), _fresh_w.get('new', 0.70)), ('기획', ft_s.str.contains('기획', na=False), _fresh_w.get('plan', 0.10))]
+                    # 정상매장: is_new 또는 freshness_type='신상' 기준
+                    if 'is_new' in df.columns:
+                        _is_new_c = pd.to_numeric(df['is_new'], errors='coerce').fillna(0).astype(int)
+                        _new_m2 = (_is_new_c == 1) | ft_s.str.contains('신상', na=False)
+                    else:
+                        _new_m2 = ft_s.str.contains('신상', na=False)
+                    fresh_cfg = [('신상', _new_m2, _fresh_w.get('new', 0.70))]
             else:
                 if is_outlet:
                     _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] == 0)
                     r_n = _fresh_w.get('new', 0.10)
                     r_p = _fresh_w.get('plan', 0.20)
+                    fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
                 else:
-                    _new_m = ft_s.str.contains('신상', na=False) | (df['_dis_rate'] <= 0)
+                    # [정상매장] is_new==1 또는 freshness_type='신상' 만으로 신상 판별
+                    # 이월/기타는 신선도 부족 판단에서 완전 제외
+                    if 'is_new' in df.columns:
+                        _is_new_c = pd.to_numeric(df['is_new'], errors='coerce').fillna(0).astype(int)
+                        _new_m = (_is_new_c == 1) | ft_s.str.contains('신상', na=False)
+                    else:
+                        _new_m = ft_s.str.contains('신상', na=False)
                     r_n = 0.70
-                    r_p = 0.00
-                fresh_cfg = [('신상', _new_m, r_n), ('기획', ft_s.str.contains('기획', na=False), r_p)]
+                    fresh_cfg = [('신상', _new_m, r_n)]
             for label, mask, r_val in fresh_cfg:
                 if r_val > 0 and _get_ref_count(mask) < (target_total * r_val): res["fresh"].append(label)
 
