@@ -509,9 +509,9 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
                    ('d0',  '정상가', (df['_age']==0), dis_inv.get('s0', 0.70))]
 
     # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
+    _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
     dis_scale = 1.0
     if _use_rate_dis_h:
-        _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
         _known_d_amt = _get_stock_ref_gen(df[df['_dis_rate'] >= 0], outlet)['_amt'].sum()
         if 0 < _known_d_amt < _total_d_amt:
             dis_scale = _total_d_amt / _known_d_amt
