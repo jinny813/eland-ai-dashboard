@@ -606,7 +606,7 @@ class AssortmentScorer:
         df['season_score'] = int(round(season_score))
         df['best_score'] = int(round(best_score))
         df['item_score'] = int(round(item_score))
-        df['dis_estimated'] = dis_estimated  # [v17.12]
+        df['dis_estimated'] = False  # [v17.12]
 
         drop_cols = ['_amt', '_dis_rate', '_sale_dt', 'item_group']
         return df.drop(drop_cols, axis=1, errors='ignore')
