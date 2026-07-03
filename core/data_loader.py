@@ -608,16 +608,31 @@ def load_dashboard_data(
                 score_data[store].append(avg)
 
             # 2. 브랜드별 상세 데이터 구축 (P2)
-            # [v114.1] 데이터가 있는 브랜드만 노출 (Placeholder 생성 로직 제거)
-            all_target_brands = sorted(st_df['brand_name'].unique().tolist())
+            # [복구] 데이터가 미업로드된 브랜드(마스터 리스트 기준)도 0점 Placeholder 생성
+            actual_brands = sorted(st_df['brand_name'].unique().tolist())
+            master_brands = sum(MASTER_CATEGORY_BRANDS.get(store, {}).values(), [])
+            all_target_brands = sorted(list(set(actual_brands + master_brands)))
 
             for b_name in all_target_brands:
                 if not b_name: continue
                 b_df = st_df[st_df['brand_name'] == b_name].copy()
                 
-                # 데이터가 없는 브랜드를 걸러내는 안전장치
+                # 데이터가 없는 브랜드를 위해 0점 Placeholder 생성
                 if b_df.empty:
-                    continue
+                    b_cat = next((k for k, v in MASTER_CATEGORY_BRANDS.get(store, {}).items() if b_name in v), '여성')
+                    _cfg_type = _cfg_store_type(store, b_name)
+                    normals = ["로엠", "미쏘", "에잇컨셉", "폴햄키즈", "스파오키즈", "뉴발란스키즈"]
+                    outlets = ["지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스", "스케쳐스"]
+                    if _cfg_type: b_type = _cfg_type
+                    elif b_name in normals: b_type = "정상"
+                    elif b_name in outlets: b_type = "상설"
+                    else: b_type = "상설"
+                    
+                    b_df = pd.DataFrame([{
+                        'brand_name': b_name, 'category_group': b_cat, 'store_name': store,
+                        'sales_qty': 0, 'sales_amt': 0, '_amt': 0, 'store_type': b_type,
+                        'item_group': '기타', 'season': '기타', 'year': 0, 'discount_rate': 0
+                    }])
 
                 # [v121.0] 데이터 중복 업로드 및 스타일 합계 판매량 반복 노출 대응
                 if 'inv_uid' in b_df.columns and b_df['inv_uid'].notna().any():
