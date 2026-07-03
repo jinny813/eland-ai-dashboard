@@ -572,7 +572,7 @@ class AssortmentScorer:
         if best_styles and 'style_code' in df.columns:
             act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
             
-        tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.20)
+        tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.30 if is_outlet else 0.35)
         best_score = (min(act_best, tgt_best) / tgt_best * 100.0) if tgt_best > 0 else 0.0
 
         # 아이템 지표 내 명시적 구간별 가중 평균
@@ -734,7 +734,7 @@ class AssortmentScorer:
         if 'sales_qty' in df.columns:
             sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
             b_list = df.assign(_sq=sq).groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
-            best_r = inv_weights.get('best', {}).get('store10', 0.20)
+            best_r = inv_weights.get('best', {}).get('store10', 0.30 if is_outlet else 0.35)
             if best_r > 0 and _get_ref_count(df['style_code'].isin(b_list)) < (target_total * best_r): res["best"] = ["TOP 10"]
 
         # 아이템 부족

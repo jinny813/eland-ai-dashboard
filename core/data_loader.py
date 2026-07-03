@@ -830,7 +830,7 @@ def load_dashboard_data(
                             "dis_w":   {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('dis',    {}).items() if v > 0},
                             "fresh_w": {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('fresh',  {}).items() if v > 0},
                             "sea_w":   {k: round(v*100) for k, v in cfg.get('inv_weights', {}).get('season', {}).items() if v > 0},
-                            "best_pct": round(cfg.get('inv_weights', {}).get('best', {}).get('store10', 0.20) * 100),
+                            "best_pct": round(cfg.get('inv_weights', {}).get('best', {}).get('store10', 0.30 if _is_outlet_type(b_type) else 0.35) * 100),
                             "is_outlet": _is_outlet_type(b_type),
                         }
                     })

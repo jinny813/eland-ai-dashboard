@@ -3248,7 +3248,9 @@
           <p style="font-size:11px; margin:0 0 1px 8px;">[정상] ${freshNorm}</p>
           <p style="font-size:11px; margin:0 0 4px 8px;">[상설] ${freshOutl}</p>
           <p style="font-size:11px; margin-bottom:2px;">- <b>시즌</b>: ${seaTxt}</p>
-          <p style="font-size:11px; margin-bottom:4px;">- <b>BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</p>
+          <p style="font-size:11px; margin-bottom:2px;">- <b>BEST</b></p>
+          <p style="font-size:11px; margin:0 0 1px 8px;">[정상] 판매 상위 10개 품번 재고 목표 ${norm.best_pct || 0}%</p>
+          <p style="font-size:11px; margin:0 0 4px 8px;">[상설] 판매 상위 10개 품번 재고 목표 ${outl.best_pct || 0}%</p>
           <p style="font-size:10px; color:#7C3AED; background:#F5F3FF; padding:4px 8px; border-radius:4px; margin-top:6px;">※ 복종(아이템)별 목표 재고 비중은 총점 계산 제외 — 브랜드 상세 화면 하단 '복종별 모니터링'에서 확인</p>
           <p style="font-size:10px; color:#94A3B8; margin-top:4px;">※ 위 수치는 코드 config에서 직접 로딩됩니다.</p>
         `;
@@ -3716,7 +3718,9 @@
           <span style="margin-left:12px; color:#1D4ED8;">[정상] ${freshNorm}</span><br>
           <span style="margin-left:12px; color:#DC2626;">[상설] ${freshOutl}</span></div>
         <div style="margin-bottom:8px;"><b>• 시즌</b>: ${seaTxt}</div>
-        <div style="margin-bottom:8px;"><b>• BEST</b>: 판매 상위 10개 품번 재고 목표 ${bestPct}%</div>
+        <div style="margin-bottom:8px;"><b>• BEST</b><br>
+          <span style="margin-left:12px; color:#1D4ED8;">[정상] 판매 상위 10개 품번 재고 목표 ${norm.best_pct || 0}%</span><br>
+          <span style="margin-left:12px; color:#DC2626;">[상설] 판매 상위 10개 품번 재고 목표 ${outl.best_pct || 0}%</span></div>
         <div style="font-size:11px; color:#7C3AED; background:#F5F3FF; padding:4px 8px; border-radius:4px; margin-top:4px;">※ 복종(아이템)별 목표 재고 비중은 총점 계산 제외 — 하단 '복종별 모니터링' 패널에서 확인</div>`;
 
       _openModalAtCursor('scoringLogicModal');
