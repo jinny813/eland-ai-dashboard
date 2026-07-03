@@ -631,7 +631,8 @@ def load_dashboard_data(
                     b_df = pd.DataFrame([{
                         'brand_name': b_name, 'category_group': b_cat, 'store_name': store,
                         'sales_qty': 0, 'sales_amt': 0, '_amt': 0, 'store_type': b_type,
-                        'item_group': '기타', 'season': '기타', 'year': 0, 'discount_rate': 0
+                        'item_group': '기타', 'season': '기타', 'year': 0, 'discount_rate': 0,
+                        'stock_amt': 0, 'stock_qty': 0
                     }])
 
                 # [v121.0] 데이터 중복 업로드 및 스타일 합계 판매량 반복 노출 대응
