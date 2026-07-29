@@ -621,18 +621,16 @@ def load_dashboard_data(
                 if b_df.empty:
                     b_cat = next((k for k, v in MASTER_CATEGORY_BRANDS.get(store, {}).items() if b_name in v), '여성')
                     _cfg_type = _cfg_store_type(store, b_name)
-                    normals = ["로엠", "미쏘", "에잇컨셉", "폴햄키즈", "스파오키즈", "뉴발란스키즈"]
-                    outlets = ["지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스", "스케쳐스"]
                     if _cfg_type: b_type = _cfg_type
-                    elif b_name in normals: b_type = "정상"
-                    elif b_name in outlets: b_type = "상설"
-                    else: b_type = "상설"
+                    else: b_type = '상설'
                     
                     b_df = pd.DataFrame([{
                         'brand_name': b_name, 'category_group': b_cat, 'store_name': store,
                         'sales_qty': 0, 'sales_amt': 0, '_amt': 0, 'store_type': b_type,
                         'item_group': '기타', 'season': '기타', 'year': 0, 'discount_rate': 0,
-                        'stock_amt': 0, 'stock_qty': 0
+                        'stock_amt': 0, 'stock_qty': 0, 'style_code': 'placeholder',
+                        'season_code': '기타', 'price_type': '기타', 'item_code': 'placeholder',
+                        'normal_price': 0, 'data_month': diag_month
                     }])
 
                 # [v121.0] 데이터 중복 업로드 및 스타일 합계 판매량 반복 노출 대응
@@ -644,7 +642,10 @@ def load_dashboard_data(
                     
                     # [v202.4] 재고액 누락 방지 로직:
                     # 판매량이 중복 기재된 경우 행을 삭제하지 않고, 중복된 행의 판매수량/매출액만 0으로 처리하여 재고를 보존함.
-                    sales_mask = b_df['sales_qty'] > 0
+                    if 'sales_qty' in b_df.columns:
+                        sales_mask = b_df['sales_qty'] > 0
+                    else:
+                        sales_mask = pd.Series(False, index=b_df.index)
                     if sales_mask.any():
                         subset_cols = ['style_code', 'sales_qty', 'sales_amt']
                         for c in ['color', 'size']:
@@ -661,19 +662,10 @@ def load_dashboard_data(
                 
                 # [v107.0] 특정 브랜드는 DB 설정과 무관하게 '정상/상설' 유형 고정 적용
                 # 지오지아는 매장별로 정상/상설이 다르므로 store_type_config에서 관리
-                normals = ["로엠", "미쏘", "에잇컨셉", "폴햄키즈", "스파오키즈", "뉴발란스키즈"]
-                outlets = ["지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스", "스케쳐스"]
-                
                 _cfg_type = _cfg_store_type(store, b_name)
                 if _cfg_type:
                     b_type = _cfg_type
                     b_df['store_type'] = _cfg_type
-                elif b_name in normals:
-                    b_type = "정상"
-                    b_df['store_type'] = "정상"
-                elif b_name in outlets:
-                    b_type = "상설"
-                    b_df['store_type'] = "상설"
                 else:
                     b_type = str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설'
 
@@ -923,5 +915,5 @@ def load_dashboard_data(
         import traceback
         import gc
         gc.collect()
-        logger.error(f"대시보드 로드 오류: {e}")
+        logger.error(f"[DataLoader] 대시보드 로드 오류: {e}\n{traceback.format_exc()}")
         return {"error": str(e), "traceback": traceback.format_exc()}

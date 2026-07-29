@@ -63,7 +63,7 @@ Thumbs.db
 *.log
 
 # [Others]
-.streamlit/
+.streamlit/secrets.toml
 tmp/
 .firebase/
 

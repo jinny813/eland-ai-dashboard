@@ -292,8 +292,21 @@ class AssortmentScorer:
             return df
 
         df = df.copy()
-        
+
         # [v12.5] 아이템 그룹 매핑 (스포츠/아동 등 브랜드 특성 반영 고도화)
+        # [Guard] stock_amt 컬럼이 없을 경우 0으로 초기화
+        if 'stock_amt' not in df.columns:
+            df['stock_amt'] = 0.0
+        if 'stock_qty' not in df.columns:
+            df['stock_qty'] = 0.0
+        if 'sales_amt' not in df.columns:
+            df['sales_amt'] = 0.0
+        if 'sales_qty' not in df.columns:
+            df['sales_qty'] = 0.0
+        if 'normal_price' not in df.columns:
+            df['normal_price'] = 0.0
+        if 'style_code' not in df.columns:
+            df['style_code'] = ''
         df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, self._safe_float(x)))
         def _get_group_smart(row):
             # item_code 우선, 비어있으면 style_code fallback
@@ -430,11 +443,12 @@ class AssortmentScorer:
         has_dis_data = (df['_dis_rate'] > 0).any()
         use_age_for_dis = False  # 상설은 rate-based 고정; 정상 매장은 _use_rate_dis=False 분기에서 처리
 
-        # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
+        # [v4.5 수정] 상설매장은 무조건 rate-based. 정상매장이라도 Elandworld 브랜드가 아니면 rate-based.
         _brand_nm_s = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
-        _age_only_brands = {'로엠', '로엠(ROEM)'}
+        _eland_brands = ['로엠', '클라비스', '스파오', '미쏘', '후아유', '뉴발란스', '뉴발란스키즈', '스파오키즈']
+        _is_eland = any(k in _brand_nm_s for k in _eland_brands) if _brand_nm_s else False
 
-        _use_rate_dis = (is_outlet and not use_age_for_dis) or is_rate_based or (has_dis_data and _brand_nm_s not in _age_only_brands)
+        _use_rate_dis = is_outlet or not _is_eland
         # 점수 테이블 선택 (정상/상설 구분)
         _dis_score_tbl = DIS_SCORES["outlet"] if is_outlet else DIS_SCORES["normal"]
         if _use_rate_dis:
@@ -461,7 +475,11 @@ class AssortmentScorer:
                 {'m': (df['_age'] == 2), 'r': 0.10},
                 {'m': (df['_age'] == 1), 'r': 0.15},
             ]
-        _total_d_amt = _get_record_ref(pd.Series(True, index=df.index))['_amt'].sum()
+        try:
+            _total_d_ref = _get_record_ref(pd.Series(True, index=df.index))
+            _total_d_amt = _total_d_ref['_amt'].sum() if '_amt' in _total_d_ref.columns else 0.0
+        except Exception:
+            _total_d_amt = 0.0
 
         # 점수 가중치 = 목표비중(r)의 비율
         sum_r = sum(item['r'] for item in dis_cfg if item.get('r', 0) > 0)
@@ -572,7 +590,7 @@ class AssortmentScorer:
         if best_styles and 'style_code' in df.columns:
             act_best = _get_record_ref(df['style_code'].isin(best_styles))['_amt'].sum()
             
-        tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.30 if is_outlet else 0.35)
+        tgt_best = target_total * inv_weights.get('best', {}).get('store10', 0.25 if is_outlet else 0.20)
         best_score = (min(act_best, tgt_best) / tgt_best * 100.0) if tgt_best > 0 else 0.0
 
         # 아이템 지표 내 명시적 구간별 가중 평균
@@ -617,6 +635,8 @@ class AssortmentScorer:
         """현재 브랜드의 구색 부족 세그먼트(Shortage) 분석"""
         if df is None or df.empty: return {}
         df = df.copy()
+        if 'stock_amt' not in df.columns: df['stock_amt'] = 0.0
+        if 'stock_qty' not in df.columns: df['stock_qty'] = 0.0
         df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, self._safe_float(x)))
         df['item_group'] = df['item_code'].apply(self._get_item_group) if 'item_code' in df.columns else 'Others'
         
@@ -734,7 +754,7 @@ class AssortmentScorer:
         if 'sales_qty' in df.columns:
             sq = pd.to_numeric(df['sales_qty'], errors='coerce').fillna(0)
             b_list = df.assign(_sq=sq).groupby('style_code')['_sq'].sum().sort_values(ascending=False).head(10).index.tolist()
-            best_r = inv_weights.get('best', {}).get('store10', 0.30 if is_outlet else 0.35)
+            best_r = inv_weights.get('best', {}).get('store10', 0.25 if is_outlet else 0.20)
             if best_r > 0 and _get_ref_count(df['style_code'].isin(b_list)) < (target_total * best_r): res["best"] = ["TOP 10"]
 
         # 아이템 부족

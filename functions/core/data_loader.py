@@ -18,7 +18,6 @@ from config.scoring_config import SCORING_CONFIG, get_weights_by_category, get_c
 from config.brand_targets import (
     get_tm, PREV_MONTH_SALES, PREV_YEAR_SALES, MONTHLY_TM,
     PREV_YEAR_MONTHLY_SALES, CURR_MONTH_ACTUALS, normalize_brand_name,
-    _normalize_month_key,
 )
 from core.html_generator import _build_detail, _build_bp_detail, _build_best_items, _build_action_plan
 from config.area_config import get_area
@@ -124,9 +123,7 @@ def preprocess_raw_records(
             if name.startswith(prefix):
                 name = name[len(prefix):].strip()
                 break
-        if '분당' in name:
-            name = '분당점'
-        elif '강남' in name:
+        if '강남' in name:
             name = '강남점'
         elif name == '불광':
             name = '불광점'
@@ -149,6 +146,43 @@ def preprocess_raw_records(
                 df[c].astype(str).str.replace(',', '', regex=False).str.strip(),
                 errors='coerce'
             ).fillna(0)
+
+    # ── storemaster_override 정적 오버라이드 (1회) ──
+    try:
+        import importlib
+        import config.storemaster_override as sm_ov
+        import config.brand_targets as _cfg_targets
+        import config.area_config as _cfg_area
+        import config.store_type_config as _cfg_type
+        importlib.reload(sm_ov)
+        if getattr(sm_ov, 'STORE_AREA', None):
+            for _s, _bmap in sm_ov.STORE_AREA.items():
+                _cfg_area.AREA_CONFIG.setdefault(_s, {}).update(_bmap)
+        if getattr(sm_ov, 'STORE_BRAND_TYPE', None):
+            for _s, _bmap in sm_ov.STORE_BRAND_TYPE.items():
+                _cfg_type.BRAND_STORE_TYPES.setdefault(_s, {}).update(_bmap)
+        if getattr(sm_ov, 'PREV_YEAR_MONTHLY_SALES_OVERRIDE', None):
+            for _ym, _store_map in sm_ov.PREV_YEAR_MONTHLY_SALES_OVERRIDE.items():
+                for _s, _bmap in _store_map.items():
+                    _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+        if getattr(sm_ov, 'CURR_YEAR_MONTHLY_SALES_OVERRIDE', None):
+            for _ym, _store_map in sm_ov.CURR_YEAR_MONTHLY_SALES_OVERRIDE.items():
+                for _s, _bmap in _store_map.items():
+                    _cfg_targets.CURR_MONTH_ACTUALS.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+        if getattr(sm_ov, 'MONTHLY_TARGET_OVERRIDE', None):
+            _cur_mo = f"{datetime.now().month:02d}"
+            _cur_yr = str(datetime.now().year)
+            for _ym, _store_map in sm_ov.MONTHLY_TARGET_OVERRIDE.items():
+                _yr, _mo = _ym.split('_')
+                for _s, _bmap in _store_map.items():
+                    _cfg_targets.MONTHLY_TM.setdefault(_s, {}).setdefault(_ym, {}).update(_bmap)
+                    if _yr == _cur_yr and _mo == _cur_mo:
+                        _cfg_targets.STORE_BRAND_TM.setdefault(_s, {}).update(_bmap)
+        logger.info("[storemaster_override] 정적 오버라이드 적용 완료")
+    except ImportError:
+        pass
+    except Exception as _soe:
+        logger.error("[storemaster_override] 적용 실패: %s", _soe)
 
     # ── [v185.0] storemaster 동적 오버라이드 ──
     try:
@@ -283,7 +317,7 @@ def preprocess_raw_records(
     # ── year 필터 ──
     if 'year' in df.columns and 'store_type' in df.columns and 'category_group' in df.columns:
         is_normal = ~df['store_type'].apply(_is_outlet_type)
-        is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화'])
+        is_no_year_cat = df['category_group'].astype(str).str.strip().isin(['스포츠', '잡화', '신사'])
         bad_year = df['year'].astype(str).str.strip().eq("")
         is_fresh_new = (
             df['freshness_type'].astype(str).str.contains('신상', na=False)
@@ -312,19 +346,6 @@ def preprocess_raw_records(
         for b in ['스파오키즈', '뉴발란스키즈']:
             mask = df['brand_name'].str.contains(b, na=False)
             df.loc[mask, 'store_type'] = '정상'
-
-    # ── config 기반 store_type 일괄 업데이트 (가장 마지막에 적용하여 config 우선) ──
-    if 'store_name' in df.columns and 'brand_name' in df.columns and 'store_type' in df.columns:
-        try:
-            import config.store_type_config as _cfg_type_mod
-            _pairs = df[['store_name', 'brand_name']].drop_duplicates()
-            for _, _pair in _pairs.iterrows():
-                _cfg_t = _cfg_type_mod.get_store_type(str(_pair['store_name']), str(_pair['brand_name']))
-                if _cfg_t:
-                    _mask = (df['store_name'] == _pair['store_name']) & (df['brand_name'] == _pair['brand_name'])
-                    df.loc[_mask, 'store_type'] = _cfg_t
-        except Exception as _ste:
-            logger.warning("[preprocess] config store_type 업데이트 실패: %s", _ste)
 
     # ── 가용 월 목록 ──
     def _get_m_num(m_str):
@@ -426,9 +447,14 @@ def load_dashboard_data(
                     if s_amt > 0:
                         yr_key = ym_key.split('_')[0]
                         if yr_key == '2025':
-                            _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
+                            # 기존 storemaster 데이터가 없을 때만 fallback으로 채움
+                            existing = _cfg_targets.PREV_YEAR_MONTHLY_SALES.get(st_key, {}).get(ym_key, {}).get(br_key, 0)
+                            if not existing or existing <= 0:
+                                _cfg_targets.PREV_YEAR_MONTHLY_SALES.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
                         elif yr_key == '2026':
-                            _cfg_targets.CURR_MONTH_ACTUALS.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
+                            existing = _cfg_targets.CURR_MONTH_ACTUALS.get(st_key, {}).get(ym_key, {}).get(br_key, 0)
+                            if not existing or existing <= 0:
+                                _cfg_targets.CURR_MONTH_ACTUALS.setdefault(st_key, {}).setdefault(ym_key, {}).update({br_key: s_amt})
                             
                 logger.info("[data_loader] DB 내 과거 및 당기 실적 데이터 동적 적재 완료 (%d건)", len(group_df))
         except Exception as _e:
@@ -553,6 +579,7 @@ def load_dashboard_data(
                     b_type = _ct if _ct else (str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설')
                     cfg = _get_config(cat if cat != '전체' else "여성", b_type, brand)
                     b_df['tM'] = get_tm(brand_name=brand, store_name=store, month=diag_month)
+                    b_df['area'] = get_area(store, brand)  # 평수 기반 목표 재고액 산출용
                     try:
                         score = _score_df_product(b_df, cfg)
                     except Exception as _e:
@@ -594,71 +621,58 @@ def load_dashboard_data(
                 if b_df.empty:
                     b_cat = next((k for k, v in MASTER_CATEGORY_BRANDS.get(store, {}).items() if b_name in v), '여성')
                     _cfg_type = _cfg_store_type(store, b_name)
-                    normals = ["로엠", "미쏘", "에잇컨셉", "폴햄키즈", "스파오키즈", "뉴발란스키즈"]
-                    outlets = ["지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스", "스케쳐스"]
                     if _cfg_type: b_type = _cfg_type
-                    elif b_name in normals: b_type = "정상"
-                    elif b_name in outlets: b_type = "상설"
-                    else: b_type = "상설"
+                    else: b_type = '상설'
                     
                     b_df = pd.DataFrame([{
                         'brand_name': b_name, 'category_group': b_cat, 'store_name': store,
                         'sales_qty': 0, 'sales_amt': 0, '_amt': 0, 'store_type': b_type,
                         'item_group': '기타', 'season': '기타', 'year': 0, 'discount_rate': 0,
-                        'stock_amt': 0, 'stock_qty': 0
+                        'stock_amt': 0, 'stock_qty': 0, 'style_code': 'placeholder',
+                        'season_code': '기타', 'price_type': '기타', 'item_code': 'placeholder',
+                        'normal_price': 0
                     }])
 
                 # [v121.0] 데이터 중복 업로드 및 스타일 합계 판매량 반복 노출 대응
                 if 'inv_uid' in b_df.columns and b_df['inv_uid'].notna().any():
                     b_df = b_df.drop_duplicates(subset=['inv_uid'])
                 else:
-                    # 1. 먼저 완전히 동일한 행 제거
+                    # 1. 완전히 동일한 행(엑셀 중복 업로드) 제거
                     b_df = b_df.drop_duplicates()
                     
-                    # [v122.0] 판매량이 있는 경우에만 스타일별 중복 제거 수행
-                    # 판매량이 0인 행들은 각각의 재고를 모두 합산해야 하므로 보존해야 함
+                    # [v202.4] 재고액 누락 방지 로직:
+                    # 판매량이 중복 기재된 경우 행을 삭제하지 않고, 중복된 행의 판매수량/매출액만 0으로 처리하여 재고를 보존함.
                     sales_mask = b_df['sales_qty'] > 0
-                    sales_df = b_df[sales_mask].copy()
-                    zero_df = b_df[~sales_mask].copy()
-                    
-                    if not sales_df.empty:
+                    if sales_mask.any():
                         subset_cols = ['style_code', 'sales_qty', 'sales_amt']
                         for c in ['color', 'size']:
                             if c in b_df.columns: subset_cols.append(c)
-                        sales_df = sales_df.drop_duplicates(subset=subset_cols, keep='first')
-                    
-                    b_df = pd.concat([sales_df, zero_df], ignore_index=True)
+                        
+                        dups = b_df[sales_mask].duplicated(subset=subset_cols, keep='first')
+                        if dups.any():
+                            dup_idx = b_df[sales_mask][dups].index
+                            b_df.loc[dup_idx, 'sales_qty'] = 0.0
+                            b_df.loc[dup_idx, 'sales_amt'] = 0.0
 
                 # 데이터가 있는 브랜드 처리
                 b_cat = str(b_df.iloc[0].get('category_group', '여성')).strip() or '여성'
                 
                 # [v107.0] 특정 브랜드는 DB 설정과 무관하게 '정상/상설' 유형 고정 적용
                 # 지오지아는 매장별로 정상/상설이 다르므로 store_type_config에서 관리
-                normals = ["로엠", "미쏘", "에잇컨셉", "폴햄키즈", "스파오키즈", "뉴발란스키즈"]
-                outlets = ["지오지아팩토리", "인동팩토리(리스트,쉬즈미스)", "프로젝트키즈", "네파", "젝시믹스", "스케쳐스"]
-                
                 _cfg_type = _cfg_store_type(store, b_name)
                 if _cfg_type:
                     b_type = _cfg_type
                     b_df['store_type'] = _cfg_type
-                elif b_name in normals:
-                    b_type = "정상"
-                    b_df['store_type'] = "정상"
-                elif b_name in outlets:
-                    b_type = "상설"
-                    b_df['store_type'] = "상설"
                 else:
-                    raw_st = str(b_df.iloc[0].get('store_type', '')).strip()
-                    if not raw_st or raw_st == 'nan':
-                        raw_st = '상설' if _is_outlet_type(store) else '정상'
-                    b_type = raw_st
-                    b_df['store_type'] = b_type
+                    b_type = str(b_df.iloc[0].get('store_type', '상설')).strip() or '상설'
 
                 cfg = _get_config(b_cat, b_type, b_name)
                 
                 tM_won = get_tm(brand_name=b_name, store_name=store, month=diag_month)
 
-                # [v176.0] 목표재고액 공식 통일: 평수 * 10만원/일 * 30일 (×3 제거)
+                # [v176.0] 목표재고액 공식 통일: 평수 * 10만원/일 * 30일 (×2 제거)
+                # - tM_won (목표매출): 전년동월×1.3 자동계산 (get_tm 1순위)
+                # - tM_inv_won (목표재고액): 평수 * 100,000 * 30 (재고 회전 기준)
                 _tM_adjusted = None
                 _b_area_for_cap = get_area(store, b_name)
                 tM_for_score = tM_won  # 채점에 사용할 tM (목표매출 기준)
@@ -670,20 +684,19 @@ def load_dashboard_data(
                     tM_inv_won = _b_area_for_cap * 100_000.0 * 30.0 * 3.0  # 평수 * 10만 * 30일 * 3배
                     _tM_adjusted = 'cap'
                 else:
+                    # 평수 미설정 브랜드: 목표매출의 3배를 목표재고로 (최소 안전망)
                     tM_inv_won = tM_won * 3.0
 
-                b_df['tM'] = tM_for_score  # 채점 로직은 목표매출 기준 사용
+                b_df['tM'] = tM_for_score   # 채점 로직 tM (평수 없을 때 fallback용)
+                b_df['area'] = _b_area_for_cap  # 평수 기반 목표 재고액 산출용 (calc_target_total)
 
-                has_valid_uid = False
+                # [v202.4] 재고 계산 시 중복 제거 제외:
+                # 이미 위에서 완전히 동일한 행(엑셀 중복 덧붙여넣기)은 drop_duplicates()로 제거되었으므로,
+                # 남은 데이터는 사이즈나 재고 수량이 다른 유효한 데이터임. 행 단위 drop 없이 무조건 합산하여 DB와 동기화.
                 if 'inv_uid' in b_df.columns and b_df['inv_uid'].notna().any():
-                    if not (b_df['inv_uid'].astype(str).str.strip().eq('') | b_df['inv_uid'].astype(str).str.strip().eq('nan')).all():
-                        has_valid_uid = True
-                
-                if has_valid_uid:
                     stock_ref = b_df.drop_duplicates('inv_uid')
                 else:
-                    dedup_cols = ['style_code', 'year', 'season_code', 'price_type', 'stock_qty', 'stock_amt']
-                    stock_ref = b_df.drop_duplicates(subset=[c for c in dedup_cols if c in b_df.columns])
+                    stock_ref = b_df
                 
                 stock_amt = stock_ref['stock_amt'].apply(lambda x: max(0.0, _try_float(x))).sum()
                 stock_qty = stock_ref['stock_qty'].apply(lambda x: max(0.0, _try_float(x))).sum()
@@ -701,7 +714,15 @@ def load_dashboard_data(
                 _active_mk = None
                 _active_sales = 0
                 if _cur_mk:
-                    _store_actuals = CURR_MONTH_ACTUALS.get(store, {})
+                    _norm_store = store
+                    for prefix in ["NC", "뉴코아", "동아", "2001"]:
+                        if _norm_store.startswith(prefix):
+                            _norm_store = _norm_store[len(prefix):].strip()
+                            break
+                    if '분당' in _norm_store: _norm_store = '분당점'
+                    elif '강남' in _norm_store: _norm_store = '강남점'
+                    
+                    _store_actuals = CURR_MONTH_ACTUALS.get(_norm_store, {})
                     for _try_mk in sorted(_store_actuals.keys(), reverse=True):
                         if _try_mk <= _cur_mk and isinstance(_store_actuals[_try_mk], dict):
                             v = _store_actuals[_try_mk].get(_b_norm, 0)
@@ -831,18 +852,9 @@ def load_dashboard_data(
                 bp_detail[store][b_name][display_key] = _build_bp_detail(cfg, bp_df if not bp_df.empty else None)
                 best_items[store][b_name][display_key] = _build_best_items(b_df)
 
-                # [액션가이드] 벤치마크 매장: 재고 확보 필요(ai_unified)는 동일 로직, 집중판매(push)는 비움
-                # 관리 매장(신구로/부천): 재고 확보 + 벤치마크 1등 매장 기반 집중판매 모두 적용
-                if store not in _MANAGED_STORES:
-                    action_plan[store][b_name][display_key] = _build_action_plan(b_df, None)
-                else:
-                    bp_brand_df = bp_df[bp_df['brand_name'] == b_name].copy() if not bp_df.empty else pd.DataFrame()
-                    if bp_brand_df.empty:
-                        _top_benchmark = brand_top_benchmark.get(b_name)
-                        if _top_benchmark:
-                            bp_brand_df = df[(df['store_name'] == _top_benchmark) & (df['brand_name'] == b_name)].copy()
-                            bp_brand_df.attrs['top_store_name'] = _top_benchmark
-                    action_plan[store][b_name][display_key] = _build_action_plan(b_df, bp_brand_df)
+                # [액션가이드] 왼쪽(재고확보): 본 매장, 오른쪽(집중판매): NC전체 매장 기준
+                nc_brand_df = df[df['brand_name'] == b_name].copy()
+                action_plan[store][b_name][display_key] = _build_action_plan(b_df, nc_brand_df)
 
         # [v4.2] '전체' 점수: 카테고리별 점수를 카테고리 매출 비중으로 가중평균 (2단계 집계)
         # [v4.6] dis==0 브랜드 제외 시 폴백 없음 — 전체 dis=0이면 해당 카테고리 점수 미산출
@@ -884,6 +896,10 @@ def load_dashboard_data(
                     new_scores.append(cat_score_map.get(cat, (0, 0.0))[0])
             score_data[store] = new_scores
 
+        import gc
+        del df, all_recs
+        gc.collect()
+
         return {
             "AVAILABLE_MONTHS": sorted_months,
             "CATS": cats, "STORES": stores, "scoreData": score_data, "BRANDS": brands_list,
@@ -894,5 +910,7 @@ def load_dashboard_data(
 
     except Exception as e:
         import traceback
+        import gc
+        gc.collect()
         logger.error(f"대시보드 로드 오류: {e}")
         return {"error": str(e), "traceback": traceback.format_exc()}

@@ -343,8 +343,15 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     if df is None or df.empty: return {}
 
     df = df.copy()
+    # [Guard] 필수 컬럼 없을 경우 0으로 초기화
+    if 'stock_amt' not in df.columns: df['stock_amt'] = 0.0
+    if 'stock_qty' not in df.columns: df['stock_qty'] = 0.0
+    if 'sales_qty' not in df.columns: df['sales_qty'] = 0.0
+    if 'sales_amt' not in df.columns: df['sales_amt'] = 0.0
+    if 'style_code' not in df.columns: df['style_code'] = ''
+    if 'normal_price' not in df.columns: df['normal_price'] = 0.0
     df['_amt'] = df['stock_amt'].apply(lambda x: max(0.0, _safe_float(x)))
-    df['_qty'] = df['stock_qty'].apply(lambda x: max(0.0, _safe_float(x))) if 'stock_qty' in df.columns else 0
+    df['_qty'] = df['stock_qty'].apply(lambda x: max(0.0, _safe_float(x)))
     total_amt = df['_amt'].sum()
     if total_amt <= 0: return {}
 
@@ -503,13 +510,14 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     if not is_rate_based and any(k in category_group for k in ["스포츠", "아웃도어"]):
         is_rate_based = True
 
-    # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
+    # [v4.5 수정] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (이랜드월드 브랜드 제외)
     _brand_nm_h = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
-    _age_only_brands_h = {'로엠', '로엠(ROEM)'}
+    _eland_brands = ['로엠', '클라비스', '스파오', '미쏘', '후아유', '뉴발란스', '뉴발란스키즈', '스파오키즈']
+    _is_eland = any(k in _brand_nm_h for k in _eland_brands) if _brand_nm_h else False
 
     dis_inv = inv_w.get('dis', {})
 
-    _use_rate_dis_h = outlet or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h)
+    _use_rate_dis_h = outlet or not _is_eland
     if _use_rate_dis_h:
         # 상설 또는 스포츠: 실시간 할인율 필드 활용 (s0=0% 항목은 rate-based 채점 제외)
         _d_s70 = dis_inv.get('s70', 0.10 if outlet else 0.00)
@@ -539,7 +547,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         amt = ref['_amt'].sum()
         qty = ref['_qty'].sum()
         tgt_amt = target_total * ratio
-        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 and amt <= 0 else 0)
+        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0.0
         dis_mapped_amt += amt
         dis_mapped_qty += qty
         dis_mapped_weight += ratio
@@ -664,7 +672,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     ref_best = _get_stock_ref_gen(df[df['style_code'].isin(best_styles)], outlet)
     best_amt = ref_best['_amt'].sum()
     # 정상 35% / 상설 30% — config 우선, 없으면 매장 유형에 따른 기본값
-    best_ratio = inv_w.get('best', {}).get('store10', 0.30 if outlet else 0.35)
+    best_ratio = inv_w.get('best', {}).get('store10', 0.25 if outlet else 0.20)
     tgt_best = target_total * best_ratio
     best_pct = (best_amt / tgt_best * 100) if tgt_best > 0 else 0
     best_segs = [{
@@ -805,8 +813,11 @@ def _build_best_items(df) -> dict:
         
         # 2. 해당 스타일의 전체 데이터(df)에서 0보다 큰 유효 단가가 있는지 검색
         style_all = df[df['style_code'] == s]
-        valid_prices = style_all['normal_price'].apply(_safe_float)
-        valid_prices = valid_prices[valid_prices > 0]
+        if 'normal_price' in style_all.columns:
+            valid_prices = style_all['normal_price'].apply(_safe_float)
+            valid_prices = valid_prices[valid_prices > 0]
+        else:
+            valid_prices = pd.Series([], dtype=float)
         
         if db_price and db_price > 0:
             raw_price = db_price

@@ -96,8 +96,8 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
     if not query:
         return ('', '')
     norm_code = re.sub(r'[^a-zA-Z0-9]', '', clean_style_code).upper()
-    best_cleaned = None
-    best_brand_only = None
+    best_cleaned = None      # 브랜드 + 품번 모두 일치
+    best_brand_only = None   # 브랜드만 일치 (품번 미포함 폴백)
     best_img = ''
     best_brand_only_img = ''
     try:
@@ -140,6 +140,7 @@ def _crawl_naver_shopping_title(brand_name: str, style_code: str, item_code: str
                     if _is_valid_title(cleaned, keywords):
                         return (cleaned, img_url)
                 elif not best_brand_only:
+                    # 품번이 제목에 없어도 브랜드 일치면 폴백으로 저장
                     best_brand_only = cleaned
                     best_brand_only_img = img_url
             if best_cleaned:
@@ -165,6 +166,7 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
     image_url = ''
     keywords = _get_item_keywords(item_code)
     clean_style_code = style_code.replace('-', '')
+    # 브랜드와 품번 사이 공백 포함 (검색 정확도 향상)
     query = f"{brand_name} {clean_style_code}".strip() if brand_name else clean_style_code
     if not query:
         return ('', '')
@@ -176,21 +178,6 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
         _result, _img, _ts = _cached
         if _time.time() - _ts < _NAME_SEARCH_TTL:
             return (_result, _img)
-
-    # style_master.json 파일 캐시 확인 (재시작 후에도 유지되는 영구 캐시)
-    try:
-        _json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
-        if os.path.exists(_json_path):
-            with open(_json_path, 'r', encoding='utf-8') as _jf:
-                _master = json.load(_jf)
-            _cached_entry = _master.get(style_code, {})
-            _cached_title = _cached_entry.get('style_name', '')
-            if _cached_title:
-                with _NAME_SEARCH_CACHE_LOCK:
-                    _NAME_SEARCH_CACHE[style_code] = (_cached_title, '', _time.time())
-                return (_cached_title, '')
-    except Exception:
-        pass
 
     # 1. API 키가 있으면 OpenAPI 우선 시도
     if client_id and client_secret:
@@ -214,9 +201,9 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
             items = fetch_api(clean_style_code)
 
         if items:
-            best_with_code = ''
+            best_with_code = ''   # 브랜드 O + 품번 O
             best_with_code_img = ''
-            best_brand_only = ''
+            best_brand_only = ''  # 브랜드 O + 품번 X (폴백)
             best_brand_only_img = ''
             for item in items:
                 t = re.sub(r'<[^>]*>', '', item.get('title', '')).strip()
@@ -231,6 +218,7 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
                 code_in_title = norm_query and norm_query in norm_title
 
                 if code_in_title:
+                    # 1순위: 브랜드 + 품번 모두 제목에 있는 결과
                     if not best_with_code:
                         best_with_code = t
                         best_with_code_img = item.get('image', '')
@@ -239,6 +227,7 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
                         image_url = item.get('image', '')
                         break
                 elif not best_brand_only:
+                    # 2순위: 브랜드는 맞지만 품번이 제목에 없는 경우 (폴백)
                     best_brand_only = t
                     best_brand_only_img = item.get('image', '')
 
@@ -247,6 +236,7 @@ def _naver_search_style_name(brand_name: str, style_code: str, item_code: str = 
                     title = best_with_code
                     image_url = best_with_code_img
                 elif best_brand_only:
+                    # 품번이 제목에 없어도 브랜드 일치 결과 사용
                     title = best_brand_only
                     image_url = best_brand_only_img
 
@@ -360,6 +350,7 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
 
     store_type = str(df['store_type'].iloc[0]).strip() if 'store_type' in df.columns else "정상"
     outlet = _is_outlet(store_type)
+    # 목표 총 재고액 = 평수 × 단가 × 30일 × 3배. 평수 없으면 tM × 3 fallback.
     area = 0.0
     if 'area' in df.columns:
         _a = df['area'].iloc[0]
@@ -367,6 +358,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
             area = max(0.0, float(_a))
     target_total = calc_target_total(area, tM)
     inv_w = config.get('inv_weights', {})
+    _cat_grp = str(df['category_group'].iloc[0]).strip() if 'category_group' in df.columns and not df.empty else ''
+    _is_jabh = (_cat_grp == '잡화')
 
     # 1. 아이템 점수 세부 (조닝별 특화 로직 반영)
     scorer = AssortmentScorer(config)
@@ -452,16 +445,36 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         item_weights = default_item_w['남성']
     
     item_segs = []
+    item_mapped_amt = 0
+    item_mapped_qty = 0
+    item_mapped_weight = 0.0
     for i, (eng, kor) in enumerate(item_map.items()):
         ref = _get_stock_ref_gen(df[df['item_group'] == eng], outlet)
         amt = ref['_amt'].sum()
+        qty = ref['_qty'].sum()
         target_ratio = item_weights.get(eng, 0.0)
         tgt_amt = target_total * target_ratio
         pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0.0
+        item_mapped_amt += amt
+        item_mapped_qty += qty
+        item_mapped_weight += target_ratio
         item_segs.append({
-            "key": eng, "l": kor, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+            "key": eng, "l": kor, "valM": round(amt/1_000_000, 1), "qty": int(qty),
             "c": ITEM_COLORS[i % len(ITEM_COLORS)], "weight": int(target_ratio*100), "pct": min(100.0, round(pct, 1)),
             "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(target_ratio*100)
+        })
+
+    # [v18] 아이템 기타/미지정 영역 추가하여 총합 맞추기
+    _rem_item_amt = max(0, total_amt - item_mapped_amt)
+    if _rem_item_amt > 0:
+        _rem_item_qty = max(0, df['_qty'].sum() - item_mapped_qty)
+        _rem_item_weight = max(0.0, 1.0 - item_mapped_weight)
+        _rem_tgt_amt = target_total * _rem_item_weight
+        _rem_pct = (_rem_item_amt / _rem_tgt_amt * 100) if _rem_tgt_amt > 0 else 0.0
+        item_segs.append({
+            "key": "etc", "l": "기타", "valM": round(_rem_item_amt/1_000_000, 1), "qty": int(_rem_item_qty),
+            "c": "#9CA3AF", "weight": int(_rem_item_weight*100), "pct": min(100.0, round(_rem_pct, 1)),
+            "targetM": round(_rem_tgt_amt/1_000_000, 1), "mix_pct": round(_rem_item_amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(_rem_item_weight*100)
         })
 
     # [v8.7] 연차(Age) 계산: 기준 연도 정규화 (자릿수 보정)
@@ -490,23 +503,26 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     if not is_rate_based and any(k in category_group for k in ["스포츠", "아웃도어"]):
         is_rate_based = True
 
-    # [v4.5] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (로엠 계열 제외)
+    # [v4.5 수정] 정상 매장도 할인율 데이터가 있으면 rate-based 사용 (이랜드월드 브랜드 제외)
     _brand_nm_h = str(df['brand_name'].iloc[0]).strip() if 'brand_name' in df.columns and not df.empty else ''
-    _age_only_brands_h = {'로엠', '로엠(ROEM)'}
+    _eland_brands = ['로엠', '클라비스', '스파오', '미쏘', '후아유', '뉴발란스', '뉴발란스키즈', '스파오키즈']
+    _is_eland = any(k in _brand_nm_h for k in _eland_brands) if _brand_nm_h else False
 
     dis_inv = inv_w.get('dis', {})
 
-    _use_rate_dis_h = outlet or is_rate_based or (has_dis_data and _brand_nm_h not in _age_only_brands_h)
+    _use_rate_dis_h = outlet or not _is_eland
     if _use_rate_dis_h:
         # 상설 또는 스포츠: 실시간 할인율 필드 활용 (s0=0% 항목은 rate-based 채점 제외)
         _d_s70 = dis_inv.get('s70', 0.10 if outlet else 0.00)
         _d_s50 = dis_inv.get('s50', 0.20 if outlet else 0.05)
         _d_s30 = dis_inv.get('s30', 0.30 if outlet else 0.10)
         _d_s10 = dis_inv.get('s10', 0.10 if outlet else 0.15)
+        _d_s0  = dis_inv.get('s0', 0.00 if outlet else 0.70)
         dis_cfg = [('d70', '70% 이상', (df['_dis_rate']>=70), _d_s70),
                    ('d50', '50~70% 미만', (df['_dis_rate']>=50)&(df['_dis_rate']<70), _d_s50),
                    ('d30', '30~50% 미만', (df['_dis_rate']>=30)&(df['_dis_rate']<50), _d_s30),
-                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), _d_s10)]
+                   ('d10', '1~30% 미만', (df['_dis_rate']>0)&(df['_dis_rate']<30), _d_s10),
+                   ('d0',  '정상가', (df['_dis_rate']<=0), _d_s0)]
     else:
         # 정상 또는 할인율 데이터 없는 상설: 연차(year) 기준 매핑
         dis_cfg = [('d70', '70% 이상', (df['_age']>=4), dis_inv.get('s70', 0.00)),
@@ -515,60 +531,80 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
                    ('d10', '1~30%', (df['_age']==1), dis_inv.get('s10', 0.15)),
                    ('d0',  '정상가', (df['_age']==0), dis_inv.get('s0', 0.70))]
 
-    # [v17.11] 할인율 미변환 품번 보정: rate-based 모드에서 구간 합 < 총재고 시 비례 추정
-    dis_scale = 1.0
-    if _use_rate_dis_h:
-        _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
-        _known_d_amt = _get_stock_ref_gen(df[df['_dis_rate'] >= 0], outlet)['_amt'].sum()
-        if 0 < _known_d_amt < _total_d_amt:
-            dis_scale = _total_d_amt / _known_d_amt
-
     dis_segs = []
+    dis_mapped_amt = 0
+    dis_mapped_qty = 0
+    dis_mapped_weight = 0.0
     for key, lbl, mask, ratio in dis_cfg:
         ref = _get_stock_ref_gen(df[mask], outlet)
-        raw_amt = ref['_amt'].sum()
-        raw_qty = ref['_qty'].sum()
-        amt = raw_amt * dis_scale
-        qty = round(raw_qty * dis_scale)
+        amt = ref['_amt'].sum()
+        qty = ref['_qty'].sum()
         tgt_amt = target_total * ratio
-        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 and amt <= 0 else 0)
+        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0.0
+        dis_mapped_amt += amt
+        dis_mapped_qty += qty
+        dis_mapped_weight += ratio
         dis_segs.append({
             "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(qty),
             "c": "#EF4444" if ratio > 0 else "#CBD5E1", "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
-            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
+            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(ratio*100)
+        })
+
+    # 미분류/기타 할인율 보정
+    _total_d_amt = _get_stock_ref_gen(df, outlet)['_amt'].sum()
+    _total_d_qty = _get_stock_ref_gen(df, outlet)['_qty'].sum()
+    _rem_dis_amt = max(0, _total_d_amt - dis_mapped_amt)
+    if _rem_dis_amt > 0:
+        _rem_dis_qty = max(0, _total_d_qty - dis_mapped_qty)
+        _rem_dis_weight = max(0.0, 1.0 - dis_mapped_weight)
+        _rem_dis_tgt = target_total * _rem_dis_weight
+        _rem_dis_pct = (_rem_dis_amt / _rem_dis_tgt * 100) if _rem_dis_tgt > 0 else 0.0
+        dis_segs.append({
+            "key": "other", "l": "기타/미분류", "valM": round(_rem_dis_amt/1_000_000, 1), "qty": int(_rem_dis_qty),
+            "c": "#9CA3AF", "weight": int(_rem_dis_weight*100), "pct": min(100.0, round(_rem_dis_pct, 1)),
+            "targetM": round(_rem_dis_tgt/1_000_000, 1), "mix_pct": round(_rem_dis_amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(_rem_dis_weight*100)
         })
 
     # 3. 신선도 세부 — scoring_logic.py와 동일한 신상 판별 조건 사용
     ft = df['freshness_type'].astype(str).str.strip() if 'freshness_type' in df.columns else pd.Series(['']*len(df))
     _dis_r = df['_dis_rate'] if '_dis_rate' in df.columns else pd.Series([0.0]*len(df))
-    # freshness_type에 '신상' OR 할인율 0%(정상가) = 신상 (scoring_logic 동일 기준)
-    _new_mask = ft.str.contains('신상', na=False) | (_dis_r == 0)
     _plan_mask = ft.str.contains('기획', na=False)
 
     _fresh_w = inv_w.get('fresh', {})
     if outlet:
+        _new_mask = ft.str.contains('신상', na=False) | (_dis_r == 0)
         fresh_cfg = [
             ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.10)),
             ('plan', '기획', _plan_mask, _fresh_w.get('plan', 0.20)),
+            ('carry', '이월/기타', ~(_new_mask | _plan_mask), max(0.0, 1.0 - _fresh_w.get('new', 0.10) - _fresh_w.get('plan', 0.20))),
         ]
     else:
-        # 정상 매장: 기획 비중 항상 0 (config에 관계없이) — FRESH_SCORES["normal"].plan=0 과 동일
+        # [정상매장] is_new==1 또는 freshness_type='신상' 만을 신상으로 판별 (scoring_logic.py와 동일)
+        # 이월/기타는 신선도 목표비중 0 (화면 표시만, 점수 미반영)
+        if 'is_new' in df.columns:
+            _is_new_col = pd.to_numeric(df['is_new'], errors='coerce').fillna(0).astype(int)
+            _new_mask = (_is_new_col == 1) | ft.str.contains('신상', na=False)
+        else:
+            _new_mask = ft.str.contains('신상', na=False)
         fresh_cfg = [
-            ('new',  '신상', _new_mask,  _fresh_w.get('new',  0.70)),
-            ('plan', '기획', _plan_mask, 0.00),
+            ('new',  '신상', _new_mask,  0.70),
+            # 이월/기타: 대시보드에 표시하지 않음
         ]
-
+    
     fresh_segs = []
-    for key, lbl, mask, ratio in fresh_cfg:
-        ref = _get_stock_ref_gen(df[mask], outlet)
-        amt = ref['_amt'].sum()
-        tgt_amt = target_total * ratio
-        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0
-        fresh_segs.append({
-            "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
-            "c": _get_dynamic_color(pct, "fresh"), "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
-            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio*100)
-        })
+    if not _is_jabh:
+        for key, lbl, mask, ratio in fresh_cfg:
+            if key == 'carry':
+                continue  # 이월/기타는 화면에서 제외
+            ref = _get_stock_ref_gen(df[mask], outlet)
+            amt = ref['_amt'].sum()
+            tgt_amt = target_total * ratio
+            pct = (amt / tgt_amt * 100) if tgt_amt > 0 else 0
+            fresh_segs.append({
+                "key": key, "l": lbl, "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+                "c": _get_dynamic_color(pct, "fresh") if key != 'carry' else '#9CA3AF', "weight": int(ratio*100), "pct": min(100.0, round(pct, 1)),
+                "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1) if total_amt > 0 else 0, "opt_pct": int(ratio*100)
+            })
 
     # 4. 시즌 세부 (4개 계절 고정 노출)
     # 데이터 기준월 사용 (오늘 날짜가 아닌 실제 데이터 월 기준으로 시즌 목표 결정)
@@ -597,26 +633,26 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
         
     sc_df = df['season_code'].astype(str).str.strip() if 'season_code' in df.columns else pd.Series(['']*len(df))
     season_segs = []
-    
-    for item in season_map:
-        mask = sc_df.isin(item['codes'])
-        ref = _get_stock_ref_gen(df[mask], outlet)
-        amt = ref['_amt'].sum()
-        
-        # 해당 계절 라벨(봄, 여름 등) 추출하여 목표 비중 매칭
-        core_label = item['l'].split(' ')[0]
-        ratio = target_weights.get(core_label, 0.0)
-            
-        tgt_amt = target_total * ratio
-        pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 else 0)
-        
-        season_segs.append({
-            "key": item['key'], "l": item['l'], "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
-            "c": _get_dynamic_color(pct, "season") if ratio > 0 else "#CBD5E1", 
-            "weight": int(ratio * 100), "pct": min(100.0, round(pct, 1)),
-            "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio * 100),
-            "is_score_target": ratio > 0
-        })
+    if not _is_jabh:
+        for item in season_map:
+            mask = sc_df.isin(item['codes'])
+            ref = _get_stock_ref_gen(df[mask], outlet)
+            amt = ref['_amt'].sum()
+
+            # 해당 계절 라벨(봄, 여름 등) 추출하여 목표 비중 매칭
+            core_label = item['l'].split(' ')[0]
+            ratio = target_weights.get(core_label, 0.0)
+
+            tgt_amt = target_total * ratio
+            pct = (amt / tgt_amt * 100) if tgt_amt > 0 else (100.0 if ratio == 0 else 0)
+
+            season_segs.append({
+                "key": item['key'], "l": item['l'], "valM": round(amt/1_000_000, 1), "qty": int(ref['_qty'].sum()),
+                "c": _get_dynamic_color(pct, "season") if ratio > 0 else "#CBD5E1",
+                "weight": int(ratio * 100), "pct": min(100.0, round(pct, 1)),
+                "targetM": round(tgt_amt/1_000_000, 1), "mix_pct": round(amt/total_amt*100, 1), "opt_pct": int(ratio * 100),
+                "is_score_target": ratio > 0
+            })
 
     # 5. BEST 세부
     # [v128.0] scoring_logic.py와 동일하게 config의 inv_weights 참조 (하드코딩 0.25 제거)
@@ -628,8 +664,8 @@ def _build_detail(df: pd.DataFrame, config: dict, tM: float = 100.0) -> dict:
     
     ref_best = _get_stock_ref_gen(df[df['style_code'].isin(best_styles)], outlet)
     best_amt = ref_best['_amt'].sum()
-    # scoring_logic과 동일한 비율 사용 (상설: 0.20, 정상: config 기본값)
-    best_ratio = inv_w.get('best', {}).get('store10', 0.25)
+    # 정상 35% / 상설 30% — config 우선, 없으면 매장 유형에 따른 기본값
+    best_ratio = inv_w.get('best', {}).get('store10', 0.25 if outlet else 0.20)
     tgt_best = target_total * best_ratio
     best_pct = (best_amt / tgt_best * 100) if tgt_best > 0 else 0
     best_segs = [{
@@ -649,14 +685,12 @@ def _build_bp_detail(config: dict, bp_df=None) -> dict:
     return { "item":{"segs":[]}, "dis":{"segs":[]}, "fresh":{"segs":[]}, "best":{"segs":[]}, "season":{"segs":[]} }
 
 def _get_product_info(style_codes: list) -> dict:
-    """DB + style_master.json 에서 스타일 정보를 딕셔너리 형태로 일괄 로드"""
+    """style_master.json → DB 순서로 스타일 정보 일괄 로드"""
     if not style_codes: return {}
-    # style_master.json 파일 캐시 우선 로드 (project root/core/ 우선, 없으면 functions/core/)
     res = {}
+    # 1. style_master.json 우선 로드
     try:
-        _base_core = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "core", "style_master.json")
-        _local_json = os.path.join(os.path.dirname(__file__), "style_master.json")
-        _json_path = _base_core if os.path.exists(_base_core) else _local_json
+        _json_path = os.path.join(os.path.dirname(__file__), "style_master.json")
         if os.path.exists(_json_path):
             with open(_json_path, 'r', encoding='utf-8') as _jf:
                 _master = json.load(_jf)
@@ -671,13 +705,8 @@ def _get_product_info(style_codes: list) -> dict:
                     }
     except Exception:
         pass
-
-    # functions/core/ → functions/ → project root → database/
-    _base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    db_path = os.path.join(_base, "database", "product_master.db")
-    if not os.path.exists(db_path):
-        # Streamlit Cloud 폴백: functions/database/
-        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
+    # 2. DB로 보완 (product_name이 있는 경우 style_master.json 값을 덮어씀)
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database", "product_master.db")
     try:
         conn = sqlite3.connect(db_path)
         codes_str = "', '".join(style_codes)
@@ -687,9 +716,10 @@ def _get_product_info(style_codes: list) -> dict:
 
         for _, row in df_p.iterrows():
             kw = row['keywords']
+            pname = row['product_name']
             res[row['style_code']] = {
                 "item_name": row['category'],
-                "style_name": row['product_name'],
+                "style_name": pname,
                 "keywords": kw.split(", ") if isinstance(kw, str) and kw.strip() else [],
                 "normal_price": row.get('normal_price', 0)
             }
@@ -698,6 +728,20 @@ def _get_product_info(style_codes: list) -> dict:
         return res  # DB 실패해도 style_master.json 로드 결과 반환
 
 _EMPTY_VALS = {'', '—', '-', 'nan', 'None', 'none'}
+
+# GSheet style_name 컬럼에 카테고리명이 잘못 입력된 경우를 걸러내기 위한 집합
+_CATEGORY_LIKE_NAMES = {
+    '가방', '백', '파우치', '지갑', '토트백', '숄더백', '크로스백', '클러치', '배낭', '백팩',
+    '티셔츠', '티', '반팔티', '긴팔티', '맨투맨', '후드티', '후드',
+    '셔츠', '블라우스', '남방',
+    '팬츠', '바지', '슬랙스', '청바지', '데님', '반바지', '쇼츠', '레깅스',
+    '스커트', '치마', '원피스', '드레스',
+    '자켓', '재킷', '점퍼', '코트', '패딩', '아우터', '가디건', '조끼', '베스트',
+    '니트', '스웨터', '세트', '수트', '정장',
+    '신발', '운동화', '스니커즈', '구두', '슬리퍼', '샌들', '부츠',
+    '모자', '캡', '비니', '머플러', '스카프', '벨트', '양말',
+    '상의', '하의', '이너', '언더웨어',
+}
 
 def _build_best_items(df) -> dict:
     if df is None or df.empty or "sales_qty" not in df.columns: return {"store":[], "nc":[]}
@@ -720,36 +764,34 @@ def _build_best_items(df) -> dict:
         row = sub.iloc[0]
 
         # ── 상품명(style_name) 추출: DB 우선 → GSheet → 크롤링 ──
-        raw_item_name = str(row.get('item_name', '') or '').strip()
         raw_style_name = ''
+        raw_item_name = ''
 
-        # 1. DB 마스터 우선 확인 (products 테이블 원본 상품명)
+        # 1. SQLite 마스터(DB) 우선 확인
         if s in p_map:
-            db_item = p_map[s].get('item_name') or ''
-            db_style = p_map[s].get('style_name') or ''
-            if db_item and db_item not in _EMPTY_VALS:
-                raw_item_name = db_item
-            if db_style and db_style not in _EMPTY_VALS:
-                raw_style_name = str(db_style).strip()
+            db_style = str(p_map[s].get('style_name') or '').strip()
+            if db_style and db_style not in _EMPTY_VALS and db_style not in _CATEGORY_LIKE_NAMES:
+                raw_style_name = db_style
 
-        # 2. DB에 없으면 GSheet(Raw Data) 확인
+        # 2. DB에 없으면 GSheet 원본 확인 (카테고리명처럼 보이면 건너뜀)
         if not raw_style_name or raw_style_name in _EMPTY_VALS:
             for _, srow in df[df['style_code'] == s].iterrows():
                 sn = str(srow.get('style_name', '')).strip()
-                if sn and sn not in _EMPTY_VALS:
+                if sn and sn not in _EMPTY_VALS and sn not in _CATEGORY_LIKE_NAMES:
                     raw_style_name = sn
                     break
 
-        # ── 4) item_name: item_code 기반 한국어 카테고리명
-        if raw_item_name in _EMPTY_VALS:
-            ic = str(row.get('item_code', '') or '').strip()
-            if not ic or ic in _EMPTY_VALS:
-                ic = s
-            mapped_name = _item_code_to_ko(ic)
-            if mapped_name and mapped_name not in _EMPTY_VALS:
-                raw_item_name = mapped_name
-            else:
-                raw_item_name = ic
+        # ── item_name: item_code 기반 매핑 우선 (GSheet의 잘못된 카테고리 데이터 방지)
+        ic = str(row.get('item_code', '') or '').strip()
+        if not ic or ic in _EMPTY_VALS:
+            ic = s
+        mapped_name = _item_code_to_ko(ic)
+        if mapped_name and mapped_name not in _EMPTY_VALS:
+            raw_item_name = mapped_name
+        else:
+            # item_code 매핑 실패 시에만 GSheet item_name 사용
+            gs_item = str(row.get('item_name', '') or '').strip()
+            raw_item_name = gs_item if gs_item not in _EMPTY_VALS else ic
 
         # ── 5) style_name: DB에 유효값 없으면 네이버에서 품번 정확 매칭으로 검색
         if raw_style_name in _EMPTY_VALS:
