@@ -470,18 +470,25 @@ class GASWorksheetMock:
         self.manager = manager
         self.name = name
     def get_all_records(self):
-        """gspread.get_all_records() 호환성 유지 — GAS read_all 직접 사용"""
+        """gspread.get_all_records() 호환성 — GAS read_raw(배열) → dict 리스트 변환.
+        GAS 스크립트에 read_all 액션이 없으므로 read_raw로 가져온 후 Python에서 변환."""
         sheet_name = self.manager.sheet_master_name
-        logger.warning(f"[GSheet] read_all 요청 (sheetName={sheet_name})")
-        result = self.manager._get({"action": "read_all", "sheetName": sheet_name}, timeout=180)
-        if result is None:
-            logger.error(f"[GSheet] read_all 실패: {self.manager.error_msg!r}")
+        logger.warning(f"[GSheet] read_raw 요청 (sheetName={sheet_name})")
+        raw = self.manager._get({"action": "read_raw", "sheetName": sheet_name}, timeout=180)
+        if raw is None:
+            logger.error(f"[GSheet] read_raw 실패: {self.manager.error_msg!r}")
             return []
-        if isinstance(result, list):
-            logger.warning(f"[GSheet] read_all 완료: {len(result)}행")
-            return result
-        logger.error(f"[GSheet] read_all 응답 형식 오류: {type(result).__name__} / {str(result)[:200]}")
-        return []
+        # raw = [[header...], [row...], ...] 형식
+        if not isinstance(raw, list) or len(raw) < 2:
+            logger.warning(f"[GSheet] read_raw 빈 응답 또는 헤더만 있음: {len(raw) if isinstance(raw, list) else type(raw).__name__}")
+            return []
+        headers = [str(h).strip() for h in raw[0]]
+        records = []
+        for row in raw[1:]:
+            rec = {h: (row[i] if i < len(row) else "") for i, h in enumerate(headers)}
+            records.append(rec)
+        logger.warning(f"[GSheet] read_raw 완료: {len(records)}행 (헤더 {len(headers)}개)")
+        return records
     
     def get_all_values(self):
         """gspread.get_all_values() 호환성 유지 (헤더 포함, 페이징 데이터 기반 재구성)"""
